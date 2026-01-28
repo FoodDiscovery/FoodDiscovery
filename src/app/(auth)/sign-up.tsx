@@ -4,26 +4,33 @@ import { supabase } from '../../lib/supabase'
 import { Button, Input } from '@rneui/themed'
 import { router } from 'expo-router'
 
-export default function SignIn() {
+export default function SignUp() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
-  async function signInWithEmail() {
-    console.log('[SignIn] Attempting to sign in with email:', email)
+  async function signUpWithEmail() {
+    console.log('[SignUp] Attempting to sign up with email:', email)
     setLoading(true)
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.signUp({
       email: email,
       password: password,
     })
 
     if (error) {
-      console.log('[SignIn] Sign in error:', error.message)
+      console.log('[SignUp] Sign up error:', error.message)
       Alert.alert(error.message)
       setLoading(false)
+    } else if (!session) {
+      console.log('[SignUp] Sign up successful but no session - email verification required')
+      Alert.alert('Please check your inbox for email verification!')
+      setLoading(false)
     } else {
-      console.log('[SignIn] Sign in successful! User:', data.user?.email)
-      console.log('[SignIn] Redirecting to home page...')
+      console.log('[SignUp] Sign up successful! User:', session.user?.email)
+      console.log('[SignUp] Redirecting to home page...')
       router.replace('/')
     }
   }
@@ -50,11 +57,11 @@ export default function SignIn() {
         />
       </View>
       <View style={[styles.verticallySpaced, styles.mt20]}>
-        <Button title="Sign in" disabled={loading} onPress={() => signInWithEmail()} />
+        <Button title="Sign up" disabled={loading} onPress={() => signUpWithEmail()} />
       </View>
       <View style={[styles.verticallySpaced, styles.mt20]}>
-        <TouchableOpacity onPress={() => router.push('/(auth)/sign-up')}>
-          <Text style={styles.linkText}>Don't have an account? Sign up</Text>
+        <TouchableOpacity onPress={() => router.push('/(auth)/sign-in')}>
+          <Text style={styles.linkText}>Already have an account? Sign in</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -80,3 +87,4 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 })
+
