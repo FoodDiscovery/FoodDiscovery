@@ -17,12 +17,19 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { View, Text, ActivityIndicator } from 'react-native'
+import { View, Text, ActivityIndicator, Button, Alert } from 'react-native'
 import { Session } from '@supabase/supabase-js'
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+
+  async function handleSignOut() {
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      Alert.alert('Error signing out', error.message)
+    }
+  }
 
   useEffect(() => {
     console.log('[App] Checking session on mount...')
@@ -60,7 +67,8 @@ export default function App() {
       {session ? (
         <View style={{ alignItems: 'center' }}>
           <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 10 }}>Hello World</Text>
-          <Text style={{ fontSize: 16, color: '#666' }}>Signed in as: {session.user.email}</Text>
+          <Text style={{ fontSize: 16, color: '#666', marginBottom: 20 }}>Signed in as: {session.user.email}</Text>
+          <Button title="Sign Out" onPress={handleSignOut} />
         </View>
       ) : (
         <Text>Please sign in</Text>
