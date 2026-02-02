@@ -10,7 +10,6 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false)
 
   async function signUpWithEmail() {
-    console.log('[SignUp] Attempting to sign up with email:', email)
     setLoading(true)
     const {
       data: { session },
@@ -21,16 +20,12 @@ export default function SignUp() {
     })
 
     if (error) {
-      console.log('[SignUp] Sign up error:', error.message)
       Alert.alert(error.message)
       setLoading(false)
     } else if (!session) {
-      console.log('[SignUp] Sign up successful but no session - email verification required')
       Alert.alert('Please check your inbox for email verification!')
       setLoading(false)
     } else {
-      console.log('[SignUp] Sign up successful! User:', session.user?.email)
-      console.log('[SignUp] Redirecting to home page...')
       router.replace('/')
     }
   }

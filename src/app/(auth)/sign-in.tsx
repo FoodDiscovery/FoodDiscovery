@@ -10,7 +10,6 @@ export default function SignIn() {
   const [loading, setLoading] = useState(false)
 
   async function signInWithEmail() {
-    console.log('[SignIn] Attempting to sign in with email:', email)
     setLoading(true)
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email,
@@ -18,12 +17,9 @@ export default function SignIn() {
     })
 
     if (error) {
-      console.log('[SignIn] Sign in error:', error.message)
       Alert.alert(error.message)
       setLoading(false)
     } else {
-      console.log('[SignIn] Sign in successful! User:', data.user?.email)
-      console.log('[SignIn] Redirecting to home page...')
       router.replace('/')
     }
   }

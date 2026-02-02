@@ -1,46 +1,52 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, createContext, useContext } from 'react'
 import { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { useRouter, useSegments } from 'expo-router'
 import { View, ActivityIndicator } from 'react-native'
 
+// Create a context to share the session with child components
+const AuthContext = createContext<{ session: Session | null }>({ session: null })
+
+// Hook to access the session from any component
+export const useAuth = () => useContext(AuthContext)
+
+// destrucutre the children from passed in props and they are of type ...
+// type script says that its of tyoe 'anything that react can render'
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
+  // session is of type Session or null initially
   const [session, setSession] = useState<Session | null>(null)
   const [initialized, setInitialized] = useState(false)
+  // tells you where you are in the file system route
   const segments = useSegments()
+  // navigation control
   const router = useRouter()
 
   useEffect(() => {
-    console.log('[AuthProvider] Initializing auth state...')
+    // supabase checks asyncStorage/secureStorage looking for saved auth token
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('[AuthProvider] Initial session check:', session ? `User: ${session.user.email}` : 'No session')
       setSession(session)
+      // let us know that supabase token/session restoration from storage) has completed, so the app can now reliably know whether a session exists or not
       setInitialized(true)
     })
 
+    // reacts to auth events and sets the updated session
     supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('[AuthProvider] Auth state changed:', _event, session ? `User: ${session.user.email}` : 'No session')
       setSession(session)
     })
   }, [])
 
   useEffect(() => {
     if (!initialized) {
-      console.log('[AuthProvider] Not initialized yet, waiting...')
       return
     }
 
     const inAuthGroup = segments[0] === '(auth)'
-    console.log('[AuthProvider] Routing check - Session:', session ? 'exists' : 'null', 'In auth group:', inAuthGroup, 'Segments:', segments)
 
+    // user is signed out and trying to access protected content
     if (!session && !inAuthGroup) {
-      console.log('[AuthProvider] No session and not in auth group, redirecting to sign-in')
       router.replace('/(auth)/sign-in')
-    } else if (session && inAuthGroup) {
-      console.log('[AuthProvider] Session exists and in auth group, redirecting to home')
+    } else if (session && inAuthGroup) {  // user is logged in but trying to access login screen
       router.replace('/')
-    } else {
-      console.log('[AuthProvider] No redirect needed')
     }
   }, [session, segments, initialized])
 
@@ -52,5 +58,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     )
   }
 
-  return <>{children}</>
+  // Provide the session to all child components via context
+  return <AuthContext.Provider value={{ session }}>{children}</AuthContext.Provider>
 }
