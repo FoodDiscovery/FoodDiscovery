@@ -18,10 +18,10 @@ export default function SignIn() {
 
     if (error) {
       Alert.alert(error.message)
-      setLoading(false)
-    } else {
-      router.replace('/')
     }
+    // Note: AuthProvider will automatically redirect to home on successful sign-in
+    // Don't call router.replace('/') here to avoid double navigation
+    setLoading(false)
   }
 
   return (

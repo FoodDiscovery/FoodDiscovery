@@ -393,10 +393,10 @@ export default function SignUp() {
         'Verification Required',
         'Please check your inbox for email verification!'
       )
-      setLoading(false)
-    } else {
-      router.replace('/')
     }
+    // Note: If session exists, AuthProvider will automatically redirect to home
+    // Don't call router.replace('/') here to avoid double navigation
+    setLoading(false)
   }
 
   const isOwner = selectedRole === 'owner'
