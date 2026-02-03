@@ -10,13 +10,16 @@ import {
   TextInput,
   View,
   Image,
+  TouchableOpacity,
+  StyleSheet,
 } from "react-native";
 import { supabase } from "../../lib/supabase";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
+import { File } from "expo-file-system/next";
 import { decode } from "base64-arraybuffer";
+import { router } from "expo-router";
 
-type RestaurantRow = {
+interface RestaurantRow {
   id: string;
   owner_id: string;
   name: string | null;
@@ -26,7 +29,7 @@ type RestaurantRow = {
   business_hours: { text: string } | null;
   phone: string | null;
   created_at: string | null;
-};
+}
 
 function Field({
   label,
@@ -92,11 +95,9 @@ async function uploadImageToSupabase(params: {
   const asset = result.assets[0];
   if (!asset?.uri) return null;
 
-  // Read file as base64 -> arraybuffer
-  const base64 = await FileSystem.readAsStringAsync(asset.uri, {
-    encoding: "base64",
-  });
-
+  // Read file as base64 -> arraybuffer using new File class
+  const file = new File(asset.uri);
+  const base64 = await file.base64();
   const arrayBuffer = decode(base64);
 
   // Guess extension / content type
@@ -137,6 +138,8 @@ export default function RestaurantEditScreen() {
   const [businessHours, setBusinessHours] = useState("");
   const [phone, setPhone] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [address, setAddress] = useState("");
+  const [locationId, setLocationId] = useState<number | null>(null);
 
   const isDirty = useMemo(() => {
     return (
@@ -145,9 +148,10 @@ export default function RestaurantEditScreen() {
       cuisineType.trim().length > 0 ||
       businessHours.trim().length > 0 ||
       phone.trim().length > 0 ||
-      imageUrl.trim().length > 0
+      imageUrl.trim().length > 0 ||
+      address.trim().length > 0
     );
-  }, [name, description, cuisineType, businessHours, phone, imageUrl]);
+  }, [name, description, cuisineType, businessHours, phone, imageUrl, address]);
 
   useEffect(() => {
     const loadOrCreateRestaurant = async () => {
@@ -208,6 +212,19 @@ export default function RestaurantEditScreen() {
         setImageUrl(row.image_url ?? "");
       };
 
+      const loadLocation = async (restaurantId: string) => {
+        const { data: location, error: locationErr } = await supabase
+          .from("locations")
+          .select("id, restaurant_id, address_text")
+          .eq("restaurant_id", restaurantId)
+          .maybeSingle();
+
+        if (!locationErr && location) {
+          setLocationId(location.id);
+          setAddress(location.address_text ?? "");
+        }
+      };
+
       if (!existing) {
         // Create a new restaurant for this owner
         const { data: created, error: createErr } = await supabase
@@ -238,6 +255,7 @@ export default function RestaurantEditScreen() {
       }
 
       hydrate(existing as RestaurantRow);
+      await loadLocation(existing.id);
       setLoading(false);
     };
 
@@ -282,13 +300,46 @@ export default function RestaurantEditScreen() {
       })
       .eq("id", restaurantId);
 
-    setSaving(false);
-
     if (error) {
+      setSaving(false);
       Alert.alert("Save failed", error.message);
       return;
     }
 
+    // Save or update location/address
+    if (address.trim()) {
+      if (locationId) {
+        // Update existing location
+        const { error: locationErr } = await supabase
+          .from("locations")
+          .update({ address_text: address.trim() })
+          .eq("id", locationId);
+
+        if (locationErr) {
+          console.error("Location update error:", locationErr);
+        }
+      } else {
+        // Create new location
+        const { data: newLocation, error: locationErr } = await supabase
+          .from("locations")
+          .insert([
+            {
+              restaurant_id: restaurantId,
+              address_text: address.trim(),
+            },
+          ])
+          .select("id")
+          .single();
+
+        if (locationErr) {
+          console.error("Location create error:", locationErr);
+        } else if (newLocation) {
+          setLocationId(newLocation.id);
+        }
+      }
+    }
+
+    setSaving(false);
     Alert.alert("Saved", "Restaurant details updated successfully.");
   };
 
@@ -311,6 +362,9 @@ export default function RestaurantEditScreen() {
         <Text style={{ marginTop: 10, opacity: 0.7, textAlign: "center" }}>
           This page is only available for business owners. Please register as a business owner to manage your restaurant.
         </Text>
+        <TouchableOpacity style={[styles.backButton, { marginTop: 20 }]} onPress={() => router.back()}>
+          <Text style={styles.backButtonText}>← Back to Home</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -329,6 +383,13 @@ export default function RestaurantEditScreen() {
           value={name}
           onChangeText={setName}
           placeholder="e.g., FoodDiscovery Cafe"
+        />
+
+        <Field
+          label="Address"
+          value={address}
+          onChangeText={setAddress}
+          placeholder="e.g., 123 Main St, City, State"
         />
 
         <Field
@@ -368,9 +429,18 @@ export default function RestaurantEditScreen() {
             <View style={{ alignItems: "flex-start", gap: 8 }}>
               <Image
                 source={{ uri: imageUrl }}
-                style={{ width: 96, height: 96, borderRadius: 12, borderWidth: 1, borderColor: "#333" }}
+                style={{ width: 96, height: 96, borderRadius: 12, borderWidth: 1, borderColor: "#333", backgroundColor: "#f0f0f0" }}
+                onError={(e) => {
+                  console.error("Image load error:", e.nativeEvent.error);
+                  console.log("Failed URL:", imageUrl);
+                  Alert.alert(
+                    "Image Load Error",
+                    `Could not load image. Please check:\n\n1. The storage bucket is set to PUBLIC in Supabase\n2. The bucket name matches your code\n\nURL: ${imageUrl.substring(0, 100)}...`
+                  );
+                }}
+                onLoad={() => console.log("Image loaded successfully:", imageUrl)}
               />
-              <Text style={{ fontSize: 12, opacity: 0.7 }}>{imageUrl}</Text>
+              <Text style={{ fontSize: 12, opacity: 0.7, maxWidth: 280 }} numberOfLines={2}>{imageUrl}</Text>
             </View>
           ) : (
             <Text style={{ opacity: 0.7 }}>No image uploaded yet.</Text>
@@ -390,7 +460,24 @@ export default function RestaurantEditScreen() {
             disabled={saving || !restaurantId || !isDirty}
           />
         </View>
+
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backButtonText}>← Back to Home</Text>
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  backButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    alignSelf: "flex-start",
+  },
+  backButtonText: {
+    color: "#007AFF",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+});
