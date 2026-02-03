@@ -16,15 +16,15 @@ import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import { decode } from "base64-arraybuffer";
 
-type CompanyRow = {
+type RestaurantRow = {
   id: string;
   owner_id: string;
   name: string | null;
-  cuisine: string | null;
-  address: string | null;
-  hours: string | null;
+  description: string | null;
+  cuisine_type: string | null;
+  image_url: string | null;
+  business_hours: { text: string } | null;
   phone: string | null;
-  logo_url: string | null;
   created_at: string | null;
 };
 
@@ -66,16 +66,16 @@ function Field({
   );
 }
 
-async function uploadLogoToSupabase(params: {
-  companyId: string;
+async function uploadImageToSupabase(params: {
+  restaurantId: string;
   ownerId: string;
 }): Promise<string | null> {
-  const { companyId, ownerId } = params;
+  const { restaurantId, ownerId } = params;
 
   // Ask permission
   const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!perm.granted) {
-    Alert.alert("Permission needed", "Please allow photo library access to upload a logo.");
+    Alert.alert("Permission needed", "Please allow photo library access to upload an image.");
     return null;
   }
 
@@ -94,7 +94,7 @@ async function uploadLogoToSupabase(params: {
 
   // Read file as base64 -> arraybuffer
   const base64 = await FileSystem.readAsStringAsync(asset.uri, {
-    encoding: FileSystem.EncodingType.Base64,
+    encoding: "base64",
   });
 
   const arrayBuffer = decode(base64);
@@ -103,11 +103,11 @@ async function uploadLogoToSupabase(params: {
   const fileExt = asset.uri.toLowerCase().includes(".png") ? "png" : "jpg";
   const contentType = fileExt === "png" ? "image/png" : "image/jpeg";
 
-  // Put logos under: company-logos/<ownerId>/<companyId>/logo.<ext>
-  const path = `${ownerId}/${companyId}/logo.${fileExt}`;
+  // Put images under: restaurant-images/<ownerId>/<restaurantId>/image.<ext>
+  const path = `${ownerId}/${restaurantId}/image.${fileExt}`;
 
   const { error: uploadErr } = await supabase.storage
-    .from("company-logos")
+    .from("restaurant-images")
     .upload(path, arrayBuffer, {
       contentType,
       upsert: true,
@@ -118,54 +118,76 @@ async function uploadLogoToSupabase(params: {
     return null;
   }
 
-  const { data } = supabase.storage.from("company-logos").getPublicUrl(path);
+  const { data } = supabase.storage.from("restaurant-images").getPublicUrl(path);
   return data?.publicUrl ?? null;
 }
 
-export default function CompanyEditScreen() {
+export default function RestaurantEditScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
 
-  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [ownerId, setOwnerId] = useState<string | null>(null);
 
   const [name, setName] = useState("");
-  const [cuisine, setCuisine] = useState("");
-  const [address, setAddress] = useState("");
-  const [hours, setHours] = useState("");
+  const [description, setDescription] = useState("");
+  const [cuisineType, setCuisineType] = useState("");
+  const [businessHours, setBusinessHours] = useState("");
   const [phone, setPhone] = useState("");
-  const [logoUrl, setLogoUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
 
   const isDirty = useMemo(() => {
     return (
       name.trim().length > 0 ||
-      cuisine.trim().length > 0 ||
-      address.trim().length > 0 ||
-      hours.trim().length > 0 ||
+      description.trim().length > 0 ||
+      cuisineType.trim().length > 0 ||
+      businessHours.trim().length > 0 ||
       phone.trim().length > 0 ||
-      logoUrl.trim().length > 0
+      imageUrl.trim().length > 0
     );
-  }, [name, cuisine, address, hours, phone, logoUrl]);
+  }, [name, description, cuisineType, businessHours, phone, imageUrl]);
 
   useEffect(() => {
-    const loadOrCreateCompany = async () => {
+    const loadOrCreateRestaurant = async () => {
       setLoading(true);
 
       const { data: userRes, error: userErr } = await supabase.auth.getUser();
       if (userErr || !userRes.user) {
         setLoading(false);
-        Alert.alert("Not signed in", "Please sign in to edit your company.");
+        Alert.alert("Not signed in", "Please sign in to edit your restaurant.");
         return;
       }
 
       const uid = userRes.user.id;
       setOwnerId(uid);
 
-      // IMPORTANT: filter to only THIS user's company
+      // Check if user has 'owner' role in profiles table
+      const { data: profile, error: profileErr } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", uid)
+        .single();
+
+      if (profileErr) {
+        setLoading(false);
+        Alert.alert("Profile load failed", profileErr.message);
+        return;
+      }
+
+      if (profile?.role !== "owner") {
+        setIsOwner(false);
+        setLoading(false);
+        return;
+      }
+
+      setIsOwner(true);
+
+      // Fetch existing restaurant for this owner
       const { data: existing, error: fetchErr } = await supabase
-        .from("companies")
-        .select("id,owner_id,name,cuisine,address,hours,phone,logo_url,created_at")
+        .from("restaurants")
+        .select("id,owner_id,name,description,cuisine_type,image_url,business_hours,phone,created_at")
         .eq("owner_id", uid)
         .maybeSingle();
 
@@ -175,32 +197,33 @@ export default function CompanyEditScreen() {
         return;
       }
 
-      const hydrate = (row: CompanyRow) => {
-        setCompanyId(row.id);
+      const hydrate = (row: RestaurantRow) => {
+        setRestaurantId(row.id);
         setOwnerId(row.owner_id);
         setName(row.name ?? "");
-        setCuisine(row.cuisine ?? "");
-        setAddress(row.address ?? "");
-        setHours(row.hours ?? "");
+        setDescription(row.description ?? "");
+        setCuisineType(row.cuisine_type ?? "");
+        setBusinessHours(row.business_hours?.text ?? "");
         setPhone(row.phone ?? "");
-        setLogoUrl(row.logo_url ?? "");
+        setImageUrl(row.image_url ?? "");
       };
 
       if (!existing) {
+        // Create a new restaurant for this owner
         const { data: created, error: createErr } = await supabase
-          .from("companies")
+          .from("restaurants")
           .insert([
             {
               owner_id: uid,
               name: "",
-              cuisine: "",
-              address: "",
-              hours: "",
+              description: "",
+              cuisine_type: "",
+              business_hours: { text: "" },
               phone: "",
-              logo_url: "",
+              image_url: "",
             },
           ])
-          .select("id,owner_id,name,cuisine,address,hours,phone,logo_url,created_at")
+          .select("id,owner_id,name,description,cuisine_type,image_url,business_hours,phone,created_at")
           .single();
 
         if (createErr) {
@@ -209,55 +232,55 @@ export default function CompanyEditScreen() {
           return;
         }
 
-        hydrate(created as CompanyRow);
+        hydrate(created as RestaurantRow);
         setLoading(false);
         return;
       }
 
-      hydrate(existing as CompanyRow);
+      hydrate(existing as RestaurantRow);
       setLoading(false);
     };
 
-    loadOrCreateCompany();
+    loadOrCreateRestaurant();
   }, []);
 
-  const onPickLogo = async () => {
-    if (!companyId || !ownerId) {
-      Alert.alert("Not ready", "Company not loaded yet.");
+  const onPickImage = async () => {
+    if (!restaurantId || !ownerId) {
+      Alert.alert("Not ready", "Restaurant not loaded yet.");
       return;
     }
 
-    setUploadingLogo(true);
-    const publicUrl = await uploadLogoToSupabase({ companyId, ownerId });
-    setUploadingLogo(false);
+    setUploadingImage(true);
+    const publicUrl = await uploadImageToSupabase({ restaurantId, ownerId });
+    setUploadingImage(false);
 
     if (publicUrl) {
-      setLogoUrl(publicUrl);
-      Alert.alert("Logo uploaded", "Logo saved locally. Press “Save changes” to store it on your company.");
+      setImageUrl(publicUrl);
+      Alert.alert("Image uploaded", "Image saved locally. Press 'Save changes' to store it on your restaurant.");
     }
   };
 
   const onSave = async () => {
-    if (!companyId) return;
+    if (!restaurantId) return;
 
     if (!name.trim()) {
-      Alert.alert("Missing name", "Please enter a company name.");
+      Alert.alert("Missing name", "Please enter a restaurant name.");
       return;
     }
 
     setSaving(true);
 
     const { error } = await supabase
-      .from("companies")
+      .from("restaurants")
       .update({
         name: name.trim(),
-        cuisine: cuisine.trim(),
-        address: address.trim(),
-        hours: hours.trim(),
+        description: description.trim(),
+        cuisine_type: cuisineType.trim(),
+        business_hours: { text: businessHours.trim() },
         phone: phone.trim(),
-        logo_url: logoUrl.trim(),
+        image_url: imageUrl.trim(),
       })
-      .eq("id", companyId);
+      .eq("id", restaurantId);
 
     setSaving(false);
 
@@ -266,14 +289,28 @@ export default function CompanyEditScreen() {
       return;
     }
 
-    Alert.alert("Saved", "Company details updated successfully.");
+    Alert.alert("Saved", "Restaurant details updated successfully.");
   };
 
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator />
-        <Text style={{ marginTop: 10 }}>Loading company...</Text>
+        <Text style={{ marginTop: 10 }}>Loading restaurant...</Text>
+      </View>
+    );
+  }
+
+  // Show access denied message if user is not an owner
+  if (!isOwner) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 20 }}>
+        <Text style={{ fontSize: 18, fontWeight: "600", textAlign: "center" }}>
+          Access Denied
+        </Text>
+        <Text style={{ marginTop: 10, opacity: 0.7, textAlign: "center" }}>
+          This page is only available for business owners. Please register as a business owner to manage your restaurant.
+        </Text>
       </View>
     );
   }
@@ -284,34 +321,35 @@ export default function CompanyEditScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView contentContainerStyle={{ padding: 16, gap: 14 }}>
-        <Text style={{ fontSize: 22, fontWeight: "700" }}>Edit Company</Text>
+        <Text style={{ fontSize: 22, fontWeight: "700" }}>Edit Restaurant</Text>
         <Text style={{ opacity: 0.7 }}>Update basic details for your restaurant.</Text>
 
         <Field
-          label="Company Name"
+          label="Restaurant Name"
           value={name}
           onChangeText={setName}
           placeholder="e.g., FoodDiscovery Cafe"
         />
 
         <Field
-          label="Cuisine"
-          value={cuisine}
-          onChangeText={setCuisine}
+          label="Description"
+          value={description}
+          onChangeText={setDescription}
+          placeholder="e.g., A cozy cafe serving fresh, local cuisine"
+          multiline
+        />
+
+        <Field
+          label="Cuisine Type"
+          value={cuisineType}
+          onChangeText={setCuisineType}
           placeholder="e.g., Ethiopian, Thai, Mexican"
         />
 
         <Field
-          label="Address"
-          value={address}
-          onChangeText={setAddress}
-          placeholder="e.g., 123 Main St, Santa Cruz, CA"
-        />
-
-        <Field
-          label="Hours"
-          value={hours}
-          onChangeText={setHours}
+          label="Business Hours"
+          value={businessHours}
+          onChangeText={setBusinessHours}
           placeholder="e.g., Mon–Fri 10am–8pm"
         />
 
@@ -324,24 +362,24 @@ export default function CompanyEditScreen() {
         />
 
         <View style={{ gap: 10 }}>
-          <Text style={{ fontSize: 14, fontWeight: "600" }}>Logo</Text>
+          <Text style={{ fontSize: 14, fontWeight: "600" }}>Restaurant Image</Text>
 
-          {logoUrl ? (
+          {imageUrl ? (
             <View style={{ alignItems: "flex-start", gap: 8 }}>
               <Image
-                source={{ uri: logoUrl }}
+                source={{ uri: imageUrl }}
                 style={{ width: 96, height: 96, borderRadius: 12, borderWidth: 1, borderColor: "#333" }}
               />
-              <Text style={{ fontSize: 12, opacity: 0.7 }}>{logoUrl}</Text>
+              <Text style={{ fontSize: 12, opacity: 0.7 }}>{imageUrl}</Text>
             </View>
           ) : (
-            <Text style={{ opacity: 0.7 }}>No logo uploaded yet.</Text>
+            <Text style={{ opacity: 0.7 }}>No image uploaded yet.</Text>
           )}
 
           <Button
-            title={uploadingLogo ? "Uploading..." : "Pick & upload logo"}
-            onPress={onPickLogo}
-            disabled={uploadingLogo || !companyId || !ownerId}
+            title={uploadingImage ? "Uploading..." : "Pick & upload image"}
+            onPress={onPickImage}
+            disabled={uploadingImage || !restaurantId || !ownerId}
           />
         </View>
 
@@ -349,7 +387,7 @@ export default function CompanyEditScreen() {
           <Button
             title={saving ? "Saving..." : "Save changes"}
             onPress={onSave}
-            disabled={saving || !companyId || !isDirty}
+            disabled={saving || !restaurantId || !isDirty}
           />
         </View>
       </ScrollView>

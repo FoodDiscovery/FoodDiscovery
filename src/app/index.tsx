@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, Alert, Button } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { useAuth } from "../Providers/AuthProvider";
@@ -7,6 +7,26 @@ import { supabase } from "../lib/supabase";
 export default function App() {
   const { session } = useAuth();
   const router = useRouter();
+  const [isOwner, setIsOwner] = useState(false);
+
+  useEffect(() => {
+    const checkUserRole = async () => {
+      if (!session?.user?.id) {
+        setIsOwner(false);
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .single();
+
+      setIsOwner(profile?.role === "owner");
+    };
+
+    checkUserRole();
+  }, [session]);
 
   async function handleSignOut() {
     const { error } = await supabase.auth.signOut();
@@ -24,10 +44,12 @@ export default function App() {
 
           <Button title="Sign Out" onPress={handleSignOut} />
 
-          <Button
-            title="Company Sign-up / Edit"
-            onPress={() => router.push("/(owner)/company-edit")}
-          />
+          {isOwner && (
+            <Button
+              title="Edit Restaurant"
+              onPress={() => router.push("/(owner)/restaurant-edit")}
+            />
+          )}
         </View>
       ) : (
         <View style={{ gap: 12, width: "100%" }}>
