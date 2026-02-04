@@ -43,7 +43,8 @@ export default function App() {
           </Text>
 
           <Button title="Sign Out" onPress={handleSignOut} />
-
+          <Button title="View Map" onPress={() => router.push("/map")} />
+            
           {isOwner && (
             <Button
               title="Edit Restaurant"
