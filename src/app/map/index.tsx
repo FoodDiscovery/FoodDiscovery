@@ -1,7 +1,8 @@
-import { Button, Dimensions, StyleSheet, Text, View } from 'react-native';
+import { Button, Dimensions, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
+import { router } from 'expo-router';
 
 const MapScreen = () => {
     const [myLocation, setMyLocation] = useState(null);
@@ -77,6 +78,12 @@ const MapScreen = () => {
                     description={"Here I am"}
                 />
             </MapView>
+            <TouchableOpacity 
+                style={styles.backButton} 
+                onPress={() => router.push('/')}
+            >
+                <Text style={styles.backButtonText}>← Back</Text>
+            </TouchableOpacity>
             <View style = {styles.buttonContainer}>
              <Button title="Get Location" onPress={focusOnLocation} />
             </View> 
@@ -103,6 +110,25 @@ const styles = StyleSheet.create({
         bottom: 20,
         width: '100%',
         alignItems: 'center',
+    },
+    backButton: {
+        position: 'absolute',
+        top: 50,
+        left: 20,
+        backgroundColor: 'white',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    backButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#333',
     },
     loading: {
         flex: 1,
