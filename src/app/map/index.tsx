@@ -1,60 +1,51 @@
 import { Button, Dimensions, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import MapView, { Marker } from 'react-native-maps';
-import * as Location from 'expo-location';
 import { router } from 'expo-router';
+import { useLocation } from "../../Providers/LocationProvider";
 
 const MapScreen = () => {
-    const [myLocation, setMyLocation] = useState(null);
     const mapRef = useRef<MapView>(null);
+    const {location, errorMsg, isLoading} = useLocation();
     
     useEffect(() => {
-        getLocation();
-    }, []);
-
-    const getLocation = async() => {
-        try{
-            let {status} = await Location.requestForegroundPermissionsAsync();
-            if(status !== 'granted'){
-                console.warn('Permission to access location was denied');
-                return;
-            }
-            let location = await Location.getCurrentPositionAsync({});
-            setMyLocation(location.coords);
-            console.log(location);
-            
-            // Center the map on the user's location
-            if(mapRef.current){
-                mapRef.current.animateToRegion({
-                    latitude: location.coords.latitude,
-                    longitude: location.coords.longitude,
-                    latitudeDelta: 0.0922,
-                    longitudeDelta: 0.0421,
-                }, 1000);
-            }
+        // wait for location to chage from context and then center map
+        if (location && mapRef.current) {
+            mapRef.current.animateToRegion({
+                latitude: location.latitude,
+                longitude: location.longitude,
+                latitudeDelta: 0.0922,
+                longitudeDelta: 0.0421,
+            }, 1000);
         }
-        catch(err){
-            console.warn(err);
-        }
-    }
+    }, [location]);
 
     const focusOnLocation = () => {
-        if (!myLocation || !mapRef.current) {
+        if (!location || !mapRef.current) {
             return;
         }
         mapRef.current.animateToRegion({
-            latitude: myLocation.latitude,
-            longitude: myLocation.longitude,
+            latitude: location.latitude,
+            longitude: location.longitude,
             latitudeDelta: 0.0922,
             longitudeDelta: 0.0421,
         }, 1000);
     }
 
     // display loading text while location is being fetched
-    if(!myLocation){
+    if(isLoading){
         return (
             <View style={styles.container}>
                 <Text>Searching for location...</Text>
+            </View>
+        );
+    }
+
+    if (errorMsg || !location) {
+        return (
+            <View style={styles.container}>
+                <Text>{errorMsg || "Location unavailable"}</Text>
+                <Button title="Try Again" onPress={() => router.replace('/map')} />
             </View>
         );
     }
@@ -65,22 +56,23 @@ const MapScreen = () => {
                 style={styles.map}
                 ref={mapRef}
                 initialRegion={{
-                    latitude: myLocation.latitude,
-                    longitude: myLocation.longitude,
+                    latitude: location.latitude,
+                    longitude: location.longitude,
                     latitudeDelta: 0.0922,
                     longitudeDelta: 0.0421,
                 }}
                 provider='google'
             >
                 <Marker
-                    coordinate={myLocation}
+                    coordinate={location}
                     title={"My Location"}
                     description={"Here I am"}
                 />
             </MapView>
             <TouchableOpacity 
                 style={styles.backButton} 
-                onPress={() => router.push('/')}
+                // can replace for router.back() to keep the map in memory
+                onPress={() => router.replace('/')}
             >
                 <Text style={styles.backButtonText}>← Back</Text>
             </TouchableOpacity>
