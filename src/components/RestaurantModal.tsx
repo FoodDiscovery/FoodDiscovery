@@ -8,6 +8,7 @@ import {
     ScrollView,
     Dimensions,
     Image,
+    ActivityIndicator
 } from 'react-native';
 
 interface RestaurantModalInfo {
@@ -51,54 +52,92 @@ export default function RestaurantModal({
                     onPress={onClose}
                 />
                 <View style={styles.modalContainer}>
-                    {/* Swipeable menu images section */}
-                    <ScrollView
-                        horizontal
-                        pagingEnabled
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.imageScroll}
-                    >
-                        {restaurant.preview_images?.map((imageUrl, index) => (
-                            <Image
-                                key={index}
-                                source={{ uri: imageUrl }}
-                                style={styles.menuImage}
-                                resizeMode="cover"
-                            />
-                        ))}
-                    </ScrollView>
-                    <ScrollView style={styles.content}>
-                        <Text style={styles.name}>{restaurant.name}</Text>
-
-                        {distance && (
-                            <Text style={styles.distance}>
-                                {distance.toFixed(1)} miles away
-                            </Text>
-                        )}
-
-                        {restaurant.business_hours && (
-                            <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>Hours</Text>
-                                <Text style={styles.sectionText}>{restaurant.business_hours.text}</Text>
-                            </View>
-                        )}
-
-                        {/* Reviews section - you'll need to fetch this from Supabase */}
-                        <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Reviews</Text>
-                            <Text style={styles.sectionText}>Coming soon...</Text>
+                    {!restaurant ? (
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="large" />
+                            <Text>Loading restaurant details...</Text>
                         </View>
+                    ) : (
+                        <>
+                            {/* Swipeable menu images section */}
+                            <ScrollView
+                                horizontal
+                                pagingEnabled
+                                showsHorizontalScrollIndicator={false}
+                                style={styles.imageScroll}
+                            >
+                                {restaurant.preview_images && restaurant.preview_images.length > 0 ? (
+                                    restaurant.preview_images.map((imageUrl, index) => (
+                                        <Image
+                                            key={index}
+                                            source={{ uri: imageUrl }}
+                                            style={styles.menuImage}
+                                            resizeMode="cover"
+                                        />
+                                    ))
+                                ) : (
+                                    // Fallback if no preview images
+                                    <View style={styles.noImageContainer}>
+                                        <Text style={styles.noImageText}>No preview images</Text>
+                                    </View>
+                                )}
+                            </ScrollView>
 
-                        {/* Menu section */}
-                        <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Menu</Text>
-                            <Text style={styles.sectionText}>View full menu...</Text>
-                        </View>
-                    </ScrollView>
+                            <ScrollView style={styles.content}>
+                                <Text style={styles.name}>{restaurant.name}</Text>
 
-                    <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                        <Text style={styles.closeButtonText}>Close</Text>
-                    </TouchableOpacity>
+                                {distance && (
+                                    <Text style={styles.distance}>
+                                        {distance.toFixed(1)} miles away
+                                    </Text>
+                                )}
+
+                                {restaurant.description && (
+                                    <View style={styles.section}>
+                                        <Text style={styles.sectionTitle}>About</Text>
+                                        <Text style={styles.sectionText}>{restaurant.description}</Text>
+                                    </View>
+                                )}
+
+                                {restaurant.cuisine_type && (
+                                    <View style={styles.section}>
+                                        <Text style={styles.sectionTitle}>Cuisine</Text>
+                                        <Text style={styles.sectionText}>{restaurant.cuisine_type}</Text>
+                                    </View>
+                                )}
+
+                                {restaurant.business_hours && (
+                                    <View style={styles.section}>
+                                        <Text style={styles.sectionTitle}>Hours</Text>
+                                        <Text style={styles.sectionText}>{restaurant.business_hours.text}</Text>
+                                    </View>
+                                )}
+
+                                {restaurant.phone && (
+                                    <View style={styles.section}>
+                                        <Text style={styles.sectionTitle}>Phone</Text>
+                                        <Text style={styles.sectionText}>{restaurant.phone}</Text>
+                                    </View>
+                                )}
+
+                                {/* Reviews section */}
+                                <View style={styles.section}>
+                                    <Text style={styles.sectionTitle}>Reviews</Text>
+                                    <Text style={styles.sectionText}>Coming soon...</Text>
+                                </View>
+
+                                {/* Menu section */}
+                                <View style={styles.section}>
+                                    <Text style={styles.sectionTitle}>Menu</Text>
+                                    <Text style={styles.sectionText}>View full menu...</Text>
+                                </View>
+                            </ScrollView>
+
+                            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                                <Text style={styles.closeButtonText}>Close</Text>
+                            </TouchableOpacity>
+                        </>
+                    )}
                 </View>
             </View>
         </Modal>
@@ -164,5 +203,21 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 16,
         fontWeight: '600',
+    },
+    loadingContainer: {
+        padding: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    noImageContainer: {
+        width: Dimensions.get('window').width,
+        height: 200,
+        backgroundColor: '#f0f0f0',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    noImageText: {
+        color: '#999',
+        fontSize: 16,
     },
 });
