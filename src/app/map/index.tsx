@@ -3,22 +3,59 @@ import React, { useEffect, useRef } from 'react';
 import MapView, { Marker } from 'react-native-maps';
 import { router } from 'expo-router';
 import { useLocation } from "../../Providers/LocationProvider";
+import { supabase } from '../../lib/supabase';
+
+// Define the Restaurant type based on expected data structure
+type Restaurant = {
+    location_id: number;
+    distance_meters: number;
+    latitude: number;
+    longitude: number;
+    restaurant: {
+        id: string,
+        name: string,
+        owner_id: string,
+    }
+}
 
 const MapScreen = () => {
     const mapRef = useRef<MapView>(null);
     const {location, errorMsg, isLoading} = useLocation();
+    const [restaurants, setRestaurants] = React.useState<Restaurant[]>([]);
+    const [loadingRestaurants, setLoadingRestaurants] = React.useState(false);
+
+    // fetch restaurant locations from supabase on mount
     
     useEffect(() => {
         // wait for location to chage from context and then center map
         if (location && mapRef.current) {
-            mapRef.current.animateToRegion({
+            mapRef.current.animateToRegion({ // center map on user location
                 latitude: location.latitude,
                 longitude: location.longitude,
                 latitudeDelta: 0.0922,
                 longitudeDelta: 0.0421,
             }, 1000);
+            fetchNearbyRestaurants(location.latitude, location.longitude);
         }
     }, [location]);
+
+    const fetchNearbyRestaurants = async ( latitude: number, longitude: number) => {
+        setLoadingRestaurants(true);
+        const { data, error } = await supabase
+            .rpc('get_nearby_restaurants', { // call the Postgres function
+                user_lat: latitude,
+                user_lng: longitude,
+                radius_meters: 5000,
+            });
+        
+        if (error) {
+            console.error('Error fetching nearby restaurants:', error);
+        } else if (data) {
+            setRestaurants(data as Restaurant[]);
+        }
+
+        setLoadingRestaurants(false);
+    };
 
     const focusOnLocation = () => {
         if (!location || !mapRef.current) {
@@ -41,6 +78,7 @@ const MapScreen = () => {
         );
     }
 
+    // error handling for location fetch
     if (errorMsg || !location) {
         return (
             <View style={styles.container}>
@@ -68,6 +106,18 @@ const MapScreen = () => {
                     title={"My Location"}
                     description={"Here I am"}
                 />
+                {restaurants.map((item) => (
+                    <Marker
+                        key={item.location_id}
+                        coordinate={{
+                            latitude: item.latitude,
+                            longitude: item.longitude,
+                        }}
+                        title={item.restaurant.name}
+                        description={`Distance: ${(item.distance_meters / 1000).toFixed(2)} km`}
+                        pinColor="blue"
+                    />
+                ))}
             </MapView>
             <TouchableOpacity 
                 style={styles.backButton} 
@@ -76,9 +126,12 @@ const MapScreen = () => {
             >
                 <Text style={styles.backButtonText}>← Back</Text>
             </TouchableOpacity>
-            <View style = {styles.buttonContainer}>
-             <Button title="Get Location" onPress={focusOnLocation} />
-            </View> 
+            <TouchableOpacity
+                style={styles.buttonContainer} 
+                onPress={focusOnLocation}
+            >
+                <Text style ={styles.backButtonText}>Get Location</Text>
+            </TouchableOpacity>
         </View>
     );
 }
