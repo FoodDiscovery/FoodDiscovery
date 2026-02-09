@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -51,6 +51,20 @@ export default function MenuEditScreen() {
   const [photoItem, setPhotoItem] = useState<MenuItem | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
+  // Pre-group items by category_id for O(n) render instead of O(categories × items)
+  const itemsByCategory = useMemo(() => {
+    const map = new Map<number, MenuItem[]>();
+    for (const item of items) {
+      const list = map.get(item.category_id);
+      if (list) {
+        list.push(item);
+      } else {
+        map.set(item.category_id, [item]);
+      }
+    }
+    return map;
+  }, [items]);
+
 
   useEffect(() => {
     (async () => {
@@ -66,11 +80,17 @@ export default function MenuEditScreen() {
       const uid = userRes.user.id;
       setOwnerId(uid);
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileErr } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", uid)
         .single();
+
+      if (profileErr) {
+        setLoading(false);
+        Alert.alert("Profile load failed", profileErr.message);
+        return;
+      }
 
       if (profile?.role !== "owner") {
         setIsOwner(false);
@@ -79,11 +99,17 @@ export default function MenuEditScreen() {
       }
       setIsOwner(true);
 
-      const { data: restaurant } = await supabase
+      const { data: restaurant, error: restaurantErr } = await supabase
         .from("restaurants")
         .select("id")
         .eq("owner_id", uid)
         .maybeSingle();
+
+      if (restaurantErr) {
+        setLoading(false);
+        Alert.alert("Load failed", restaurantErr.message);
+        return;
+      }
 
       if (!restaurant) {
         setLoading(false);
@@ -102,21 +128,31 @@ export default function MenuEditScreen() {
 
   // Load categories and items
   const loadMenu = async (restId: string) => {
-    const { data: cats } = await supabase
+    const { data: cats, error: catsErr } = await supabase
       .from("menu_categories")
       .select("*")
       .eq("restaurant_id", restId)
       .order("display_order", { ascending: true });
+
+    if (catsErr) {
+      Alert.alert("Load failed", "Could not load menu categories: " + catsErr.message);
+      return;
+    }
 
     const loadedCats = (cats ?? []) as MenuCategory[];
     setCategories(loadedCats);
 
     if (loadedCats.length > 0) {
       const catIds = loadedCats.map((c) => c.id);
-      const { data: menuItems } = await supabase
+      const { data: menuItems, error: itemsErr } = await supabase
         .from("menu_items")
         .select("*")
         .in("category_id", catIds);
+
+      if (itemsErr) {
+        Alert.alert("Load failed", "Could not load menu items: " + itemsErr.message);
+        return;
+      }
 
       setItems((menuItems ?? []) as MenuItem[]);
     } else {
@@ -211,19 +247,42 @@ export default function MenuEditScreen() {
     const current = categories[idx];
     const neighbor = categories[swapIdx];
 
+    // Use a temp sentinel value (-1) to avoid duplicate display_order during swap
+    const tempOrder = -1;
+
     const { error: e1 } = await supabase
       .from("menu_categories")
-      .update({ display_order: neighbor.display_order })
+      .update({ display_order: tempOrder })
       .eq("id", current.id);
+
+    if (e1) {
+      Alert.alert("Reorder failed", e1.message);
+      return;
+    }
 
     const { error: e2 } = await supabase
       .from("menu_categories")
       .update({ display_order: current.display_order })
       .eq("id", neighbor.id);
 
-    if (e1 || e2) {
-      Alert.alert("Reorder failed", (e1 || e2)!.message);
+    if (e2) {
+      // Attempt to restore original order for current
+      await supabase
+        .from("menu_categories")
+        .update({ display_order: current.display_order })
+        .eq("id", current.id);
+      Alert.alert("Reorder failed", e2.message);
       return;
+    }
+
+    const { error: e3 } = await supabase
+      .from("menu_categories")
+      .update({ display_order: neighbor.display_order })
+      .eq("id", current.id);
+
+    if (e3) {
+      Alert.alert("Reorder failed", e3.message);
+      // Reload to reflect whatever state the DB is in
     }
 
     if (restaurantId) await loadMenu(restaurantId);
@@ -364,7 +423,7 @@ export default function MenuEditScreen() {
           Alert.alert("Update failed", updateErr.message);
         } else {
           setPhotoItem({ ...photoItem, image_url: publicUrl });
-          if (restaurantId) await loadMenu(restaurantId);
+          await loadMenu(restaurantId!);
         }
       }
     } catch (err: any) {
@@ -443,7 +502,7 @@ export default function MenuEditScreen() {
 
         {/* Category list */}
         {categories.map((cat, idx) => {
-          const catItems = items.filter((i) => i.category_id === cat.id);
+          const catItems = itemsByCategory.get(cat.id) ?? [];
 
           return (
             <View key={cat.id} style={styles.categoryCard}>
