@@ -6,7 +6,7 @@ module.exports = {
   collectCoverageFrom: [
     "src/**/*.{js,jsx,ts,tsx}",
     "!**/*.d.ts",
-    "!src/app/map/_layout.tsx",
+    "!**/_layout.tsx",
   ],
   coverageReporters: ["text", "text-summary", "lcov"],
   coverageDirectory: "coverage",
