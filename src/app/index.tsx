@@ -108,10 +108,16 @@ export default function App() {
             <Button title="View Map" onPress={() => router.push("/map")} />
             
             {isOwner && (
-              <Button
-                title="Edit Restaurant"
-                onPress={() => router.push("/(owner)/restaurant-edit")}
-              />
+              <>
+                <Button
+                  title="Edit Restaurant"
+                  onPress={() => router.push("/(owner)/restaurant-edit")}
+                />
+                <Button
+                  title="Edit Menu"
+                  onPress={() => router.push("/(owner)/menu-edit")}
+                />
+              </>
             )}
           </View>
         </View>
