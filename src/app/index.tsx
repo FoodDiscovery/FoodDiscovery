@@ -104,8 +104,10 @@ export default function App() {
           </Text>
 
           <View style={styles.buttonContainer}>
+            <Button title="Home" onPress={() => router.push("/home")} />
             <Button title="Sign Out" onPress={handleSignOut} />
             <Button title="View Map" onPress={() => router.push("/map")} />
+            <Button title="Owner Profile" onPress={() => router.push("/(owner)/owner-profile")} />
             
             {isOwner && (
               <Button
