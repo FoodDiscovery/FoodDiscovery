@@ -152,7 +152,6 @@ const MapScreen = () => {
                     latitudeDelta: 0.0922,
                     longitudeDelta: 0.0421,
                 }}
-                provider='google'
             >
                 <Marker
                     coordinate={location}
