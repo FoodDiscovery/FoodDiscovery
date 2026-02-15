@@ -6,7 +6,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -15,6 +14,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { supabase } from "../../lib/supabase";
+import styles from "./ownerStyles";
 
 type RestaurantRow = {
   id: string;
@@ -40,7 +40,7 @@ function Field({
   multiline?: boolean;
 }) {
   return (
-    <View style={{ gap: 6 }}>
+    <View style={styles.fieldContainer}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
         value={value}
@@ -49,7 +49,7 @@ function Field({
         multiline={multiline}
         style={[
           styles.input,
-          multiline ? { minHeight: 90, paddingVertical: 12 } : null,
+          multiline ? styles.multilineInput : null,
         ]}
       />
     </View>
@@ -244,7 +244,7 @@ export default function OwnerProfileScreen() {
       <SafeAreaView style={[styles.safe, { paddingTop: insets.top }]}>
         <View style={styles.center}>
           <ActivityIndicator />
-          <Text style={{ marginTop: 10, opacity: 0.7 }}>Loading owner profile...</Text>
+          <Text style={styles.loadingText}>Loading owner profile...</Text>
         </View>
       </SafeAreaView>
     );
@@ -259,7 +259,7 @@ export default function OwnerProfileScreen() {
       </View>
 
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={styles.keyboardFlex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView contentContainerStyle={styles.container}>
@@ -286,12 +286,12 @@ export default function OwnerProfileScreen() {
               <Image source={{ uri: logoUrl.trim() }} style={styles.logoImg} />
             ) : (
               <View style={styles.logoPlaceholder}>
-                <Text style={{ opacity: 0.6 }}>No logo</Text>
+                <Text style={styles.noLogoText}>No logo</Text>
               </View>
             )}
-            <View style={{ flex: 1, gap: 8 }}>
-              <Text style={{ fontSize: 14, fontWeight: "600" }}>Logo</Text>
-              <Text style={{ opacity: 0.7, fontSize: 12 }}>
+            <View style={styles.logoMetaWrap}>
+              <Text style={styles.logoLabel}>Logo</Text>
+              <Text style={styles.logoHint}>
                 Paste an image URL for now (we can switch to uploading later).
               </Text>
             </View>
@@ -333,7 +333,7 @@ export default function OwnerProfileScreen() {
             placeholder="(555) 123-4567"
           />
 
-          <View style={{ marginTop: 10 }}>
+          <View style={styles.saveWrap}>
             <Button
               title={saving ? "Saving..." : "Save profile"}
               onPress={onSave}
@@ -341,7 +341,7 @@ export default function OwnerProfileScreen() {
             />
           </View>
 
-          <View style={{ marginTop: 12 }}>
+          <View style={styles.editDetailsWrap}>
             <Button
               title="Edit full restaurant details"
               onPress={() => router.push("/(owner)/restaurant-edit")}
@@ -357,67 +357,3 @@ export default function OwnerProfileScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#fff" },
-  center: { flex: 1, alignItems: "center", justifyContent: "center" },
-
-  topBar: {
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  topTitle: { fontSize: 18, fontWeight: "700" },
-
-  container: { padding: 16, gap: 14, paddingBottom: 40 },
-
-  label: { fontSize: 14, fontWeight: "600" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#DDD",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    backgroundColor: "#fff",
-  },
-
-  statsCard: {
-    borderWidth: 1,
-    borderColor: "#EEE",
-    backgroundColor: "#FAFAFA",
-    borderRadius: 16,
-    padding: 14,
-    gap: 6,
-  },
-  statsTitle: { fontSize: 16, fontWeight: "700" },
-  statsLine: { fontSize: 14, opacity: 0.85 },
-  statsValue: { fontWeight: "700" },
-  statsHint: { fontSize: 12, opacity: 0.6, marginTop: 4 },
-
-  logoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  logoImg: { width: 64, height: 64, borderRadius: 12, backgroundColor: "#EEE" },
-  logoPlaceholder: {
-    width: 64,
-    height: 64,
-    borderRadius: 12,
-    backgroundColor: "#F0F0F0",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-  },
-
-  footnote: {
-    marginTop: 10,
-    fontSize: 12,
-    opacity: 0.55,
-    lineHeight: 16,
-  },
-});

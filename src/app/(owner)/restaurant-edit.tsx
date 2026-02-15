@@ -11,13 +11,13 @@ import {
   View,
   Image,
   TouchableOpacity,
-  StyleSheet,
 } from "react-native";
 import { supabase } from "../../lib/supabase";
 import * as ImagePicker from "expo-image-picker";
 import { File } from "expo-file-system/next";
 import { decode } from "base64-arraybuffer";
 import { router } from "expo-router";
+import styles from "./ownerStyles";
 
 interface RestaurantRow {
   id: string;
@@ -469,15 +469,3 @@ export default function RestaurantEditScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  backButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    alignSelf: "flex-start",
-  },
-  backButtonText: {
-    color: "#007AFF",
-    fontSize: 16,
-    fontWeight: "500",
-  },
-});
