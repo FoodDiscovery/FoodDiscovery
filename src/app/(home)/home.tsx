@@ -15,6 +15,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { supabase } from "../../lib/supabase";
 import { useLocation } from "../../Providers/LocationProvider";
+import { useCart } from "../../Providers/CartProvider";
 import styles from "./homeStyles";
 
 type RestaurantRow = {
@@ -41,6 +42,7 @@ type SortMode = "name" | "distance";
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { location, errorMsg, isLoading } = useLocation();
+  const { itemCount } = useCart();
 
   const [loading, setLoading] = useState(true);
   const [restaurants, setRestaurants] = useState<RestaurantRow[]>([]);
@@ -190,20 +192,26 @@ export default function HomeScreen() {
       const n = item as NearbyRestaurant;
       const km = (n.distance_meters / 1000).toFixed(2);
       return (
-        <View style={styles.card}>
+        <Pressable
+          style={({ pressed }) => [styles.card, pressed && styles.pressedOpacity85]}
+          onPress={() => router.push(`/restaurant/${n.restaurant.id}`)}
+        >
           <Text style={styles.cardTitle}>{n.restaurant.name}</Text>
           <Text style={styles.cardMeta}>{km} km away</Text>
-        </View>
+        </Pressable>
       );
     }
 
     const r = item as RestaurantRow;
     return (
-      <View style={styles.card}>
+      <Pressable
+        style={({ pressed }) => [styles.card, pressed && styles.pressedOpacity85]}
+        onPress={() => router.push(`/restaurant/${r.id}`)}
+      >
         <Text style={styles.cardTitle}>{r.name ?? "Unnamed restaurant"}</Text>
         {!!r.cuisine_type && <Text style={styles.cardCuisine}>{r.cuisine_type}</Text>}
         {!!r.description && <Text style={styles.cardDesc}>{r.description}</Text>}
-      </View>
+      </Pressable>
     );
   };
 
@@ -268,6 +276,13 @@ export default function HomeScreen() {
           <Text style={styles.pillText}>
             Sort: {sortMode === "name" ? "Name" : "Distance"}
           </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => router.push("/cart")}
+          style={({ pressed }) => [styles.pill, pressed && styles.pressedOpacity80]}
+        >
+          <Text style={styles.pillText}>Cart ({itemCount})</Text>
         </Pressable>
 
         {(selectedCuisines.length > 0 || query.trim().length > 0) && (
