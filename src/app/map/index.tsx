@@ -122,6 +122,11 @@ const MapScreen = () => {
         setSelectedRestaurant(null);
     }
 
+    const openRestaurantMenu = (restaurantId: string) => {
+        closeModal();
+        router.push(`/restaurant/${restaurantId}`);
+    };
+
     // display loading text while location is being fetched
     if (isLoading) {
         return (
@@ -194,6 +199,7 @@ const MapScreen = () => {
                         ? restaurants.find(r => r.restaurant.id === selectedRestaurant.id)!.distance_meters / 1609.34 // Convert meters to miles
                         : undefined}
                     onClose={closeModal}
+                    onViewMenu={openRestaurantMenu}
                 />
             )}
         </View>

@@ -5,7 +5,7 @@ export default function MapLayout() {
     return (
         <LocationProvider>
         <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="map" />
+            <Stack.Screen name="index" />
         </Stack>
         </LocationProvider>
     );

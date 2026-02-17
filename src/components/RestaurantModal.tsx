@@ -28,6 +28,7 @@ interface RestaurantModalProps {
     restaurant: RestaurantModalInfo;
     distance?: number;
     onClose: () => void;
+    onViewMenu?: (restaurantId: string) => void;
 }
 
 // Function to determine if restaurant is currently open
@@ -106,7 +107,8 @@ export default function RestaurantModal({
     visible,
     restaurant,
     distance,
-    onClose
+    onClose,
+    onViewMenu
 }: RestaurantModalProps) {
     if (!restaurant) return null;
 
@@ -263,6 +265,13 @@ export default function RestaurantModal({
 
                             {/* Close Button */}
                             <View style={styles.buttonContainer}>
+                                <TouchableOpacity
+                                    style={styles.menuButton}
+                                    onPress={() => onViewMenu?.(restaurant.id)}
+                                    activeOpacity={0.8}
+                                >
+                                    <Text style={styles.menuButtonText}>View Full Menu</Text>
+                                </TouchableOpacity>
                                 <TouchableOpacity
                                     style={styles.closeButton}
                                     onPress={onClose}
@@ -459,6 +468,24 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
         borderTopWidth: 1,
         borderTopColor: '#E8EAED',
+        gap: 10,
+    },
+    menuButton: {
+        backgroundColor: '#34A853',
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: 'center',
+        shadowColor: '#34A853',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    menuButtonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '600',
+        letterSpacing: 0.3,
     },
     closeButton: {
         backgroundColor: '#1A73E8',
