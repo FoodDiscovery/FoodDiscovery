@@ -137,7 +137,7 @@ export default function MapScreen() {
       <MapView
         style={styles.map}
         ref={mapRef}
-        mapPadding={{ top: insets.top * 0.45, right: 8 }}
+        mapPadding={{ top: insets.top * 0.45, right: 8, bottom: 0, left: 0 }}
         initialRegion={{
           latitude: location.latitude,
           longitude: location.longitude,
