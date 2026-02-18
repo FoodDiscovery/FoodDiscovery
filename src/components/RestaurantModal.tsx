@@ -10,6 +10,12 @@ import {
     Image,
     ActivityIndicator
 } from 'react-native';
+import {
+    WeeklyBusinessHours,
+    businessHoursToDisplayText,
+    getRestaurantOpenStatus,
+    isWeeklyBusinessHours,
+} from '../lib/businessHours';
 
 interface RestaurantModalInfo {
     id: string;
@@ -17,7 +23,7 @@ interface RestaurantModalInfo {
     description: string | null;
     cuisine_type: string | null;
     image_url: string | null;
-    business_hours: { text: string } | null;
+    business_hours: WeeklyBusinessHours | { text: string } | string | null;
     phone: string | null;
     preview_images: string[] | null; // array of image URLs restaurant owners selected to display
 }
@@ -32,11 +38,7 @@ interface RestaurantModalProps {
 }
 
 // Function to determine if restaurant is currently open
-function isRestaurantOpen(businessHours: { text: string } | null): { isOpen: boolean; statusText: string } {
-    if (!businessHours || !businessHours.text) {
-        return { isOpen: false, statusText: 'Hours not available' };
-    }
-
+function getLegacyOpenStatus(hoursText: string): { isOpen: boolean; statusText: string } {
     const now = new Date();
     const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
     const currentTime = now.getHours() * 60 + now.getMinutes(); // Time in minutes since midnight
@@ -45,8 +47,6 @@ function isRestaurantOpen(businessHours: { text: string } | null): { isOpen: boo
     const dayAbbrevs = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const currentDayName = dayNames[currentDay];
     const currentDayAbbrev = dayAbbrevs[currentDay];
-
-    const hoursText = businessHours.text;
 
     // Try to find today's hours in the text
     // Look for patterns like "Monday: 9:00 AM - 5:00 PM" or "Mon: 9am-5pm"
@@ -103,6 +103,38 @@ function isRestaurantOpen(businessHours: { text: string } | null): { isOpen: boo
     return { isOpen: false, statusText: 'Hours vary' };
 }
 
+function getRestaurantHoursDisplay(businessHours: RestaurantModalInfo['business_hours']) {
+    if (!businessHours) {
+        return { isOpen: false, statusText: 'Hours not available', displayText: 'Hours not available' };
+    }
+
+    if (isWeeklyBusinessHours(businessHours)) {
+        const status = getRestaurantOpenStatus(businessHours);
+        return {
+            ...status,
+            displayText: businessHoursToDisplayText(businessHours),
+        };
+    }
+
+    if (typeof businessHours === 'string' && businessHours.trim()) {
+        const legacyStatus = getLegacyOpenStatus(businessHours);
+        return {
+            ...legacyStatus,
+            displayText: businessHours,
+        };
+    }
+
+    if (typeof businessHours === 'object' && typeof businessHours.text === 'string' && businessHours.text.trim()) {
+        const legacyStatus = getLegacyOpenStatus(businessHours.text);
+        return {
+            ...legacyStatus,
+            displayText: businessHours.text,
+        };
+    }
+
+    return { isOpen: false, statusText: 'Hours not available', displayText: 'Hours not available' };
+}
+
 export default function RestaurantModal({
     visible,
     restaurant,
@@ -112,8 +144,7 @@ export default function RestaurantModal({
 }: RestaurantModalProps) {
     if (!restaurant) return null;
 
-    // Determine if restaurant is currently open
-    const { isOpen, statusText } = isRestaurantOpen(restaurant.business_hours);
+    const { isOpen, statusText, displayText } = getRestaurantHoursDisplay(restaurant.business_hours);
 
     return (
         <Modal
@@ -227,7 +258,7 @@ export default function RestaurantModal({
                                             <Text style={styles.sectionIcon}>🕐</Text>
                                             <Text style={styles.sectionTitle}>Hours</Text>
                                         </View>
-                                        <Text style={styles.sectionText}>{restaurant.business_hours.text}</Text>
+                                        <Text style={styles.sectionText}>{displayText}</Text>
                                     </View>
                                 )}
 

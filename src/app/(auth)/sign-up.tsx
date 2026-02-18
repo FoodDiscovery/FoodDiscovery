@@ -16,6 +16,12 @@ import * as ImagePicker from 'expo-image-picker'
 import { File } from 'expo-file-system/next'
 import { decode } from 'base64-arraybuffer'
 import styles from './authStyles'
+import BusinessHoursEditor from '../../components/BusinessHoursEditor'
+import {
+  WeeklyBusinessHours,
+  createDefaultBusinessHours,
+  validateWeeklyBusinessHours,
+} from '../../lib/businessHours'
 
 type RoleType = 'customer' | 'owner'
 
@@ -25,9 +31,11 @@ interface BusinessInfo {
   phone: string
   description: string
   cuisineType: string
-  businessHours: string
+  businessHours: WeeklyBusinessHours
   imageUri: string | null
 }
+
+type BusinessInfoTextField = Exclude<keyof BusinessInfo, 'businessHours' | 'imageUri'>
 
 function RoleToggle({
   selectedRole,
@@ -80,11 +88,13 @@ function RoleToggle({
 function BusinessInfoForm({
   businessInfo,
   onUpdate,
+  onUpdateBusinessHours,
   onPickImage,
   isUploadingImage,
 }: {
   businessInfo: BusinessInfo
-  onUpdate: (field: keyof BusinessInfo, value: string) => void
+  onUpdate: (field: BusinessInfoTextField, value: string) => void
+  onUpdateBusinessHours: (value: WeeklyBusinessHours) => void
   onPickImage: () => void
   isUploadingImage: boolean
 }) {
@@ -147,11 +157,10 @@ function BusinessInfoForm({
       </View>
 
       <View style={styles.verticallySpaced}>
-        <Input
-          label="Business Hours"
-          onChangeText={(text) => onUpdate('businessHours', text)}
+        <Text style={styles.imageLabel}>Business Hours *</Text>
+        <BusinessHoursEditor
           value={businessInfo.businessHours}
-          placeholder="e.g., Mon-Fri 9am-9pm"
+          onChange={onUpdateBusinessHours}
         />
       </View>
 
@@ -199,12 +208,16 @@ export default function SignUp() {
     phone: '',
     description: '',
     cuisineType: '',
-    businessHours: '',
+    businessHours: createDefaultBusinessHours(),
     imageUri: null,
   })
 
-  function updateBusinessInfo(field: keyof BusinessInfo, value: string) {
+  function updateBusinessInfo(field: BusinessInfoTextField, value: string) {
     setBusinessInfo((prev) => ({ ...prev, [field]: value }))
+  }
+
+  function updateBusinessHours(value: WeeklyBusinessHours) {
+    setBusinessInfo((prev) => ({ ...prev, businessHours: value }))
   }
 
   async function pickImage() {
@@ -246,6 +259,11 @@ export default function SignUp() {
     }
     if (!businessInfo.imageUri) {
       Alert.alert('Missing Information', 'Please upload a business image.')
+      return false
+    }
+    const businessHoursError = validateWeeklyBusinessHours(businessInfo.businessHours)
+    if (businessHoursError) {
+      Alert.alert('Invalid Business Hours', businessHoursError)
       return false
     }
     return true
@@ -299,7 +317,7 @@ export default function SignUp() {
           name: businessInfo.name.trim(),
           description: businessInfo.description.trim(),
           cuisine_type: businessInfo.cuisineType.trim(),
-          business_hours: { text: businessInfo.businessHours.trim() },
+          business_hours: businessInfo.businessHours,
           phone: businessInfo.phone.trim(),
           image_url: '', // Will update after image upload
         },
@@ -442,6 +460,7 @@ export default function SignUp() {
             <BusinessInfoForm
               businessInfo={businessInfo}
               onUpdate={updateBusinessInfo}
+              onUpdateBusinessHours={updateBusinessHours}
               onPickImage={pickImage}
               isUploadingImage={isUploadingImage}
             />

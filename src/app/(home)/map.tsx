@@ -7,6 +7,7 @@ import { useLocation } from "../../Providers/LocationProvider";
 import { supabase } from "../../lib/supabase";
 import RestaurantModal from "../../components/RestaurantModal";
 import { homeMapStyles as styles } from "../../components/styles";
+import { WeeklyBusinessHours } from "../../lib/businessHours";
 
 type Restaurant = {
   location_id: number;
@@ -26,7 +27,7 @@ interface RestaurantModalInfo {
   description: string | null;
   cuisine_type: string | null;
   image_url: string | null;
-  business_hours: { text: string } | null;
+  business_hours: WeeklyBusinessHours | { text: string } | string | null;
   phone: string | null;
   preview_images: string[] | null;
 }
@@ -136,6 +137,7 @@ export default function MapScreen() {
       <MapView
         style={styles.map}
         ref={mapRef}
+        mapPadding={{ top: insets.top * 0.45, right: 8 }}
         initialRegion={{
           latitude: location.latitude,
           longitude: location.longitude,

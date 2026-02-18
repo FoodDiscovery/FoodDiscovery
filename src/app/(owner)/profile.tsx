@@ -12,13 +12,20 @@ import {
   Image,
   TouchableOpacity,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { supabase } from "../../lib/supabase";
 import { ownerStyles as styles } from "../../components/styles";
 import * as ImagePicker from "expo-image-picker";
 import { File } from "expo-file-system/next";
 import { decode } from "base64-arraybuffer";
+import BusinessHoursEditor from "../../components/BusinessHoursEditor";
+import {
+  WeeklyBusinessHours,
+  createDefaultBusinessHours,
+  normalizeWeeklyBusinessHours,
+  validateWeeklyBusinessHours,
+} from "../../lib/businessHours";
 
 type RestaurantRow = {
   id: string;
@@ -27,7 +34,7 @@ type RestaurantRow = {
   description: string | null;
   cuisine_type: string | null;
   image_url: string | null;
-  business_hours: { text?: string } | string | null;
+  business_hours: WeeklyBusinessHours | { text?: string } | string | null;
   phone: string | null;
 };
 
@@ -36,7 +43,7 @@ type FormState = {
   address: string;
   cuisine: string;
   description: string;
-  businessHours: string;
+  businessHours: WeeklyBusinessHours;
   phone: string;
   imageUrl: string;
 };
@@ -69,13 +76,6 @@ function Field({
       />
     </View>
   );
-}
-
-function getBusinessHoursText(value: RestaurantRow["business_hours"]) {
-  if (!value) return "";
-  if (typeof value === "string") return value;
-  if (typeof value === "object" && typeof value.text === "string") return value.text;
-  return "";
 }
 
 async function uploadImageToSupabase(params: {
@@ -127,8 +127,6 @@ async function uploadImageToSupabase(params: {
 }
 
 export default function OwnerProfileScreen() {
-  const insets = useSafeAreaInsets();
-
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -141,7 +139,7 @@ export default function OwnerProfileScreen() {
   const [address, setAddress] = useState("");
   const [cuisine, setCuisine] = useState("");
   const [description, setDescription] = useState("");
-  const [businessHours, setBusinessHours] = useState("");
+  const [businessHours, setBusinessHours] = useState<WeeklyBusinessHours>(createDefaultBusinessHours());
   const [phone, setPhone] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [initialValues, setInitialValues] = useState<FormState | null>(null);
@@ -155,7 +153,7 @@ export default function OwnerProfileScreen() {
       address: address.trim(),
       cuisine: cuisine.trim(),
       description: description.trim(),
-      businessHours: businessHours.trim(),
+      businessHours,
       phone: phone.trim(),
       imageUrl: imageUrl.trim(),
     }),
@@ -263,7 +261,7 @@ export default function OwnerProfileScreen() {
               name: "",
               description: "",
               cuisine_type: "",
-              business_hours: { text: "" },
+              business_hours: createDefaultBusinessHours(),
               phone: "",
               image_url: "",
             },
@@ -283,11 +281,12 @@ export default function OwnerProfileScreen() {
       }
 
       const loadedAddress = await loadLocation(row.id);
+      const loadedHours = normalizeWeeklyBusinessHours(row.business_hours);
       setRestaurantId(row.id);
       setName(row.name ?? "");
       setCuisine(row.cuisine_type ?? "");
       setDescription(row.description ?? "");
-      setBusinessHours(getBusinessHoursText(row.business_hours));
+      setBusinessHours(loadedHours);
       setPhone(row.phone ?? "");
       setImageUrl(row.image_url ?? "");
       setInitialValues({
@@ -295,7 +294,7 @@ export default function OwnerProfileScreen() {
         address: loadedAddress.trim(),
         cuisine: (row.cuisine_type ?? "").trim(),
         description: (row.description ?? "").trim(),
-        businessHours: getBusinessHoursText(row.business_hours).trim(),
+        businessHours: loadedHours,
         phone: (row.phone ?? "").trim(),
         imageUrl: (row.image_url ?? "").trim(),
       });
@@ -331,6 +330,12 @@ export default function OwnerProfileScreen() {
       return;
     }
 
+    const businessHoursError = validateWeeklyBusinessHours(businessHours);
+    if (businessHoursError) {
+      Alert.alert("Invalid business hours", businessHoursError);
+      return;
+    }
+
     setSaving(true);
 
     const { error } = await supabase
@@ -339,7 +344,7 @@ export default function OwnerProfileScreen() {
         name: name.trim(),
         description: description.trim(),
         cuisine_type: cuisine.trim(),
-        business_hours: { text: businessHours.trim() },
+        business_hours: businessHours,
         phone: phone.trim() || null,
         image_url: imageUrl.trim() || null,
       })
@@ -392,9 +397,16 @@ export default function OwnerProfileScreen() {
     Alert.alert("Saved", "Business profile updated successfully.");
   };
 
+  async function handleSignOut() {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      Alert.alert("Error signing out", error.message);
+    }
+  }
+
   if (loading) {
     return (
-      <SafeAreaView style={[styles.safe, { paddingTop: insets.top }]}>
+      <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
         <View style={styles.center}>
           <ActivityIndicator />
           <Text style={styles.loadingText}>Loading owner profile...</Text>
@@ -404,10 +416,9 @@ export default function OwnerProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { paddingTop: insets.top }]}>
+    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       <View style={styles.topBar}>
         <Text style={styles.topTitle}>Owner Profile</Text>
-        <Button title="Back" onPress={() => router.push("/(owner)/home")} />
       </View>
 
       <KeyboardAvoidingView
@@ -415,88 +426,90 @@ export default function OwnerProfileScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView contentContainerStyle={styles.container}>
-          <View style={styles.statsCard}>
-            <Text style={styles.statsTitle}>Business Stats</Text>
-            <Text style={styles.statsLine}>
-              Orders: <Text style={styles.statsValue}>{ordersCount ?? 0}</Text>
-            </Text>
-            <Text style={styles.statsLine}>
-              Sales:{" "}
-              <Text style={styles.statsValue}>
-                ${Number(salesTotal ?? 0).toFixed(2)}
+            <View style={styles.statsCard}>
+              <Text style={styles.statsTitle}>Business Stats</Text>
+              <Text style={styles.statsLine}>
+                Orders: <Text style={styles.statsValue}>{ordersCount ?? 0}</Text>
               </Text>
-            </Text>
-            <Text style={styles.statsHint}>
-              (Sales total depends on your orders schema.)
-            </Text>
-          </View>
-
-          <TouchableOpacity style={styles.logoRow} onPress={onPickImage} disabled={uploadingImage}>
-            {imageUrl.trim() ? (
-              <Image source={{ uri: imageUrl.trim() }} style={styles.logoImg} />
-            ) : (
-              <View style={styles.logoPlaceholder}>
-                <Text style={styles.noLogoText}>No logo</Text>
-              </View>
-            )}
-            <View style={styles.logoMetaWrap}>
-              <Text style={styles.logoLabel}>Restaurant Image</Text>
-              <Text style={styles.logoHint}>
-                {uploadingImage ? "Uploading image..." : "Tap to choose from your camera roll"}
+              <Text style={styles.statsLine}>
+                Sales:{" "}
+                <Text style={styles.statsValue}>
+                  ${Number(salesTotal ?? 0).toFixed(2)}
+                </Text>
+              </Text>
+              <Text style={styles.statsHint}>
+                (Sales total TBD.)
               </Text>
             </View>
-          </TouchableOpacity>
 
-          <Field
-            label="Restaurant Name"
-            value={name}
-            onChangeText={setName}
-            placeholder="e.g., FoodDiscovery Cafe"
-          />
+            <TouchableOpacity style={styles.logoRow} onPress={onPickImage} disabled={uploadingImage}>
+              {imageUrl.trim() ? (
+                <Image source={{ uri: imageUrl.trim() }} style={styles.logoImg} />
+              ) : (
+                <View style={styles.logoPlaceholder}>
+                  <Text style={styles.noLogoText}>No logo</Text>
+                </View>
+              )}
+              <View style={styles.logoMetaWrap}>
+                <Text style={styles.logoLabel}>Restaurant Image</Text>
+                <Text style={styles.logoHint}>
+                  {uploadingImage ? "Uploading image..." : "Tap to choose from your camera roll"}
+                </Text>
+              </View>
+            </TouchableOpacity>
 
-          <Field
-            label="Address"
-            value={address}
-            onChangeText={setAddress}
-            placeholder="e.g., 123 Main St, City, State"
-          />
-
-          <Field
-            label="Cuisine Type"
-            value={cuisine}
-            onChangeText={setCuisine}
-            placeholder="e.g., Ethiopian, Thai, Mexican"
-          />
-
-          <Field
-            label="Description"
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Short description customers will see"
-            multiline
-          />
-
-          <Field
-            label="Business Hours"
-            value={businessHours}
-            onChangeText={setBusinessHours}
-            placeholder="e.g., Mon-Fri 10am-8pm"
-          />
-
-          <Field
-            label="Phone Number"
-            value={phone}
-            onChangeText={setPhone}
-            placeholder="(555) 123-4567"
-            keyboardType="phone-pad"
-          />
-
-          <View style={styles.saveWrap}>
-            <Button
-              title={saving ? "Saving..." : "Save profile"}
-              onPress={onSave}
-              disabled={saving || !restaurantId || !isDirty}
+            <Field
+              label="Restaurant Name"
+              value={name}
+              onChangeText={setName}
+              placeholder="e.g., FoodDiscovery Cafe"
             />
+
+            <Field
+              label="Address"
+              value={address}
+              onChangeText={setAddress}
+              placeholder="e.g., 123 Main St, City, State"
+            />
+
+            <Field
+              label="Cuisine Type"
+              value={cuisine}
+              onChangeText={setCuisine}
+              placeholder="e.g., Ethiopian, Thai, Mexican"
+            />
+
+            <Field
+              label="Description"
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Short description customers will see"
+              multiline
+            />
+
+            <View style={styles.fieldContainer}>
+              <Text style={styles.label}>Business Hours</Text>
+              <BusinessHoursEditor value={businessHours} onChange={setBusinessHours} />
+            </View>
+
+            <Field
+              label="Phone Number"
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="(555) 123-4567"
+              keyboardType="phone-pad"
+            />
+
+            <View style={styles.saveWrap}>
+              <Button
+                title={saving ? "Saving..." : "Save profile"}
+                onPress={onSave}
+                disabled={saving || !restaurantId || !isDirty}
+              />
+            </View>
+
+          <View style={styles.signOutWrap}>
+            <Button title="Sign Out" onPress={handleSignOut} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -14,7 +14,6 @@ import { supabase } from "../../lib/supabase";
 import * as ImagePicker from "expo-image-picker";
 import { File } from "expo-file-system/next";
 import { decode } from "base64-arraybuffer";
-import { router } from "expo-router";
 
 import type { MenuCategory, MenuItem, ItemFormData } from "../../components/menu/types";
 import styles from "../../components/menu/menuEditStyles";
@@ -454,9 +453,6 @@ export default function MenuEditScreen() {
         <Text style={styles.subtitle}>
           This page is only available for business owners.
         </Text>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backBtnText}>← Back</Text>
-        </TouchableOpacity>
       </View>
     );
   }
@@ -468,9 +464,6 @@ export default function MenuEditScreen() {
         <Text style={styles.subtitle}>
           Please create a restaurant profile first.
         </Text>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backBtnText}>← Back</Text>
-        </TouchableOpacity>
       </View>
     );
   }
@@ -595,9 +588,6 @@ export default function MenuEditScreen() {
           );
         })}
 
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backBtnText}>← Back to Home</Text>
-        </TouchableOpacity>
       </ScrollView>
 
       {/* Modals */}

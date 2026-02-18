@@ -11,11 +11,11 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
   },
   topTitle: { fontSize: 18, fontWeight: "700" },
 
-  container: { padding: 16, gap: 14, paddingBottom: 40 },
+  container: { padding: 16, gap: 14, paddingBottom: 20 },
   fieldContainer: { gap: 6 },
 
   label: { fontSize: 14, fontWeight: "600" },
@@ -65,6 +65,10 @@ const styles = StyleSheet.create({
   logoHint: { opacity: 0.7, fontSize: 12 },
 
   saveWrap: { marginTop: 10 },
+  signOutWrap: {
+    marginTop: 4,
+    marginBottom: 8,
+  },
   editDetailsWrap: { marginTop: 12 },
 
   footnote: {
