@@ -3,7 +3,7 @@ import { View, Text, Alert, Button, Image, StyleSheet, ActivityIndicator } from 
 import { Link, useRouter } from "expo-router";
 import { useAuth } from "../Providers/AuthProvider";
 import { supabase } from "../lib/supabase";
-
+import { StripeProvider } from "@stripe/stripe-react-native"; 
 interface RestaurantInfo {
   name: string;
   image_url: string | null;
@@ -76,6 +76,10 @@ export default function App() {
   }
 
   return (
+    <StripeProvider
+      publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}
+    >
+
     <View style={styles.container}>
       {session ? (
         <View style={styles.contentContainer}>
@@ -137,6 +141,7 @@ export default function App() {
         </View>
       )}
     </View>
+    </StripeProvider>
   );
 }
 
