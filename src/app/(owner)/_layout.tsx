@@ -1,7 +1,8 @@
 import { Tabs } from "expo-router";
 import FontAwesome from "@react-native-vector-icons/fontawesome";
+import OwnerProfileTabIcon from "../../components/OwnerProfileTabIcon";
 
-export default function HomeLayout() {
+export default function OwnerLayout() {
   return (
     <Tabs
       screenOptions={{
@@ -19,20 +20,20 @@ export default function HomeLayout() {
         }}
       />
       <Tabs.Screen
-        name="map"
+        name="analytics"
         options={{
-          title: "Map",
+          title: "Analytics",
           tabBarIcon: ({ color, size }) => (
-            <FontAwesome name="map-marker" color={color} size={size} />
+            <FontAwesome name="bar-chart" color={color} size={size} />
           ),
         }}
       />
       <Tabs.Screen
-        name="order-history"
+        name="menu-edit"
         options={{
-          title: "Order History",
+          title: "Edit Menu",
           tabBarIcon: ({ color, size }) => (
-            <FontAwesome name="history" color={color} size={size} />
+            <FontAwesome name="cutlery" color={color} size={size} />
           ),
         }}
       />
@@ -41,14 +42,10 @@ export default function HomeLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => (
-            <FontAwesome name="user" color={color} size={size} />
+            <OwnerProfileTabIcon color={color} size={size} />
           ),
         }}
       />
-
-      <Tabs.Screen name="cart" options={{ href: null }} />
-      <Tabs.Screen name="checkout" options={{ href: null }} />
-      <Tabs.Screen name="restaurant/[restaurantId]" options={{ href: null }} />
     </Tabs>
   );
 }

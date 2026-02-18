@@ -1,0 +1,505 @@
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Button,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+  Image,
+  TouchableOpacity,
+} from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { router } from "expo-router";
+import { supabase } from "../../lib/supabase";
+import { ownerStyles as styles } from "../../components/styles";
+import * as ImagePicker from "expo-image-picker";
+import { File } from "expo-file-system/next";
+import { decode } from "base64-arraybuffer";
+
+type RestaurantRow = {
+  id: string;
+  owner_id: string;
+  name: string | null;
+  description: string | null;
+  cuisine_type: string | null;
+  image_url: string | null;
+  business_hours: { text?: string } | string | null;
+  phone: string | null;
+};
+
+type FormState = {
+  name: string;
+  address: string;
+  cuisine: string;
+  description: string;
+  businessHours: string;
+  phone: string;
+  imageUrl: string;
+};
+
+function Field({
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  multiline,
+  keyboardType,
+}: {
+  label: string;
+  value: string;
+  onChangeText: (t: string) => void;
+  placeholder?: string;
+  multiline?: boolean;
+  keyboardType?: "default" | "phone-pad";
+}) {
+  return (
+    <View style={styles.fieldContainer}>
+      <Text style={styles.label}>{label}</Text>
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        multiline={multiline}
+        keyboardType={keyboardType ?? "default"}
+        style={[styles.input, multiline ? styles.multilineInput : null]}
+      />
+    </View>
+  );
+}
+
+function getBusinessHoursText(value: RestaurantRow["business_hours"]) {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "object" && typeof value.text === "string") return value.text;
+  return "";
+}
+
+async function uploadImageToSupabase(params: {
+  restaurantId: string;
+  ownerId: string;
+}): Promise<string | null> {
+  const { restaurantId, ownerId } = params;
+
+  const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!perm.granted) {
+    Alert.alert("Permission needed", "Please allow photo library access to upload an image.");
+    return null;
+  }
+
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    quality: 0.9,
+    allowsEditing: true,
+    aspect: [1, 1],
+  });
+
+  if (result.canceled) return null;
+
+  const asset = result.assets[0];
+  if (!asset?.uri) return null;
+
+  const file = new File(asset.uri);
+  const base64 = await file.base64();
+  const arrayBuffer = decode(base64);
+
+  const fileExt = asset.uri.toLowerCase().includes(".png") ? "png" : "jpg";
+  const contentType = fileExt === "png" ? "image/png" : "image/jpeg";
+  const path = `${ownerId}/${restaurantId}/image.${fileExt}`;
+
+  const { error: uploadErr } = await supabase.storage
+    .from("restaurant-images")
+    .upload(path, arrayBuffer, {
+      contentType,
+      upsert: true,
+    });
+
+  if (uploadErr) {
+    Alert.alert("Upload failed", uploadErr.message);
+    return null;
+  }
+
+  const { data } = supabase.storage.from("restaurant-images").getPublicUrl(path);
+  return data?.publicUrl ?? null;
+}
+
+export default function OwnerProfileScreen() {
+  const insets = useSafeAreaInsets();
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const [restaurantId, setRestaurantId] = useState<string | null>(null);
+  const [ownerId, setOwnerId] = useState<string | null>(null);
+  const [locationId, setLocationId] = useState<number | null>(null);
+
+  const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
+  const [cuisine, setCuisine] = useState("");
+  const [description, setDescription] = useState("");
+  const [businessHours, setBusinessHours] = useState("");
+  const [phone, setPhone] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [initialValues, setInitialValues] = useState<FormState | null>(null);
+
+  const [ordersCount, setOrdersCount] = useState<number | null>(null);
+  const [salesTotal, setSalesTotal] = useState<number | null>(null);
+
+  const currentValues = useMemo<FormState>(
+    () => ({
+      name: name.trim(),
+      address: address.trim(),
+      cuisine: cuisine.trim(),
+      description: description.trim(),
+      businessHours: businessHours.trim(),
+      phone: phone.trim(),
+      imageUrl: imageUrl.trim(),
+    }),
+    [name, address, cuisine, description, businessHours, phone, imageUrl]
+  );
+
+  const isDirty = useMemo(() => {
+    if (!initialValues) return false;
+    return JSON.stringify(currentValues) !== JSON.stringify(initialValues);
+  }, [currentValues, initialValues]);
+
+  useEffect(() => {
+    const loadStats = async (rid: string) => {
+      const { count, error: countErr } = await supabase
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("restaurant_id", rid);
+
+      if (!countErr) setOrdersCount(count ?? 0);
+
+      const { data, error: salesErr } = await supabase
+        .from("orders")
+        .select("total_amount")
+        .eq("restaurant_id", rid);
+
+      if (!salesErr && Array.isArray(data)) {
+        const sum = data.reduce((acc: number, row: { total_amount: number | string | null }) => {
+          return acc + (Number(row.total_amount) || 0);
+        }, 0);
+        setSalesTotal(sum);
+        return;
+      }
+
+      setSalesTotal(0);
+    };
+
+    const loadLocation = async (rid: string) => {
+      const { data: location, error: locationErr } = await supabase
+        .from("locations")
+        .select("id, address_text")
+        .eq("restaurant_id", rid)
+        .maybeSingle();
+
+      if (!locationErr && location) {
+        setLocationId(location.id);
+        setAddress(location.address_text ?? "");
+        return location.address_text ?? "";
+      }
+
+      return "";
+    };
+
+    const load = async () => {
+      setLoading(true);
+
+      const { data: userRes, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userRes.user) {
+        setLoading(false);
+        Alert.alert("Not signed in", "Please sign in again.");
+        router.replace("/(auth)/sign-in");
+        return;
+      }
+
+      const uid = userRes.user.id;
+      setOwnerId(uid);
+
+      const { data: profile, error: profileErr } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", uid)
+        .single();
+
+      if (profileErr) {
+        setLoading(false);
+        Alert.alert("Error", profileErr.message);
+        return;
+      }
+
+      if (profile?.role !== "owner") {
+        setLoading(false);
+        Alert.alert("Not an owner", "This page is only for business owners.");
+        router.replace("/(home)/home");
+        return;
+      }
+
+      const { data: restaurant, error: restErr } = await supabase
+        .from("restaurants")
+        .select("id,owner_id,name,description,cuisine_type,image_url,business_hours,phone")
+        .eq("owner_id", uid)
+        .maybeSingle();
+
+      if (restErr) {
+        setLoading(false);
+        Alert.alert("Failed to load restaurant", restErr.message);
+        return;
+      }
+
+      let row: RestaurantRow;
+      if (!restaurant) {
+        const { data: created, error: createErr } = await supabase
+          .from("restaurants")
+          .insert([
+            {
+              owner_id: uid,
+              name: "",
+              description: "",
+              cuisine_type: "",
+              business_hours: { text: "" },
+              phone: "",
+              image_url: "",
+            },
+          ])
+          .select("id,owner_id,name,description,cuisine_type,image_url,business_hours,phone")
+          .single();
+
+        if (createErr || !created) {
+          setLoading(false);
+          Alert.alert("Create failed", createErr?.message ?? "Unable to create restaurant.");
+          return;
+        }
+
+        row = created as RestaurantRow;
+      } else {
+        row = restaurant as RestaurantRow;
+      }
+
+      const loadedAddress = await loadLocation(row.id);
+      setRestaurantId(row.id);
+      setName(row.name ?? "");
+      setCuisine(row.cuisine_type ?? "");
+      setDescription(row.description ?? "");
+      setBusinessHours(getBusinessHoursText(row.business_hours));
+      setPhone(row.phone ?? "");
+      setImageUrl(row.image_url ?? "");
+      setInitialValues({
+        name: (row.name ?? "").trim(),
+        address: loadedAddress.trim(),
+        cuisine: (row.cuisine_type ?? "").trim(),
+        description: (row.description ?? "").trim(),
+        businessHours: getBusinessHoursText(row.business_hours).trim(),
+        phone: (row.phone ?? "").trim(),
+        imageUrl: (row.image_url ?? "").trim(),
+      });
+
+      await loadStats(row.id);
+
+      setLoading(false);
+    };
+
+    load();
+  }, []);
+
+  const onPickImage = async () => {
+    if (!restaurantId || !ownerId) {
+      Alert.alert("Not ready", "Restaurant not loaded yet.");
+      return;
+    }
+
+    setUploadingImage(true);
+    const publicUrl = await uploadImageToSupabase({ restaurantId, ownerId });
+    setUploadingImage(false);
+
+    if (publicUrl) {
+      setImageUrl(publicUrl);
+    }
+  };
+
+  const onSave = async () => {
+    if (!restaurantId) return;
+
+    if (!name.trim()) {
+      Alert.alert("Missing name", "Please enter your restaurant name.");
+      return;
+    }
+
+    setSaving(true);
+
+    const { error } = await supabase
+      .from("restaurants")
+      .update({
+        name: name.trim(),
+        description: description.trim(),
+        cuisine_type: cuisine.trim(),
+        business_hours: { text: businessHours.trim() },
+        phone: phone.trim() || null,
+        image_url: imageUrl.trim() || null,
+      })
+      .eq("id", restaurantId);
+
+    if (error) {
+      setSaving(false);
+      Alert.alert("Save failed", error.message);
+      return;
+    }
+
+    if (address.trim()) {
+      if (locationId) {
+        const { error: locationErr } = await supabase
+          .from("locations")
+          .update({ address_text: address.trim() })
+          .eq("id", locationId);
+
+        if (locationErr) {
+          setSaving(false);
+          Alert.alert("Address save failed", locationErr.message);
+          return;
+        }
+      } else {
+        const { data: newLocation, error: locationErr } = await supabase
+          .from("locations")
+          .insert([
+            {
+              restaurant_id: restaurantId,
+              address_text: address.trim(),
+            },
+          ])
+          .select("id")
+          .single();
+
+        if (locationErr) {
+          setSaving(false);
+          Alert.alert("Address save failed", locationErr.message);
+          return;
+        }
+
+        if (newLocation) {
+          setLocationId(newLocation.id);
+        }
+      }
+    }
+
+    setInitialValues(currentValues);
+    setSaving(false);
+    Alert.alert("Saved", "Business profile updated successfully.");
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.safe, { paddingTop: insets.top }]}>
+        <View style={styles.center}>
+          <ActivityIndicator />
+          <Text style={styles.loadingText}>Loading owner profile...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={[styles.safe, { paddingTop: insets.top }]}>
+      <View style={styles.topBar}>
+        <Text style={styles.topTitle}>Owner Profile</Text>
+        <Button title="Back" onPress={() => router.push("/(owner)/home")} />
+      </View>
+
+      <KeyboardAvoidingView
+        style={styles.keyboardFlex}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView contentContainerStyle={styles.container}>
+          <View style={styles.statsCard}>
+            <Text style={styles.statsTitle}>Business Stats</Text>
+            <Text style={styles.statsLine}>
+              Orders: <Text style={styles.statsValue}>{ordersCount ?? 0}</Text>
+            </Text>
+            <Text style={styles.statsLine}>
+              Sales:{" "}
+              <Text style={styles.statsValue}>
+                ${Number(salesTotal ?? 0).toFixed(2)}
+              </Text>
+            </Text>
+            <Text style={styles.statsHint}>
+              (Sales total depends on your orders schema.)
+            </Text>
+          </View>
+
+          <TouchableOpacity style={styles.logoRow} onPress={onPickImage} disabled={uploadingImage}>
+            {imageUrl.trim() ? (
+              <Image source={{ uri: imageUrl.trim() }} style={styles.logoImg} />
+            ) : (
+              <View style={styles.logoPlaceholder}>
+                <Text style={styles.noLogoText}>No logo</Text>
+              </View>
+            )}
+            <View style={styles.logoMetaWrap}>
+              <Text style={styles.logoLabel}>Restaurant Image</Text>
+              <Text style={styles.logoHint}>
+                {uploadingImage ? "Uploading image..." : "Tap to choose from your camera roll"}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <Field
+            label="Restaurant Name"
+            value={name}
+            onChangeText={setName}
+            placeholder="e.g., FoodDiscovery Cafe"
+          />
+
+          <Field
+            label="Address"
+            value={address}
+            onChangeText={setAddress}
+            placeholder="e.g., 123 Main St, City, State"
+          />
+
+          <Field
+            label="Cuisine Type"
+            value={cuisine}
+            onChangeText={setCuisine}
+            placeholder="e.g., Ethiopian, Thai, Mexican"
+          />
+
+          <Field
+            label="Description"
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Short description customers will see"
+            multiline
+          />
+
+          <Field
+            label="Business Hours"
+            value={businessHours}
+            onChangeText={setBusinessHours}
+            placeholder="e.g., Mon-Fri 10am-8pm"
+          />
+
+          <Field
+            label="Phone Number"
+            value={phone}
+            onChangeText={setPhone}
+            placeholder="(555) 123-4567"
+            keyboardType="phone-pad"
+          />
+
+          <View style={styles.saveWrap}>
+            <Button
+              title={saving ? "Saving..." : "Save profile"}
+              onPress={onSave}
+              disabled={saving || !restaurantId || !isDirty}
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}

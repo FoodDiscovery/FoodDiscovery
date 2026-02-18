@@ -16,7 +16,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { supabase } from "../../lib/supabase";
 import { useLocation } from "../../Providers/LocationProvider";
 import { useCart } from "../../Providers/CartProvider";
-import styles from "./homeStyles";
+import { homeStyles as styles } from "../../components/styles";
 
 type RestaurantRow = {
   id: string;
@@ -235,7 +235,7 @@ export default function HomeScreen() {
 
         {/* Profile button (top-right, NOT cut off) */}
         <Pressable
-          onPress={() => router.replace("/")}
+          onPress={() => router.push("/(home)/profile")}
           style={({ pressed }) => [
             styles.profileBtn,
             pressed && styles.pressedOpacity70,
