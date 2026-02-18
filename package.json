@@ -16,6 +16,7 @@
     "@react-native-vector-icons/fontawesome": "^12.4.0",
     "@rneui/base": "^5.0.0",
     "@rneui/themed": "^5.0.0",
+    "@stripe/stripe-react-native": "0.50.3",
     "@supabase/supabase-js": "^2.93.1",
     "base64-arraybuffer": "^1.0.2",
     "expo": "~54.0.33",

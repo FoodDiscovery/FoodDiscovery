@@ -49,6 +49,13 @@
         {
           "locationWhenInUsePermission": "This app uses your location to show nearby restaurants on the map."
         }
+      ],
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.eduardodominguezsotelo.fooddiscovery",
+          "enableGooglePay": true
+        }
       ]
     ]
   }
