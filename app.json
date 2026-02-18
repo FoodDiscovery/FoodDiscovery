@@ -2,6 +2,7 @@
   "expo": {
     "name": "Food-Discovery",
     "slug": "food-discovery",
+    "scheme": "food-discovery",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -56,7 +57,8 @@
           "merchantIdentifier": "merchant.com.eduardodominguezsotelo.fooddiscovery",
           "enableGooglePay": true
         }
-      ]
+      ],
+      "expo-web-browser"
     ]
   }
 }

@@ -16,6 +16,7 @@ import * as ImagePicker from 'expo-image-picker'
 import { File } from 'expo-file-system/next'
 import { decode } from 'base64-arraybuffer'
 import styles from './authStyles'
+import * as WebBrowser from 'expo-web-browser'
 
 type RoleType = 'customer' | 'owner'
 
@@ -315,6 +316,37 @@ export default function SignUp() {
       )
       return false
     }
+
+    // inserting stripe onboarding link here
+    try{
+      const {data: stripeData, error: stripeError } = await supabase.functions.invoke(
+        'create-stripe-onboarding-link',
+        {
+          body: { owner_id: userId, email: email.trim() },
+        }
+      );
+      if (stripeError || !stripeData?.url){
+        throw new Error (stripeError?.message || 'Failed to create Stripe onboarding link');
+      }
+
+      await supabase
+      .from('restaurants')
+      .update({ 
+        stripe_onboarding_url: stripeData.url,
+        stripe_account_id: stripeData.stripeAccountId
+      })
+      .eq('id', restaurant.id);
+
+      const result = await WebBrowser.openAuthSessionAsync(stripeData.url, 'food-discovery://');
+      if (result.type !== 'success') {
+        Alert.alert('Stripe Onboarding', 'Stripe onboarding was not completed. You can complete it later from your profile.');
+      }
+    } catch (err) {
+      console.error('Stripe onboarding error:', err);
+      Alert.alert('Stripe Onboarding Error', 'Failed to initiate Stripe onboarding. You can complete it later from your profile.');
+    }
+
+    // stripe onboarding link finished
 
     // Upload the image and update the restaurant
     const imageUrl = await uploadBusinessImage(userId, restaurant.id)
