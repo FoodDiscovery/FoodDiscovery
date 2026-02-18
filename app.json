@@ -14,7 +14,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.food-discovery"
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to show nearby restaurants on the map.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app uses your location to show nearby restaurants on the map."
+      },
+      "bundleIdentifier": "com.eduardodominguezsotelo.fooddiscovery"
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +26,12 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "package": "com.eduardodominguezsotelo.fooddiscovery"
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
@@ -33,6 +42,12 @@
         "expo-router",
         {
           "root": "./src/app"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "This app uses your location to show nearby restaurants on the map."
         }
       ]
     ]

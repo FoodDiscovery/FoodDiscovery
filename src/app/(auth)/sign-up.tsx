@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import {
   Alert,
-  StyleSheet,
   View,
   Text,
   TouchableOpacity,
@@ -16,6 +15,13 @@ import { router } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
 import { File } from 'expo-file-system/next'
 import { decode } from 'base64-arraybuffer'
+import styles from './authStyles'
+import BusinessHoursEditor from '../../components/BusinessHoursEditor'
+import {
+  WeeklyBusinessHours,
+  createDefaultBusinessHours,
+  validateWeeklyBusinessHours,
+} from '../../lib/businessHours'
 
 type RoleType = 'customer' | 'owner'
 
@@ -25,9 +31,11 @@ interface BusinessInfo {
   phone: string
   description: string
   cuisineType: string
-  businessHours: string
+  businessHours: WeeklyBusinessHours
   imageUri: string | null
 }
+
+type BusinessInfoTextField = Exclude<keyof BusinessInfo, 'businessHours' | 'imageUri'>
 
 function RoleToggle({
   selectedRole,
@@ -80,11 +88,13 @@ function RoleToggle({
 function BusinessInfoForm({
   businessInfo,
   onUpdate,
+  onUpdateBusinessHours,
   onPickImage,
   isUploadingImage,
 }: {
   businessInfo: BusinessInfo
-  onUpdate: (field: keyof BusinessInfo, value: string) => void
+  onUpdate: (field: BusinessInfoTextField, value: string) => void
+  onUpdateBusinessHours: (value: WeeklyBusinessHours) => void
   onPickImage: () => void
   isUploadingImage: boolean
 }) {
@@ -147,11 +157,10 @@ function BusinessInfoForm({
       </View>
 
       <View style={styles.verticallySpaced}>
-        <Input
-          label="Business Hours"
-          onChangeText={(text) => onUpdate('businessHours', text)}
+        <Text style={styles.imageLabel}>Business Hours *</Text>
+        <BusinessHoursEditor
           value={businessInfo.businessHours}
-          placeholder="e.g., Mon-Fri 9am-9pm"
+          onChange={onUpdateBusinessHours}
         />
       </View>
 
@@ -199,12 +208,16 @@ export default function SignUp() {
     phone: '',
     description: '',
     cuisineType: '',
-    businessHours: '',
+    businessHours: createDefaultBusinessHours(),
     imageUri: null,
   })
 
-  function updateBusinessInfo(field: keyof BusinessInfo, value: string) {
+  function updateBusinessInfo(field: BusinessInfoTextField, value: string) {
     setBusinessInfo((prev) => ({ ...prev, [field]: value }))
+  }
+
+  function updateBusinessHours(value: WeeklyBusinessHours) {
+    setBusinessInfo((prev) => ({ ...prev, businessHours: value }))
   }
 
   async function pickImage() {
@@ -246,6 +259,11 @@ export default function SignUp() {
     }
     if (!businessInfo.imageUri) {
       Alert.alert('Missing Information', 'Please upload a business image.')
+      return false
+    }
+    const businessHoursError = validateWeeklyBusinessHours(businessInfo.businessHours)
+    if (businessHoursError) {
+      Alert.alert('Invalid Business Hours', businessHoursError)
       return false
     }
     return true
@@ -299,7 +317,7 @@ export default function SignUp() {
           name: businessInfo.name.trim(),
           description: businessInfo.description.trim(),
           cuisine_type: businessInfo.cuisineType.trim(),
-          business_hours: { text: businessInfo.businessHours.trim() },
+          business_hours: businessInfo.businessHours,
           phone: businessInfo.phone.trim(),
           image_url: '', // Will update after image upload
         },
@@ -411,7 +429,7 @@ export default function SignUp() {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.container}>
+        <View style={[styles.container, styles.signUpContainer]}>
           <Text style={styles.title}>Create Account</Text>
 
           <RoleToggle selectedRole={selectedRole} onRoleChange={setSelectedRole} />
@@ -442,6 +460,7 @@ export default function SignUp() {
             <BusinessInfoForm
               businessInfo={businessInfo}
               onUpdate={updateBusinessInfo}
+              onUpdateBusinessHours={updateBusinessHours}
               onPickImage={pickImage}
               isUploadingImage={isUploadingImage}
             />
@@ -465,136 +484,4 @@ export default function SignUp() {
     </KeyboardAvoidingView>
   )
 }
-
-const styles = StyleSheet.create({
-  keyboardView: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  container: {
-    marginTop: 40,
-    padding: 12,
-    paddingBottom: 40,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  verticallySpaced: {
-    paddingTop: 4,
-    paddingBottom: 4,
-    alignSelf: 'stretch',
-  },
-  mt20: {
-    marginTop: 20,
-  },
-  linkText: {
-    color: '#007AFF',
-    textAlign: 'center',
-    textDecorationLine: 'underline',
-  },
-  roleToggleContainer: {
-    marginBottom: 10,
-  },
-  roleLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    borderRadius: 10,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#007AFF',
-  },
-  toggleButton: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  toggleButtonActive: {
-    backgroundColor: '#007AFF',
-  },
-  toggleButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#007AFF',
-  },
-  toggleButtonTextActive: {
-    color: '#fff',
-  },
-  businessSection: {
-    marginTop: 24,
-    paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  sectionSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 16,
-  },
-  imageSection: {
-    marginTop: 8,
-    paddingHorizontal: 10,
-  },
-  imageLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#86939e',
-    marginBottom: 10,
-  },
-  pickImageButton: {
-    borderWidth: 2,
-    borderColor: '#007AFF',
-    borderStyle: 'dashed',
-    borderRadius: 10,
-    paddingVertical: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f8f9fa',
-  },
-  pickImageText: {
-    color: '#007AFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  imagePreviewContainer: {
-    alignItems: 'center',
-    gap: 12,
-  },
-  imagePreview: {
-    width: 120,
-    height: 120,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  changeImageButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-  },
-  changeImageText: {
-    color: '#007AFF',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-})
 
