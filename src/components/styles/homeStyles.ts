@@ -57,42 +57,43 @@ const styles = StyleSheet.create({
 
   controls: {
     flexDirection: "row",
-    gap: 12,
+    gap: 8,
     paddingHorizontal: 16,
     paddingBottom: 10,
     alignItems: "center",
+    flexWrap: "wrap",
   },
   pillPrimary: {
     backgroundColor: "#007AFF",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 18,
   },
   pillPrimaryText: {
     color: "#FFF",
-    fontWeight: "800",
-    fontSize: 16,
+    fontWeight: "600",
+    fontSize: 14,
   },
   pill: {
     backgroundColor: "#EFEFEF",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 18,
   },
   pillText: {
     color: "#111",
-    fontWeight: "800",
-    fontSize: 16,
+    fontWeight: "600",
+    fontSize: 14,
   },
   pillGhost: {
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    borderRadius: 18,
   },
   pillGhostText: {
     color: "#007AFF",
     fontWeight: "800",
-    fontSize: 16,
+    fontSize: 14,
   },
 
   listContent: {
@@ -101,35 +102,15 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: "#F4F4F4",
-    borderRadius: 22,
-    padding: 18,
-    marginBottom: 14,
-  },
-  cardTitle: {
-    fontSize: 34,
-    fontWeight: "900",
-    color: "#000",
-    letterSpacing: -0.2,
-  },
-  cardCuisine: {
-    marginTop: 4,
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#007AFF",
-  },
-  cardDesc: {
-    marginTop: 6,
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#5A5A5A",
-    lineHeight: 28,
-  },
-  cardMeta: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#5A5A5A",
+    backgroundColor: "#FFF",
+    borderRadius: 16,
+    marginBottom: 20,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
@@ -191,6 +172,70 @@ const styles = StyleSheet.create({
   pressedOpacity70: { opacity: 0.7 },
   pressedOpacity80: { opacity: 0.8 },
   pressedOpacity85: { opacity: 0.85 },
+
+  imageContainer: {
+    width: "100%",
+    height: 200,
+    backgroundColor: "#F5F5F5",
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+  },
+  imagePlaceholder: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#E0E0E0",
+  },
+  imagePlaceholderText: {
+    fontSize: 48,
+  },
+  restaurantName: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#000",
+    marginTop: 12,
+    marginHorizontal: 16,
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+    marginHorizontal: 16,
+    gap: 12,
+  },
+  rating: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000",
+  },
+  metaText: {
+    fontSize: 14,
+    color: "#666",
+  },
+  deliveryFee: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 4,
+    marginHorizontal: 16,
+  },
+  categoryTag: {
+    alignSelf: "flex-start",
+    backgroundColor: "#F0F0F0",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginTop: 12,
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  categoryText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+  },
 });
 
 export default styles;

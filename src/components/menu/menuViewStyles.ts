@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     gap: 8,
-    backgroundColor: "#fafafa",
+    backgroundColor: "#fff",
   },
   categoryName: {
     fontSize: 19,
@@ -115,6 +115,42 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 13,
     fontWeight: "700",
+  },
+  quantityControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  quantityBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+  },
+  quantityBtnOutlined: {
+    backgroundColor: "transparent",
+    borderColor: "#007AFF",
+  },
+  quantityBtnGray: {
+    backgroundColor: "#E5E5E5",
+    borderColor: "#E5E5E5",
+  },
+  quantityBtnText: {
+    color: "#007AFF",
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  quantityBtnTextGray: {
+    color: "#666",
+  },
+  quantityText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#111",
+    minWidth: 20,
+    textAlign: "center",
   },
   backBtn: {
     paddingVertical: 8,

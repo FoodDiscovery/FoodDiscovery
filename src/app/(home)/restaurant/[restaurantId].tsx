@@ -2,18 +2,21 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Image,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { supabase } from "../../../lib/supabase";
 import { useCart } from "../../../Providers/CartProvider";
+import { useAuth } from "../../../Providers/AuthProvider";
 import type { MenuCategory, MenuItem } from "../../../components/menu/types";
 import styles from "../../../components/menu/menuViewStyles";
+import MenuCategoryCard from "../../../components/menu/MenuCategoryCard";
+import CartBar from "../../../components/menu/CartBar";
 
 type RestaurantSummary = {
   id: string;
@@ -24,7 +27,9 @@ type RestaurantSummary = {
 
 export default function RestaurantMenuScreen() {
   const { restaurantId } = useLocalSearchParams<{ restaurantId: string }>();
-  const { addItem, itemCount, subtotal } = useCart();
+  const { items: cartItems, addItem, incrementItem, decrementItem, itemCount, subtotal } = useCart();
+  const { session } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
@@ -32,6 +37,7 @@ export default function RestaurantMenuScreen() {
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
 
+  // sort the items into their categories for display
   const itemsByCategory = useMemo(() => {
     const map = new Map<number, MenuItem[]>();
     for (const item of items) {
@@ -47,98 +53,115 @@ export default function RestaurantMenuScreen() {
 
   useEffect(() => {
     const loadMenuForRestaurant = async () => {
-      if (!restaurantId) {
+      if (!restaurantId || !session?.user?.id) {
         setLoading(false);
         return;
       }
 
       setLoading(true);
 
-      const { data: userRes, error: userErr } = await supabase.auth.getUser();
-      if (userErr || !userRes.user) {
-        setLoading(false);
-        Alert.alert("Not signed in", "Please sign in to view restaurant menus.");
-        return;
-      }
+      try {
+        // Fetch restaurant, categories, and profile in parallel
+        const [restaurantRes, categoriesRes, profileRes] = await Promise.all([
+          supabase
+            .from("restaurants")
+            .select("id,name,description,cuisine_type")
+            .eq("id", restaurantId)
+            .single(),
+          supabase
+            .from("menu_categories")
+            .select("*")
+            .eq("restaurant_id", restaurantId)
+            .order("display_order", { ascending: true }),
+          supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", session.user.id)
+            .maybeSingle(),
+        ]);
 
-      const { data: profile, error: profileErr } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", userRes.user.id)
-        .limit(1)
-        .maybeSingle();
-
-      // Continue even if profile row is missing/duplicated; treat as customer by default.
-      if (profileErr) {
-        console.warn("Profile load warning:", profileErr.message);
-      }
-
-      setIsOwner(profile?.role === "owner");
-
-      const { data: restaurantData, error: restaurantErr } = await supabase
-        .from("restaurants")
-        .select("id,name,description,cuisine_type")
-        .eq("id", restaurantId)
-        .single();
-
-      if (restaurantErr) {
-        setLoading(false);
-        Alert.alert("Load failed", restaurantErr.message);
-        return;
-      }
-
-      setRestaurant(restaurantData as RestaurantSummary);
-
-      const { data: cats, error: catsErr } = await supabase
-        .from("menu_categories")
-        .select("*")
-        .eq("restaurant_id", restaurantId)
-        .order("display_order", { ascending: true });
-
-      if (catsErr) {
-        setLoading(false);
-        Alert.alert("Load failed", "Could not load menu categories: " + catsErr.message);
-        return;
-      }
-
-      const loadedCategories = (cats ?? []) as MenuCategory[];
-      setCategories(loadedCategories);
-
-      if (loadedCategories.length > 0) {
-        const catIds = loadedCategories.map((c) => c.id);
-        const { data: menuItems, error: itemsErr } = await supabase
-          .from("menu_items")
-          .select("*")
-          .in("category_id", catIds);
-
-        if (itemsErr) {
+        if (restaurantRes.error) {
+          Alert.alert("Load failed", restaurantRes.error.message);
           setLoading(false);
-          Alert.alert("Load failed", "Could not load menu items: " + itemsErr.message);
           return;
         }
 
-        setItems((menuItems ?? []) as MenuItem[]);
-      } else {
-        setItems([]);
-      }
+        if (categoriesRes.error) {
+          Alert.alert("Load failed", "Could not load menu categories: " + categoriesRes.error.message);
+          setLoading(false);
+          return;
+        }
 
-      setLoading(false);
+        // Continue even if profile row is missing/duplicated; treat as customer by default.
+        if (profileRes.error) {
+          console.warn("Profile load warning:", profileRes.error.message);
+        }
+
+        setRestaurant(restaurantRes.data as RestaurantSummary);
+        setIsOwner(profileRes.data?.role === "owner");
+
+        const loadedCategories = (categoriesRes.data ?? []) as MenuCategory[];
+        setCategories(loadedCategories);
+
+        // Fetch menu items for all categories
+        if (loadedCategories.length > 0) {
+          const catIds = loadedCategories.map((c) => c.id);
+          const { data: menuItems, error: itemsErr } = await supabase
+            .from("menu_items")
+            .select("*")
+            .in("category_id", catIds);
+
+          if (itemsErr) {
+            Alert.alert("Load failed", "Could not load menu items: " + itemsErr.message);
+            setLoading(false);
+            return;
+          }
+
+          setItems((menuItems ?? []) as MenuItem[]);
+        } else {
+          setItems([]);
+        }
+      } catch (error) {
+        Alert.alert("Load failed", error instanceof Error ? error.message : "Unknown error");
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadMenuForRestaurant();
-  }, [restaurantId]);
+  }, [restaurantId, session]);
 
-  const onAddToCart = (item: MenuItem) => {
-    if (!restaurant) return;
-    addItem({
-      restaurantId: restaurant.id,
-      restaurantName: restaurant.name ?? "Restaurant",
-      itemId: item.id,
-      name: item.name,
-      price: item.price,
-      imageUrl: item.image_url,
-    });
+  const getItemQuantity = (itemId: number): number => {
+    if (!restaurant) return 0;
+    const key = `${restaurant.id}:${itemId}`;
+    const cartItem = cartItems.find((i) => i.key === key);
+    return cartItem?.quantity ?? 0;
   };
+
+  const handleIncrement = (item: MenuItem) => {
+    if (!restaurant) return;
+    const key = `${restaurant.id}:${item.id}`;
+    const currentQuantity = getItemQuantity(item.id);
+    if (currentQuantity === 0) {
+      addItem({
+        restaurantId: restaurant.id,
+        restaurantName: restaurant.name ?? "Restaurant",
+        itemId: item.id,
+        name: item.name,
+        price: item.price,
+        imageUrl: item.image_url,
+      });
+    } else if (currentQuantity < 20) {
+      incrementItem(key);
+    }
+  };
+
+  const handleDecrement = (item: MenuItem) => {
+    if (!restaurant) return;
+    const key = `${restaurant.id}:${item.id}`;
+    decrementItem(key);
+  };
+
 
   if (loading) {
     return (
@@ -164,75 +187,65 @@ export default function RestaurantMenuScreen() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.page}>
-        <Text style={styles.heading}>{restaurant?.name ?? "Restaurant Menu"}</Text>
-        {!!restaurant?.description && (
-          <Text style={styles.subtitle}>{restaurant.description}</Text>
-        )}
-        {!!restaurant?.cuisine_type && (
-          <View style={styles.cuisineTag}>
-            <Text style={styles.cuisineTagText}>{restaurant.cuisine_type}</Text>
-          </View>
-        )}
-
-        {categories.length === 0 && (
-          <Text style={styles.emptyText}>
-            This restaurant has not published menu categories yet.
-          </Text>
-        )}
-
-        {categories.map((category) => {
-          const categoryItems = itemsByCategory.get(category.id) ?? [];
-          return (
-            <View key={category.id} style={styles.categoryCard}>
-              <Text style={styles.categoryName}>{category.name}</Text>
-              {categoryItems.map((item) => (
-                <View key={item.id} style={styles.itemRow}>
-                  {item.image_url ? (
-                    <Image source={{ uri: item.image_url }} style={styles.itemThumb} />
-                  ) : (
-                    <View style={styles.itemThumbPlaceholder}>
-                      <Text style={{ fontSize: 18 }}>📷</Text>
-                    </View>
-                  )}
-                  <View style={styles.itemInfo}>
-                    <Text style={styles.itemName}>{item.name}</Text>
-                    {!!item.description && (
-                      <Text style={styles.itemDesc}>{item.description}</Text>
-                    )}
-                    <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
-                    {!item.is_available && (
-                      <Text style={styles.unavailableTag}>Unavailable</Text>
-                    )}
-                  </View>
-
-                  <TouchableOpacity
-                    style={[styles.addBtn, !item.is_available && styles.addBtnDisabled]}
-                    disabled={!item.is_available}
-                    onPress={() => onAddToCart(item)}
-                  >
-                    <Text style={styles.addBtnText}>Add</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </View>
-          );
-        })}
-
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["top"]}>
+      <View style={{ flex: 1, backgroundColor: "#fff" }}>
+        <TouchableOpacity
+          style={[
+            styles.backBtn,
+            {
+              position: "absolute",
+              top: Math.max(8, insets.top * 0.25),
+              left: 16,
+              zIndex: 10,
+              backgroundColor: "rgba(255, 255, 255, 0.9)",
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              borderRadius: 8,
+            },
+          ]}
+          onPress={() => router.back()}
+        >
           <Text style={styles.backBtnText}>← Back</Text>
         </TouchableOpacity>
-      </ScrollView>
+        <ScrollView
+          contentContainerStyle={[
+            styles.page,
+            { paddingTop: Math.max(60, insets.top + 20) },
+          ]}
+        >
+          <Text style={styles.heading}>{restaurant?.name ?? "Restaurant Menu"}</Text>
+          {!!restaurant?.description && (
+            <Text style={styles.subtitle}>{restaurant.description}</Text>
+          )}
+          {!!restaurant?.cuisine_type && (
+            <View style={styles.cuisineTag}>
+              <Text style={styles.cuisineTagText}>{restaurant.cuisine_type}</Text>
+            </View>
+          )}
 
-      <View style={styles.cartBar}>
-        <Text style={styles.cartBarText}>
-          Cart: {itemCount} item{itemCount === 1 ? "" : "s"} (${subtotal.toFixed(2)})
-        </Text>
-        <TouchableOpacity style={styles.cartBarBtn} onPress={() => router.push("/cart")}>
-          <Text style={styles.cartBarBtnText}>View Cart</Text>
-        </TouchableOpacity>
+          {categories.length === 0 && (
+            <Text style={styles.emptyText}>
+              This restaurant has not published menu categories yet.
+            </Text>
+          )}
+
+          {categories.map((category) => {
+            const categoryItems = itemsByCategory.get(category.id) ?? [];
+            return (
+              <MenuCategoryCard
+                key={category.id}
+                category={category}
+                items={categoryItems}
+                getItemQuantity={getItemQuantity}
+                onIncrement={handleIncrement}
+                onDecrement={handleDecrement}
+              />
+            );
+          })}
+        </ScrollView>
+
+        <CartBar itemCount={itemCount} subtotal={subtotal} />
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
