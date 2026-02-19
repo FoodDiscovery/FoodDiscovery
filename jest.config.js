@@ -7,6 +7,7 @@ module.exports = {
     "src/**/*.{js,jsx,ts,tsx}",
     "!**/*.d.ts",
     "!**/_layout.tsx",
+    "!**/styles/**",
   ],
   coverageReporters: ["text", "text-summary", "lcov"],
   coverageDirectory: "coverage",

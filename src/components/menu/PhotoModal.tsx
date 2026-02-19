@@ -1,6 +1,6 @@
 import React from "react";
 import { Modal, View, Text, Image, TouchableOpacity } from "react-native";
-import styles from "./menuEditStyles";
+import { menuEditStyles as styles } from "../../components/styles";
 import type { MenuItem } from "./types";
 
 interface Props {

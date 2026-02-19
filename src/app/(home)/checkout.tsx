@@ -12,7 +12,7 @@ import { useStripe } from "@stripe/stripe-react-native";
 
 import { useCart } from "../../Providers/CartProvider";
 import { useAuth } from "../../Providers/AuthProvider";
-import styles from "../../components/menu/menuViewStyles";
+import { menuViewStyles as styles } from "../../components/styles";
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
