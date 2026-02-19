@@ -3,7 +3,7 @@ import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { router } from "expo-router";
 
 import { useCart } from "../../Providers/CartProvider";
-import styles from "../../components/menu/menuViewStyles";
+import { menuViewStyles as styles } from "../../components/styles";
 
 export default function CartScreen() {
   const {

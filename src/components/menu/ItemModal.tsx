@@ -8,7 +8,7 @@ import {
   ScrollView,
   Switch,
 } from "react-native";
-import styles from "./menuEditStyles";
+import { menuEditStyles as styles } from "../../components/styles";
 import type { MenuItem, ItemFormData } from "./types";
 
 interface Props {

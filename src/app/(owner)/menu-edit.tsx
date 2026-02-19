@@ -16,7 +16,7 @@ import { File } from "expo-file-system/next";
 import { decode } from "base64-arraybuffer";
 
 import type { MenuCategory, MenuItem, ItemFormData } from "../../components/menu/types";
-import styles from "../../components/menu/menuEditStyles";
+import { menuEditStyles as styles } from "../../components/styles";
 import CategoryModal from "../../components/menu/CategoryModal";
 import ItemModal from "../../components/menu/ItemModal";
 import PhotoModal from "../../components/menu/PhotoModal";
