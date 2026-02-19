@@ -13,7 +13,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { supabase } from "../../../lib/supabase";
 import { useCart } from "../../../Providers/CartProvider";
 import type { MenuCategory, MenuItem } from "../../../components/menu/types";
-import styles from "../../../components/menu/menuViewStyles";
+import { menuViewStyles as styles } from "../../../components/styles";
 
 type RestaurantSummary = {
   id: string;

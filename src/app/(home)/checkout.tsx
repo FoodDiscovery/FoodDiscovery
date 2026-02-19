@@ -2,7 +2,7 @@ import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { router } from "expo-router";
 
-import styles from "../../components/menu/menuViewStyles";
+import { menuViewStyles as styles } from "../../components/styles";
 
 export default function CheckoutScreen() {
   return (
