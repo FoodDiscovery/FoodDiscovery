@@ -5,10 +5,12 @@ import { Stack } from "expo-router";
 import AuthProvider from "../Providers/AuthProvider";
 import LocationProvider from "../Providers/LocationProvider";
 import CartProvider from "../Providers/CartProvider";
+import { StripeProvider } from "@stripe/stripe-react-native";
 
 export default function RootLayout() {
   return (
-    <LocationProvider>
+    <StripeProvider publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}>
+      <LocationProvider>
       <CartProvider>
         <AuthProvider>
           <Stack screenOptions={{ headerShown: false }}>
@@ -20,5 +22,6 @@ export default function RootLayout() {
         </AuthProvider>
       </CartProvider>
     </LocationProvider>
+    </StripeProvider>
   );
 }
