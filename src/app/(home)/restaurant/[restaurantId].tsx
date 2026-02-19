@@ -14,7 +14,7 @@ import { supabase } from "../../../lib/supabase";
 import { useCart } from "../../../Providers/CartProvider";
 import { useAuth } from "../../../Providers/AuthProvider";
 import type { MenuCategory, MenuItem } from "../../../components/menu/types";
-import styles from "../../../components/menu/menuViewStyles";
+import styles from "../../../components/styles/menuViewStyles";
 import MenuCategoryCard from "../../../components/menu/MenuCategoryCard";
 import CartBar from "../../../components/menu/CartBar";
 
