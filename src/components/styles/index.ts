@@ -5,3 +5,5 @@ export { default as tabPlaceholderStyles } from "./tabPlaceholderStyles";
 export { default as customerProfileStyles } from "./customerProfileStyles";
 export { default as menuEditStyles } from "./menuEditStyles";
 export { default as menuViewStyles } from "./menuViewStyles";
+export { default as appIndexStyles } from "./appIndexStyles";
+export { default as businessHoursEditorStyles } from "./businessHoursEditorStyles";

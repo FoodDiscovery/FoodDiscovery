@@ -1,8 +1,9 @@
 import React, { useEffect } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../Providers/AuthProvider";
 import { supabase } from "../lib/supabase";
+import { appIndexStyles as styles } from "../components/styles";
 
 export default function App() {
   const { session } = useAuth();
@@ -37,15 +38,3 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 10,
-  },
-  loadingText: {
-    fontSize: 16,
-    color: "#666",
-  },
-});
