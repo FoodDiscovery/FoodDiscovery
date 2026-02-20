@@ -75,9 +75,9 @@ describe("BusinessHoursEditor", () => {
     );
 
     const minuteInputs = getAllByDisplayValue("00");
-    fireEvent.changeText(minuteInputs[0], "ab");
+    fireEvent.changeText(minuteInputs[0], "34");
     let next = onChange.mock.calls.at(-1)?.[0] as WeeklyBusinessHours;
-    expect(next.monday.open.minute).toBe(0);
+    expect(next.monday.open.minute).toBe(34);
 
     fireEvent.changeText(minuteInputs[1], "61");
     next = onChange.mock.calls.at(-1)?.[0] as WeeklyBusinessHours;

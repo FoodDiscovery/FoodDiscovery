@@ -4,6 +4,7 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native'
+import { useState } from 'react'
 import { businessHoursEditorStyles as styles } from './styles'
 import {
   DAY_ORDER,
@@ -50,10 +51,58 @@ export default function BusinessHoursEditor({
   value,
   onChange,
 }: BusinessHoursEditorProps) {
+  const [minuteDrafts, setMinuteDrafts] = useState<Record<string, string>>({})
+
   const updateDay = (day: DayKey, updater: (current: WeeklyBusinessHours[DayKey]) => WeeklyBusinessHours[DayKey]) => {
     onChange({
       ...value,
       [day]: updater(value[day]),
+    })
+  }
+
+  const minuteDraftKey = (day: DayKey, boundary: 'open' | 'close') => `${day}-${boundary}`
+
+  const getMinuteInputValue = (day: DayKey, boundary: 'open' | 'close', minute: number) => {
+    const key = minuteDraftKey(day, boundary)
+    if (key in minuteDrafts) {
+      return minuteDrafts[key]
+    }
+    return minute.toString().padStart(2, '0')
+  }
+
+  const handleMinuteChange = (day: DayKey, boundary: 'open' | 'close', text: string) => {
+    const digitsOnly = text.replace(/[^0-9]/g, '').slice(0, 2)
+    const key = minuteDraftKey(day, boundary)
+
+    setMinuteDrafts((current) => ({
+      ...current,
+      [key]: digitsOnly,
+    }))
+
+    if (digitsOnly.length === 0) {
+      return
+    }
+
+    updateDay(day, (current) => ({
+      ...current,
+      [boundary]: { ...current[boundary], minute: normalizeMinuteInput(digitsOnly) },
+    }))
+  }
+
+  const handleMinuteBlur = (day: DayKey, boundary: 'open' | 'close') => {
+    const key = minuteDraftKey(day, boundary)
+    const draft = minuteDrafts[key] ?? ''
+    const normalizedMinute = normalizeMinuteInput(draft)
+
+    updateDay(day, (current) => ({
+      ...current,
+      [boundary]: { ...current[boundary], minute: normalizedMinute },
+    }))
+
+    setMinuteDrafts((current) => {
+      const next = { ...current }
+      delete next[key]
+      return next
     })
   }
 
@@ -101,13 +150,10 @@ export default function BusinessHoursEditor({
                   <TextInput
                     style={styles.timeInput}
                     keyboardType="number-pad"
-                    value={dayHours.open.minute.toString().padStart(2, '0')}
-                    onChangeText={(text) =>
-                      updateDay(day, (current) => ({
-                        ...current,
-                        open: { ...current.open, minute: normalizeMinuteInput(text) },
-                      }))
-                    }
+                    value={getMinuteInputValue(day, 'open', dayHours.open.minute)}
+                    onChangeText={(text) => handleMinuteChange(day, 'open', text)}
+                    onBlur={() => handleMinuteBlur(day, 'open')}
+                    selectTextOnFocus
                     maxLength={2}
                     placeholder="00"
                   />
@@ -141,13 +187,10 @@ export default function BusinessHoursEditor({
                   <TextInput
                     style={styles.timeInput}
                     keyboardType="number-pad"
-                    value={dayHours.close.minute.toString().padStart(2, '0')}
-                    onChangeText={(text) =>
-                      updateDay(day, (current) => ({
-                        ...current,
-                        close: { ...current.close, minute: normalizeMinuteInput(text) },
-                      }))
-                    }
+                    value={getMinuteInputValue(day, 'close', dayHours.close.minute)}
+                    onChangeText={(text) => handleMinuteChange(day, 'close', text)}
+                    onBlur={() => handleMinuteBlur(day, 'close')}
+                    selectTextOnFocus
                     maxLength={2}
                     placeholder="00"
                   />
