@@ -7,35 +7,33 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 24,
     justifyContent: "center",
-    padding: 16,
-    gap: 8,
+    gap: 14,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "700",
-    textAlign: "center",
   },
   subtitle: {
-    fontSize: 15,
-    color: "#666",
-    textAlign: "center",
+    fontSize: 16,
+    color: "#4a4a4a",
+    lineHeight: 22,
   },
-  nameText: {
-    fontSize: 20,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  nameHint: {
+  helperText: {
     fontSize: 13,
     color: "#666",
-    textAlign: "center",
-    marginBottom: 2,
+    lineHeight: 18,
+  },
+  inputWrap: {
+    marginTop: 8,
   },
   buttonWrap: {
     marginTop: 12,
-    minWidth: 160,
+  },
+  secondaryButtonWrap: {
+    marginTop: 4,
   },
 });
 

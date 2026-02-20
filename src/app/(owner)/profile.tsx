@@ -39,6 +39,7 @@ interface RestaurantRow {
 }
 
 interface FormState {
+  ownerFullName: string;
   name: string;
   address: string;
   cuisine: string;
@@ -135,6 +136,7 @@ export default function OwnerProfileScreen() {
   const [ownerId, setOwnerId] = useState<string | null>(null);
   const [locationId, setLocationId] = useState<number | null>(null);
 
+  const [ownerFullName, setOwnerFullName] = useState("");
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [cuisine, setCuisine] = useState("");
@@ -149,6 +151,7 @@ export default function OwnerProfileScreen() {
 
   const currentValues = useMemo<FormState>(
     () => ({
+      ownerFullName: ownerFullName.trim(),
       name: name.trim(),
       address: address.trim(),
       cuisine: cuisine.trim(),
@@ -157,7 +160,7 @@ export default function OwnerProfileScreen() {
       phone: phone.trim(),
       imageUrl: imageUrl.trim(),
     }),
-    [name, address, cuisine, description, businessHours, phone, imageUrl]
+    [ownerFullName, name, address, cuisine, description, businessHours, phone, imageUrl]
   );
 
   const isDirty = useMemo(() => {
@@ -222,7 +225,7 @@ export default function OwnerProfileScreen() {
 
       const { data: profile, error: profileErr } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role,full_name")
         .eq("id", uid)
         .single();
 
@@ -283,6 +286,7 @@ export default function OwnerProfileScreen() {
       const loadedAddress = await loadLocation(row.id);
       const loadedHours = normalizeWeeklyBusinessHours(row.business_hours);
       setRestaurantId(row.id);
+      setOwnerFullName(profile?.full_name ?? "");
       setName(row.name ?? "");
       setCuisine(row.cuisine_type ?? "");
       setDescription(row.description ?? "");
@@ -290,6 +294,7 @@ export default function OwnerProfileScreen() {
       setPhone(row.phone ?? "");
       setImageUrl(row.image_url ?? "");
       setInitialValues({
+        ownerFullName: (profile?.full_name ?? "").trim(),
         name: (row.name ?? "").trim(),
         address: loadedAddress.trim(),
         cuisine: (row.cuisine_type ?? "").trim(),
@@ -329,6 +334,10 @@ export default function OwnerProfileScreen() {
       Alert.alert("Missing name", "Please enter your restaurant name.");
       return;
     }
+    if (!ownerFullName.trim()) {
+      Alert.alert("Missing name", "Please enter your full name.");
+      return;
+    }
 
     const businessHoursError = validateWeeklyBusinessHours(businessHours);
     if (businessHoursError) {
@@ -354,6 +363,19 @@ export default function OwnerProfileScreen() {
       setSaving(false);
       Alert.alert("Save failed", error.message);
       return;
+    }
+
+    if (ownerId) {
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ full_name: ownerFullName.trim() })
+        .eq("id", ownerId);
+
+      if (profileError) {
+        setSaving(false);
+        Alert.alert("Save failed", profileError.message);
+        return;
+      }
     }
 
     if (address.trim()) {
@@ -457,6 +479,13 @@ export default function OwnerProfileScreen() {
                 </Text>
               </View>
             </TouchableOpacity>
+
+            <Field
+              label="Owner Full Name"
+              value={ownerFullName}
+              onChangeText={setOwnerFullName}
+              placeholder="e.g., Jane Smith"
+            />
 
             <Field
               label="Restaurant Name"
