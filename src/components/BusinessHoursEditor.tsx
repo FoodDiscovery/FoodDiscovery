@@ -100,9 +100,9 @@ export default function BusinessHoursEditor({
     }))
 
     setMinuteDrafts((current) => {
-      const next = { ...current }
-      delete next[key]
-      return next
+      return Object.fromEntries(
+        Object.entries(current).filter(([draftKey]) => draftKey !== key)
+      ) as Record<string, string>
     })
   }
 

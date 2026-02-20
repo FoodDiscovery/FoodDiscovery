@@ -27,30 +27,33 @@ jest.mock("expo-router", () => ({
 }));
 
 jest.mock("@rneui/themed", () => ({
-  Input: ({
-    value,
-    onChangeText,
-    placeholder,
-    label,
-  }: {
-    value?: string;
-    onChangeText?: (text: string) => void;
-    placeholder?: string;
-    label?: string;
-  }) => {
-    const { Text, TextInput, View } = require("react-native");
-    const ReactLib = require("react");
-    return ReactLib.createElement(
-      View,
-      null,
-      label ? ReactLib.createElement(Text, null, label) : null,
-      ReactLib.createElement(TextInput, {
-        value,
-        onChangeText,
-        placeholder,
-      })
-    );
-  },
+  Input: (() => {
+    const mockReact = jest.requireActual("react") as typeof import("react");
+    const mockReactNative =
+      jest.requireActual("react-native") as typeof import("react-native");
+
+    return ({
+      value,
+      onChangeText,
+      placeholder,
+      label,
+    }: {
+      value?: string;
+      onChangeText?: (text: string) => void;
+      placeholder?: string;
+      label?: string;
+    }) =>
+      mockReact.createElement(
+        mockReactNative.View,
+        null,
+        label ? mockReact.createElement(mockReactNative.Text, null, label) : null,
+        mockReact.createElement(mockReactNative.TextInput, {
+          value,
+          onChangeText,
+          placeholder,
+        })
+      );
+  })(),
 }));
 
 describe("CustomerGettingStartedScreen", () => {
