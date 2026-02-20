@@ -16,7 +16,7 @@
     "@react-native-vector-icons/fontawesome": "^12.4.0",
     "@rneui/base": "^5.0.0",
     "@rneui/themed": "^5.0.0",
-    "@stripe/stripe-react-native": "^0.37.0",
+    "@stripe/stripe-react-native": "^0.50.3",
     "@supabase/supabase-js": "^2.93.1",
     "base64-arraybuffer": "^1.0.2",
     "expo": "~54.0.33",
@@ -39,7 +39,7 @@
   },
   "devDependencies": {
     "@testing-library/react-native": "^13.3.3",
-    "@types/jest": "^30.0.0",
+    "@types/jest": "^29.5.14",
     "@types/react": "~19.1.10",
     "jest": "^29.7.0",
     "jest-expo": "^54.0.17",
