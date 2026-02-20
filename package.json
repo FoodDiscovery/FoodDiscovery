@@ -9,9 +9,9 @@
     "web": "expo start --web",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test": "jest",
-    "watch": "jest --watch",
-    "coverage": "jest --coverage"
+    "test": "NODE_OPTIONS=--no-deprecation jest",
+    "watch": "NODE_OPTIONS=--no-deprecation jest --watch",
+    "coverage": "NODE_OPTIONS=--no-deprecation jest --coverage"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
