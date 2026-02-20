@@ -226,7 +226,7 @@ export default function HomeProvider({ children }: { children: React.ReactNode }
     return nearby.filter((n) => {
       const name = (n.restaurant?.name ?? "").toLowerCase();
       const matches = q.length === 0 || name.includes(q);
-      return matches && passesCuisine(undefined);
+      return matches && passesCuisine(n.restaurant.cuisine_type);
     });
   }, [nearby, query, selectedCuisines]);
 
