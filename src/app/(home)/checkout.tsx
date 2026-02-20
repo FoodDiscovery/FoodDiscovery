@@ -30,15 +30,17 @@ function groupByRestaurant(
   const byRestaurant = new Map<string, CartItem[]>();
   for (const item of items) {
     const key = item.restaurantId;
-    if (!byRestaurant.has(key)) {
-      byRestaurant.set(key, []);
+    let list = byRestaurant.get(key);
+    if (!list) {
+      list = [];
+      byRestaurant.set(key, list);
     }
-    byRestaurant.get(key)!.push(item);
+    list.push(item);
   }
-  return Array.from(byRestaurant.entries()).map(([restaurantId, restaurantItems]) => ({
+  return Array.from(byRestaurant.entries()).map(([restaurantId, items]) => ({
     restaurantId,
-    restaurantName: restaurantItems[0].restaurantName,
-    items: restaurantItems,
+    restaurantName: items[0].restaurantName,
+    items,
   }));
 }
 
