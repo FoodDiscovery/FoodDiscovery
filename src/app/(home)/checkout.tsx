@@ -10,7 +10,7 @@ import {
 import { router } from "expo-router";
 import { useStripe } from "@stripe/stripe-react-native";
 
-import { useCart } from "../../Providers/CartProvider";
+import { useCart, type CartItem } from "../../Providers/CartProvider";
 import { useAuth } from "../../Providers/AuthProvider";
 import { menuViewStyles as styles } from "../../components/styles";
 
@@ -20,6 +20,25 @@ function requiredEnv(name: "EXPO_PUBLIC_SUPABASE_URL" | "EXPO_PUBLIC_SUPABASE_PU
     throw new Error(`Missing required environment variable: ${name}`);
   }
   return value;
+}
+
+// Grouping cart items by restaurant on checkout screen
+function groupByRestaurant(
+  items: CartItem[]
+): { restaurantId: string; restaurantName: string; items: CartItem[] }[] {
+  const byRestaurant = new Map<string, CartItem[]>();
+  for (const item of items) {
+    const key = item.restaurantId;
+    if (!byRestaurant.has(key)) {
+      byRestaurant.set(key, []);
+    }
+    byRestaurant.get(key)!.push(item);
+  }
+  return Array.from(byRestaurant.entries()).map(([restaurantId, restaurantItems]) => ({
+    restaurantId,
+    restaurantName: restaurantItems[0].restaurantName,
+    items: restaurantItems,
+  }));
 }
 
 const SUPABASE_URL = requiredEnv("EXPO_PUBLIC_SUPABASE_URL");
@@ -137,6 +156,27 @@ export default function CheckoutScreen() {
         </Text>
       ) : (
         <>
+          {groupByRestaurant(items).map(({ restaurantId, restaurantName, items: restaurantItems }) => (
+            <View key={restaurantId} style={[styles.categoryCard, { marginBottom: 12 }]}>
+              <Text style={[styles.itemName, { fontWeight: "700", marginBottom: 8 }]}>
+                {restaurantName}
+              </Text>
+              {restaurantItems.map((item) => (
+                <View
+                  key={item.key}
+                  style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 4 }}
+                >
+                  <Text style={styles.itemName}>
+                    {item.quantity} {item.name}
+                  </Text>
+                  <Text style={styles.itemPrice}>
+                    ${(item.quantity * item.price).toFixed(2)}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ))}
+
           <View style={styles.categoryCard}>
             <Text style={styles.itemName}>Items: {itemCount}</Text>
             <Text style={styles.itemPrice}>
