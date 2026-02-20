@@ -48,6 +48,7 @@ const SUPABASE_URL = requiredEnv("EXPO_PUBLIC_SUPABASE_URL");
 const SUPABASE_ANON_KEY = requiredEnv("EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
 const PAYMENT_SHEET_URL = `${SUPABASE_URL}/functions/v1/payment-sheet-stripe`;
 const MERCHANT_DISPLAY_NAME = "Food Discovery";
+const SALES_TAX_RATE = 0.0975; // 9.75%
 
 export default function CheckoutScreen() {
   const { items, subtotal, itemCount, clearCart } = useCart();
@@ -56,6 +57,9 @@ export default function CheckoutScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [restaurantAddresses, setRestaurantAddresses] = useState<Record<string, string>>({});
+
+  const tax = subtotal * SALES_TAX_RATE;
+  const total = subtotal + tax;
 
   // Fetching restaurant addresses from supabase to display on checkout screen
   useEffect(() => {
@@ -85,7 +89,7 @@ export default function CheckoutScreen() {
       setError("Your cart is empty.");
       return;
     }
-    const amountCents = Math.round(subtotal * 100);
+    const amountCents = Math.round(total * 100);
     if (amountCents < 50) {
       setError("Minimum order is $0.50.");
       return;
@@ -222,7 +226,13 @@ export default function CheckoutScreen() {
           <View style={styles.categoryCard}>
             <Text style={styles.itemName}>Items: {itemCount}</Text>
             <Text style={styles.itemPrice}>
-              Total: ${subtotal.toFixed(2)}
+              Subtotal: ${subtotal.toFixed(2)}
+            </Text>
+            <Text style={styles.itemPrice}>
+              Tax: ${tax.toFixed(2)}
+            </Text>
+            <Text style={[styles.itemPrice, { fontWeight: "700", marginTop: 4 }]}>
+              Total: ${total.toFixed(2)}
             </Text>
           </View>
 
@@ -251,7 +261,7 @@ export default function CheckoutScreen() {
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={[styles.addBtnText, { fontSize: 16 }]}>
-                Pay ${subtotal.toFixed(2)}
+                Pay ${total.toFixed(2)}
               </Text>
             )}
           </TouchableOpacity>
