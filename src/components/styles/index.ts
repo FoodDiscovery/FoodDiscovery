@@ -7,3 +7,4 @@ export { default as menuEditStyles } from "./menuEditStyles";
 export { default as menuViewStyles } from "./menuViewStyles";
 export { default as appIndexStyles } from "./appIndexStyles";
 export { default as businessHoursEditorStyles } from "./businessHoursEditorStyles";
+export { default as authStyles } from "./authStyles";

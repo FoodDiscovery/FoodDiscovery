@@ -15,7 +15,7 @@ import { router } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
 import { File } from 'expo-file-system/next'
 import { decode } from 'base64-arraybuffer'
-import styles from './authStyles'
+import { authStyles as styles } from '../../components/styles'
 import BusinessHoursEditor from '../../components/BusinessHoursEditor'
 import {
   WeeklyBusinessHours,
