@@ -27,7 +27,7 @@ import {
   validateWeeklyBusinessHours,
 } from "../../lib/businessHours";
 
-type RestaurantRow = {
+interface RestaurantRow {
   id: string;
   owner_id: string;
   name: string | null;
@@ -36,9 +36,9 @@ type RestaurantRow = {
   image_url: string | null;
   business_hours: WeeklyBusinessHours | { text?: string } | string | null;
   phone: string | null;
-};
+}
 
-type FormState = {
+interface FormState {
   name: string;
   address: string;
   cuisine: string;
@@ -46,7 +46,7 @@ type FormState = {
   businessHours: WeeklyBusinessHours;
   phone: string;
   imageUrl: string;
-};
+}
 
 function Field({
   label,

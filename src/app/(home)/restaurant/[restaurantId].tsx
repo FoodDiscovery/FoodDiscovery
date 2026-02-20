@@ -18,12 +18,12 @@ import styles from "../../../components/styles/menuViewStyles";
 import MenuCategoryCard from "../../../components/menu/MenuCategoryCard";
 import CartBar from "../../../components/menu/CartBar";
 
-type RestaurantSummary = {
+interface RestaurantSummary {
   id: string;
   name: string | null;
   description: string | null;
   cuisine_type: string | null;
-};
+}
 
 export default function RestaurantMenuScreen() {
   const { restaurantId } = useLocalSearchParams<{ restaurantId: string }>();

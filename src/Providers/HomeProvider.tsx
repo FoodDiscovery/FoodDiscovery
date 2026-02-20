@@ -3,16 +3,16 @@ import { Alert } from "react-native";
 import { useLocation } from "./LocationProvider";
 import { supabase } from "../lib/supabase";
 
-type RestaurantRow = {
+interface RestaurantRow {
   id: string;
   name: string | null;
   description: string | null;
   cuisine_type: string | null;
   image_url: string | null;
   preview_images: string[] | null;
-};
+}
 
-type NearbyRestaurant = {
+interface NearbyRestaurant {
   location_id: number;
   distance_meters: number;
   latitude: number;
@@ -25,11 +25,11 @@ type NearbyRestaurant = {
     preview_images: string[] | null;
     cuisine_type: string | null;
   };
-};
+}
 
 type SortMode = "name" | "distance";
 
-type HomeContextValue = {
+interface HomeContextValue {
   loading: boolean;
   restaurants: RestaurantRow[];
   nearby: NearbyRestaurant[];
@@ -49,7 +49,7 @@ type HomeContextValue = {
   activeList: (RestaurantRow | NearbyRestaurant)[];
   headerSubtitle: string;
   onPressSort: () => void;
-};
+}
 
 const HomeContext = createContext<HomeContextValue | undefined>(undefined);
 
@@ -197,7 +197,7 @@ export default function HomeProvider({ children }: { children: React.ReactNode }
       return selectedCuisines.includes((r.cuisine_type ?? "").trim());
     };
 
-    let list = restaurants.filter((r) => {
+    const list = restaurants.filter((r) => {
       const name = (r.name ?? "").toLowerCase();
       const cuisine = (r.cuisine_type ?? "").toLowerCase();
       const desc = (r.description ?? "").toLowerCase();

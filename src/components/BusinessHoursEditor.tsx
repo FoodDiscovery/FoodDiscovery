@@ -1,4 +1,3 @@
-import React from 'react'
 import {
   View,
   Text,
@@ -16,7 +15,7 @@ import {
   normalizeMinuteInput,
 } from '../lib/businessHours'
 
-type BusinessHoursEditorProps = {
+interface BusinessHoursEditorProps {
   value: WeeklyBusinessHours
   onChange: (next: WeeklyBusinessHours) => void
 }

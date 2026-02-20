@@ -422,13 +422,17 @@ export default function MenuEditScreen() {
           Alert.alert("Update failed", updateErr.message);
         } else {
           setPhotoItem({ ...photoItem, image_url: publicUrl });
-          await loadMenu(restaurantId!);
+          await loadMenu(restaurantId);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Something went wrong uploading the photo.";
       Alert.alert(
         "Error",
-        err.message ?? "Something went wrong uploading the photo."
+        message
       );
     }
 

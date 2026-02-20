@@ -41,7 +41,7 @@ export default function LocationProvider({ children }: { children: React.ReactNo
       })
 
       setLocation(res.coords)
-    } catch (err) {
+    } catch {
       setErrorMsg('Could not find location. Is GPS enabled?')
     } finally {
       setIsLoading(false)
