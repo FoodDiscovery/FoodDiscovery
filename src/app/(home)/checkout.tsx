@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -10,6 +10,7 @@ import {
 import { router } from "expo-router";
 import { useStripe } from "@stripe/stripe-react-native";
 
+import { supabase } from "../../lib/supabase";
 import { useCart, type CartItem } from "../../Providers/CartProvider";
 import { useAuth } from "../../Providers/AuthProvider";
 import { menuViewStyles as styles } from "../../components/styles";
@@ -52,6 +53,30 @@ export default function CheckoutScreen() {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [restaurantAddresses, setRestaurantAddresses] = useState<Record<string, string>>({});
+
+  // Fetching restaurant addresses from supabase to display on checkout screen
+  useEffect(() => {
+    if (items.length === 0) {
+      setRestaurantAddresses({});
+      return;
+    }
+    const restaurantIds = [...new Set(items.map((i) => i.restaurantId))];
+    (async () => {
+      const { data } = await supabase
+        .from("locations")
+        .select("restaurant_id, address_text")
+        .in("restaurant_id", restaurantIds);
+      const byId: Record<string, string> = {};
+      for (const row of data ?? []) {
+        const r = row as { restaurant_id: string; address_text: string | null };
+        if (r.address_text && !byId[r.restaurant_id]) {
+          byId[r.restaurant_id] = r.address_text;
+        }
+      }
+      setRestaurantAddresses(byId);
+    })();
+  }, [items]);
 
   const handleCheckout = async () => {
     if (items.length === 0) {
@@ -158,9 +183,24 @@ export default function CheckoutScreen() {
         <>
           {groupByRestaurant(items).map(({ restaurantId, restaurantName, items: restaurantItems }) => (
             <View key={restaurantId} style={[styles.categoryCard, { marginBottom: 12 }]}>
-              <Text style={[styles.itemName, { fontWeight: "700", marginBottom: 8 }]}>
+              <Text style={[styles.itemName, { fontWeight: "700", marginBottom: 4 }]}>
                 {restaurantName}
               </Text>
+              {restaurantAddresses[restaurantId] ? (
+                <Text
+                  style={[
+                    styles.itemName,
+                    {
+                      fontWeight: "400",
+                      fontSize: 13,
+                      color: "#666",
+                      marginBottom: 8,
+                    },
+                  ]}
+                >
+                  {restaurantAddresses[restaurantId]}
+                </Text>
+              ) : null}
               {restaurantItems.map((item) => (
                 <View
                   key={item.key}
