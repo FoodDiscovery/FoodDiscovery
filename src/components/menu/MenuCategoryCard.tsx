@@ -1,7 +1,7 @@
 import React from "react";
 import { Text, View } from "react-native";
 import type { MenuCategory, MenuItem } from "./types.d";
-import styles from "./menuViewStyles";
+import styles from "../styles/menuViewStyles";
 import MenuItemCard from "./MenuItemCard";
 
 interface MenuCategoryCardProps {
