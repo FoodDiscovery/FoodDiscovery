@@ -11,6 +11,7 @@ import {
   Text,
   TextInput,
   View,
+  Image,
 } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -37,7 +38,7 @@ type NearbyRestaurant = {
   };
 };
 
-type SortMode = "name" | "distance";
+type SortMode = "Name" | "Distance";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -48,13 +49,20 @@ export default function HomeScreen() {
   const [nearby, setNearby] = useState<NearbyRestaurant[]>([]);
 
   const [query, setQuery] = useState("");
-  const [sortMode, setSortMode] = useState<SortMode>("name");
+  const [sortMode, setSortMode] = useState<SortMode>("Name");
 
   // Filters
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
 
-  // Load base restaurants (no distance needed)
+  // Build a lookup so distance mode can still access cuisine/description
+  const restaurantById = useMemo(() => {
+    const map = new Map<string, RestaurantRow>();
+    for (const r of restaurants) map.set(r.id, r);
+    return map;
+  }, [restaurants]);
+
+  // Load base restaurants (so we have cuisine + description)
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -78,7 +86,7 @@ export default function HomeScreen() {
   // Load nearby restaurants whenever sortMode=distance AND location is available
   useEffect(() => {
     const loadNearby = async () => {
-      if (sortMode !== "distance") return;
+      if (sortMode !== "Distance") return;
       if (!location) return;
 
       const { data, error } = await supabase.rpc("get_nearby_restaurants", {
@@ -113,13 +121,13 @@ export default function HomeScreen() {
     );
   };
 
+  const passesCuisine = (cuisineType: string | null | undefined) => {
+    if (selectedCuisines.length === 0) return true;
+    return selectedCuisines.includes((cuisineType ?? "").trim());
+  };
+
   const filteredBase = useMemo(() => {
     const q = query.trim().toLowerCase();
-
-    const passesCuisine = (r: RestaurantRow) => {
-      if (selectedCuisines.length === 0) return true;
-      return selectedCuisines.includes((r.cuisine_type ?? "").trim());
-    };
 
     let list = restaurants.filter((r) => {
       const name = (r.name ?? "").toLowerCase();
@@ -132,43 +140,38 @@ export default function HomeScreen() {
         cuisine.includes(q) ||
         desc.includes(q);
 
-      return matches && passesCuisine(r);
+      return matches && passesCuisine(r.cuisine_type);
     });
 
     list.sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
     return list;
   }, [restaurants, query, selectedCuisines]);
 
+  // ✅ Distance mode filtering now works because we enrich from restaurantById
   const filteredNearby = useMemo(() => {
     const q = query.trim().toLowerCase();
 
-    const passesCuisine = (cuisineType: string | null | undefined) => {
-      if (selectedCuisines.length === 0) return true;
-      return selectedCuisines.includes((cuisineType ?? "").trim());
-    };
-
-    // We don’t have cuisine/description inside the RPC payload unless your function returns it.
-    // So: when sorting by distance, search/filter by name only (and cuisine only if your RPC includes it).
     return nearby.filter((n) => {
-      const name = (n.restaurant?.name ?? "").toLowerCase();
-      const matches = q.length === 0 || name.includes(q);
-      // cuisine filter can’t be applied reliably unless you return cuisine_type in RPC.
-      return matches && passesCuisine(undefined);
+      const base = restaurantById.get(n.restaurant.id);
+
+      const name = (n.restaurant?.name ?? base?.name ?? "").toLowerCase();
+      const cuisine = (base?.cuisine_type ?? "").toLowerCase();
+      const desc = (base?.description ?? "").toLowerCase();
+
+      const matches =
+        q.length === 0 ||
+        name.includes(q) ||
+        cuisine.includes(q) ||
+        desc.includes(q);
+
+      return matches && passesCuisine(base?.cuisine_type);
     });
-  }, [nearby, query, selectedCuisines]);
+  }, [nearby, query, selectedCuisines, restaurantById]);
 
-  const activeList = sortMode === "distance" ? filteredNearby : filteredBase;
-
-  const headerSubtitle =
-    sortMode === "distance"
-      ? location
-        ? "Sorted by nearest (within 5km)"
-        : "Enable location to sort by distance"
-      : "Search by name or cuisine";
+  const activeList = sortMode === "Distance" ? filteredNearby : filteredBase;
 
   const onPressSort = () => {
-    if (sortMode === "name") {
-      // switch to distance
+    if (sortMode === "Name") {
       if (isLoading) {
         Alert.alert("Location", "Getting your location… try again in a moment.");
         return;
@@ -180,20 +183,31 @@ export default function HomeScreen() {
         );
         return;
       }
-      setSortMode("distance");
+      setSortMode("Distance");
     } else {
-      setSortMode("name");
+      setSortMode("Name");
     }
   };
 
   const renderItem = ({ item }: { item: any }) => {
-    if (sortMode === "distance") {
+    if (sortMode === "Distance") {
       const n = item as NearbyRestaurant;
       const km = (n.distance_meters / 1000).toFixed(2);
+
+      // pull cuisine/desc from the base restaurants list
+      const base = restaurantById.get(n.restaurant.id);
+
       return (
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{n.restaurant.name}</Text>
           <Text style={styles.cardMeta}>{km} km away</Text>
+
+          {!!base?.cuisine_type && (
+            <Text style={styles.cardCuisine}>{base.cuisine_type}</Text>
+          )}
+          {!!base?.description && (
+            <Text style={styles.cardDesc}>{base.description}</Text>
+          )}
         </View>
       );
     }
@@ -202,7 +216,9 @@ export default function HomeScreen() {
     return (
       <View style={styles.card}>
         <Text style={styles.cardTitle}>{r.name ?? "Unnamed restaurant"}</Text>
-        {!!r.cuisine_type && <Text style={styles.cardCuisine}>{r.cuisine_type}</Text>}
+        {!!r.cuisine_type && (
+          <Text style={styles.cardCuisine}>{r.cuisine_type}</Text>
+        )}
         {!!r.description && <Text style={styles.cardDesc}>{r.description}</Text>}
       </View>
     );
@@ -210,64 +226,69 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      {/* Header (title + profile button) */}
+      {/* Header */}
       <View
         style={[
           styles.header,
           {
-            paddingTop: Math.max(8, insets.top * 0.25),
+            paddingTop: Math.max(10, insets.top * 0.45),
           },
         ]}
       >
-        <View style={{ flex: 1, paddingRight: 12 }}>
-          <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
-            Discover Food 🍽️
-          </Text>
-          <Text style={styles.subtitle}>{headerSubtitle}</Text>
+        {/* Center logo */}
+        <View style={styles.logoRow}>
+          <Image
+            source={require("../../../assets/images/fooddiscovery-logo.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
 
-        {/* Profile button (top-right, NOT cut off) */}
+        {/* Profile icon button */}
         <Pressable
           onPress={() => router.replace("/")}
           style={({ pressed }) => [
-            styles.profileBtn,
-            pressed && { opacity: 0.7 },
+            styles.profileIconBtn,
+            pressed && { opacity: 0.75 },
           ]}
-          hitSlop={10}
+          hitSlop={12}
         >
-          <Text style={styles.profileBtnText}>Profile</Text>
+          <Text style={styles.profileIcon}>👤</Text>
         </Pressable>
       </View>
 
       {/* Search */}
       <View style={styles.searchWrap}>
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Search by name or cuisine"
-          placeholderTextColor="#9AA0A6"
-          style={styles.search}
-          autoCapitalize="none"
-          autoCorrect={false}
-          returnKeyType="search"
-        />
+        <View style={styles.searchBar}>
+          <Text style={styles.searchIcon}>🔍</Text>
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search by name or cuisine"
+            placeholderTextColor="#9AA0A6"
+            style={styles.searchInput}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="search"
+          />
+        </View>
       </View>
 
       {/* Controls */}
       <View style={styles.controls}>
         <Pressable
           onPress={() => setFiltersOpen(true)}
-          style={({ pressed }) => [styles.pillPrimary, pressed && { opacity: 0.8 }]}
+          style={({ pressed }) => [styles.pillSmallNavy, pressed && { opacity: 0.85 }]}
         >
-          <Text style={styles.pillPrimaryText}>Filters</Text>
+          <Text style={styles.pillSmallNavyText}>Filters</Text>
         </Pressable>
 
         <Pressable
           onPress={onPressSort}
-          style={({ pressed }) => [styles.pill, pressed && { opacity: 0.8 }]}
+          style={({ pressed }) => [styles.pillSmallGold, pressed && { opacity: 0.85 }]}
         >
-          <Text style={styles.pillText}>
-            Sort: {sortMode === "name" ? "Name" : "Distance"}
+          <Text style={styles.pillSmallGoldText}>
+            Sort: {sortMode === "Name" ? "Name" : "Distance"}
           </Text>
         </Pressable>
 
@@ -277,7 +298,7 @@ export default function HomeScreen() {
               setQuery("");
               setSelectedCuisines([]);
             }}
-            style={({ pressed }) => [styles.pillGhost, pressed && { opacity: 0.8 }]}
+            style={({ pressed }) => [styles.pillGhost, pressed && { opacity: 0.85 }]}
           >
             <Text style={styles.pillGhostText}>Clear</Text>
           </Pressable>
@@ -288,13 +309,13 @@ export default function HomeScreen() {
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" />
-          <Text style={{ marginTop: 10, color: "#666" }}>Loading…</Text>
+          <Text style={{ marginTop: 10, color: "#6B7280" }}>Loading…</Text>
         </View>
       ) : (
         <FlatList
           data={activeList}
           keyExtractor={(item: any) =>
-            sortMode === "distance" ? String(item.location_id) : String(item.id)
+            sortMode === "Distance" ? String(item.location_id) : String(item.id)
           }
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
@@ -324,9 +345,7 @@ export default function HomeScreen() {
             <Text style={styles.modalSectionTitle}>Cuisine</Text>
 
             {cuisineOptions.length === 0 ? (
-              <Text style={{ color: "#666" }}>
-                No cuisine types found yet.
-              </Text>
+              <Text style={{ color: "#6B7280" }}>No cuisine types found yet.</Text>
             ) : (
               <View style={styles.cuisineGrid}>
                 {cuisineOptions.map((c) => {
@@ -361,95 +380,126 @@ export default function HomeScreen() {
   );
 }
 
+const NAVY = "#0B2D5B";
+const GOLD = "#F5C542";
+const BG = "#F3F6FB";
+
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#FFF" },
+  safe: { flex: 1, backgroundColor: BG },
 
   header: {
     paddingHorizontal: 16,
-    paddingBottom: 10,
+    paddingBottom: 6,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-  },
-  title: {
-    fontSize: 44,
-    fontWeight: "900",
-    letterSpacing: -0.5,
-    color: "#000",
-  },
-  subtitle: {
-    marginTop: 2,
-    color: "#666",
-    fontSize: 14,
+    justifyContent: "center",
+    position: "relative",
   },
 
-  profileBtn: {
-    backgroundColor: "#EAF2FF",
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    alignSelf: "flex-start",
+  logoRow: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
   },
-  profileBtnText: {
-    color: "#007AFF",
-    fontSize: 16,
-    fontWeight: "700",
+  logo: {
+    width: 260,
+    height: 90,
+  },
+
+  profileIconBtn: {
+    position: "absolute",
+    right: 16,
+    top: 10,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: GOLD,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+  profileIcon: {
+    fontSize: 22,
+    color: NAVY,
   },
 
   searchWrap: {
     paddingHorizontal: 16,
-    paddingTop: 4,
+    paddingTop: 10,
     paddingBottom: 10,
   },
-  search: {
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    backgroundColor: "#FAFAFA",
-    borderRadius: 16,
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
     paddingHorizontal: 14,
     paddingVertical: Platform.OS === "ios" ? 14 : 12,
+    borderWidth: 1,
+    borderColor: "#E5ECF7",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
+  },
+  searchIcon: {
+    marginRight: 10,
+    fontSize: 18,
+    opacity: 0.55,
+  },
+  searchInput: {
+    flex: 1,
     fontSize: 16,
-    color: "#111",
+    color: "#111827",
   },
 
   controls: {
     flexDirection: "row",
-    gap: 12,
+    gap: 10,
     paddingHorizontal: 16,
     paddingBottom: 10,
     alignItems: "center",
   },
-  pillPrimary: {
-    backgroundColor: "#007AFF",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
+
+  // Smaller pills (keeps color but not “main CTA” huge)
+  pillSmallNavy: {
+    backgroundColor: NAVY,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: 999,
   },
-  pillPrimaryText: {
+  pillSmallNavyText: {
     color: "#FFF",
     fontWeight: "800",
-    fontSize: 16,
+    fontSize: 14,
   },
-  pill: {
-    backgroundColor: "#EFEFEF",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
+
+  pillSmallGold: {
+    backgroundColor: GOLD,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: 999,
   },
-  pillText: {
-    color: "#111",
-    fontWeight: "800",
-    fontSize: 16,
+  pillSmallGoldText: {
+    color: NAVY,
+    fontWeight: "900",
+    fontSize: 14,
   },
+
   pillGhost: {
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
     borderRadius: 999,
   },
   pillGhostText: {
-    color: "#007AFF",
+    color: NAVY,
     fontWeight: "800",
-    fontSize: 16,
+    fontSize: 14,
   },
 
   listContent: {
@@ -458,35 +508,42 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: "#F4F4F4",
+    backgroundColor: "#FFFFFF",
     borderRadius: 22,
     padding: 18,
     marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#E5ECF7",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 2,
   },
   cardTitle: {
     fontSize: 34,
     fontWeight: "900",
-    color: "#000",
+    color: "#0B1220",
     letterSpacing: -0.2,
   },
   cardCuisine: {
-    marginTop: 4,
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#007AFF",
+    marginTop: 6,
+    fontSize: 18,
+    fontWeight: "900",
+    color: NAVY,
   },
   cardDesc: {
     marginTop: 6,
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: "700",
-    color: "#5A5A5A",
-    lineHeight: 28,
+    color: "#6B7280",
+    lineHeight: 24,
   },
   cardMeta: {
     marginTop: 8,
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#5A5A5A",
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#6B7280",
   },
 
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
@@ -496,8 +553,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 24,
   },
-  emptyTitle: { fontSize: 24, fontWeight: "800", color: "#111" },
-  emptySub: { marginTop: 6, fontSize: 16, color: "#666", textAlign: "center" },
+  emptyTitle: { fontSize: 24, fontWeight: "800", color: "#111827" },
+  emptySub: { marginTop: 6, fontSize: 16, color: "#6B7280", textAlign: "center" },
 
   modalBackdrop: {
     flex: 1,
@@ -517,8 +574,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   modalTitle: { fontSize: 20, fontWeight: "900" },
-  modalClose: { fontSize: 16, fontWeight: "800", color: "#007AFF" },
-  modalSectionTitle: { marginTop: 8, marginBottom: 8, fontSize: 14, color: "#666" },
+  modalClose: { fontSize: 16, fontWeight: "800", color: NAVY },
+  modalSectionTitle: { marginTop: 8, marginBottom: 8, fontSize: 14, color: "#6B7280" },
 
   cuisineGrid: {
     flexDirection: "row",
@@ -529,15 +586,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 999,
-    backgroundColor: "#EFEFEF",
+    backgroundColor: "#F0F4FB",
   },
   cuisineChipActive: {
-    backgroundColor: "#007AFF",
+    backgroundColor: NAVY,
   },
   cuisineChipText: {
     fontSize: 14,
     fontWeight: "800",
-    color: "#111",
+    color: "#111827",
   },
   cuisineChipTextActive: {
     color: "#FFF",
