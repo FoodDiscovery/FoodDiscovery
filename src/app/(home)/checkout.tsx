@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+// src/app/(home)/checkout.tsx
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -6,36 +7,35 @@ import {
   Text,
   TouchableOpacity,
   View,
+  StyleSheet,
+  Platform,
+  Image,
 } from "react-native";
 import { router } from "expo-router";
 import { useStripe } from "@stripe/stripe-react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { supabase } from "../../lib/supabase";
 import { useCart, type CartItem } from "../../Providers/CartProvider";
 import { useAuth } from "../../Providers/AuthProvider";
-import { menuViewStyles as styles } from "../../components/styles";
 
-function requiredEnv(name: "EXPO_PUBLIC_SUPABASE_URL" | "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"): string {
+function requiredEnv(
+  name: "EXPO_PUBLIC_SUPABASE_URL" | "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
+): string {
   const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
+  if (!value) throw new Error(`Missing required environment variable: ${name}`);
   return value;
 }
 
-// Grouping cart items by restaurant on checkout screen
 function groupByRestaurant(
   items: CartItem[]
 ): { restaurantId: string; restaurantName: string; items: CartItem[] }[] {
   const byRestaurant = new Map<string, CartItem[]>();
   for (const item of items) {
     const key = item.restaurantId;
-    let list = byRestaurant.get(key);
-    if (!list) {
-      list = [];
-      byRestaurant.set(key, list);
-    }
+    const list = byRestaurant.get(key) ?? [];
     list.push(item);
+    byRestaurant.set(key, list);
   }
   return Array.from(byRestaurant.entries()).map(([restaurantId, items]) => ({
     restaurantId,
@@ -51,17 +51,18 @@ const MERCHANT_DISPLAY_NAME = "Food Discovery";
 const SALES_TAX_RATE = 0.0975; // 9.75%
 
 export default function CheckoutScreen() {
+  const insets = useSafeAreaInsets();
   const { items, subtotal, itemCount, clearCart } = useCart();
   const { session } = useAuth();
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [restaurantAddresses, setRestaurantAddresses] = useState<Record<string, string>>({});
 
-  const tax = subtotal * SALES_TAX_RATE;
-  const total = subtotal + tax;
+  const tax = useMemo(() => subtotal * SALES_TAX_RATE, [subtotal]);
+  const total = useMemo(() => subtotal + tax, [subtotal, tax]);
 
-  // Fetching restaurant addresses from supabase to display on checkout screen
   useEffect(() => {
     if (items.length === 0) {
       setRestaurantAddresses({});
@@ -73,12 +74,11 @@ export default function CheckoutScreen() {
         .from("locations")
         .select("restaurant_id, address_text")
         .in("restaurant_id", restaurantIds);
+
       const byId: Record<string, string> = {};
       for (const row of data ?? []) {
         const r = row as { restaurant_id: string; address_text: string | null };
-        if (r.address_text && !byId[r.restaurant_id]) {
-          byId[r.restaurant_id] = r.address_text;
-        }
+        if (r.address_text && !byId[r.restaurant_id]) byId[r.restaurant_id] = r.address_text;
       }
       setRestaurantAddresses(byId);
     })();
@@ -111,12 +111,8 @@ export default function CheckoutScreen() {
           }))
         ),
       };
-      if (session?.user?.id) {
-        metadata.user_id = session.user.id;
-      }
-      if (session?.user?.email) {
-        metadata.user_email = session.user.email;
-      }
+      if (session?.user?.id) metadata.user_id = session.user.id;
+      if (session?.user?.email) metadata.user_email = session.user.email;
 
       const res = await fetch(PAYMENT_SHEET_URL, {
         method: "POST",
@@ -140,25 +136,20 @@ export default function CheckoutScreen() {
         client_secret?: string;
         paymentIntentClientSecret?: string;
       };
-      const clientSecret =
-        data.paymentIntentClientSecret ?? data.client_secret;
-      if (!clientSecret) {
-        throw new Error("No payment client secret returned");
-      }
+      const clientSecret = data.paymentIntentClientSecret ?? data.client_secret;
+      if (!clientSecret) throw new Error("No payment client secret returned");
 
       const { error: initError } = await initPaymentSheet({
         paymentIntentClientSecret: clientSecret,
         merchantDisplayName: MERCHANT_DISPLAY_NAME,
+        // If you want to remove the Stripe warning you saw, set your returnURL:
+        // returnURL: "fooddiscovery://stripe-redirect",
       });
-      if (initError) {
-        throw new Error(initError.message);
-      }
+      if (initError) throw new Error(initError.message);
 
       const { error: presentError } = await presentPaymentSheet();
       if (presentError) {
-        if (presentError.code === "Canceled") {
-          return;
-        }
+        if (presentError.code === "Canceled") return;
         throw new Error(presentError.message);
       }
 
@@ -167,110 +158,264 @@ export default function CheckoutScreen() {
         { text: "OK", onPress: () => router.back() },
       ]);
     } catch (e) {
-      const message = e instanceof Error ? e.message : "Payment failed.";
-      setError(message);
+      setError(e instanceof Error ? e.message : "Payment failed.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.page}>
-      <Text style={styles.heading}>Checkout</Text>
-      <Text style={styles.subtitle}>
-        Pay with card. Your order will be confirmed after payment.
-      </Text>
+    <SafeAreaView style={t.safe} edges={["top"]}>
+      {/* Header (matches Home theme) */}
+      <View style={[t.header, { paddingTop: Math.max(10, insets.top * 0.45) }]}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={t.backPill}
+          activeOpacity={0.85}
+        >
+          <Text style={t.backPillText}>← Back</Text>
+        </TouchableOpacity>
 
-      {items.length === 0 ? (
-        <Text style={styles.emptyText}>
-          Your cart is empty. Add items from a restaurant first.
-        </Text>
-      ) : (
-        <>
-          {groupByRestaurant(items).map(({ restaurantId, restaurantName, items: restaurantItems }) => (
-            <View key={restaurantId} style={[styles.categoryCard, { marginBottom: 12 }]}>
-              <Text style={[styles.itemName, { fontWeight: "700", marginBottom: 4 }]}>
-                {restaurantName}
-              </Text>
-              {restaurantAddresses[restaurantId] ? (
-                <Text
-                  style={[
-                    styles.itemName,
-                    {
-                      fontWeight: "400",
-                      fontSize: 13,
-                      color: "#666",
-                      marginBottom: 8,
-                    },
-                  ]}
-                >
-                  {restaurantAddresses[restaurantId]}
-                </Text>
-              ) : null}
-              {restaurantItems.map((item) => (
-                <View
-                  key={item.key}
-                  style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 4 }}
-                >
-                  <Text style={styles.itemName}>
-                    {item.quantity} {item.name}
-                  </Text>
-                  <Text style={styles.itemPrice}>
-                    ${(item.quantity * item.price).toFixed(2)}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          ))}
+        <View style={t.headerCenter}>
+          <Image
+            source={require("../../../assets/images/fooddiscovery-logo.png")}
+            style={t.headerLogo}
+            resizeMode="contain"
+          />
+          <Text style={t.title}>Checkout</Text>
+          <Text style={t.subtitle}>Pay with card. Confirm after payment.</Text>
+        </View>
 
-          <View style={styles.categoryCard}>
-            <Text style={styles.itemName}>Items: {itemCount}</Text>
-            <Text style={styles.itemPrice}>
-              Subtotal: ${subtotal.toFixed(2)}
-            </Text>
-            <Text style={styles.itemPrice}>
-              Tax: ${tax.toFixed(2)}
-            </Text>
-            <Text style={[styles.itemPrice, { fontWeight: "700", marginTop: 4 }]}>
-              Total: ${total.toFixed(2)}
-            </Text>
+        {/* spacer to balance header */}
+        <View style={{ width: 86 }} />
+      </View>
+
+      <ScrollView
+        contentContainerStyle={[
+          t.page,
+          { paddingBottom: Math.max(24, insets.bottom + 18) },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {items.length === 0 ? (
+          <View style={t.emptyCard}>
+            <Text style={t.emptyTitle}>Your cart is empty</Text>
+            <Text style={t.emptySub}>Add items from a restaurant first.</Text>
           </View>
+        ) : (
+          <>
+            {groupByRestaurant(items).map(
+              ({ restaurantId, restaurantName, items: restaurantItems }) => (
+                <View key={restaurantId} style={t.card}>
+                  <Text style={t.cardTitle}>{restaurantName}</Text>
 
-          {error ? (
-            <View style={[styles.categoryCard, { borderColor: "#B42318" }]}>
-              <Text style={[styles.itemName, { color: "#B42318" }]}>
-                {error}
+                  {restaurantAddresses[restaurantId] ? (
+                    <Text style={t.cardMeta}>{restaurantAddresses[restaurantId]}</Text>
+                  ) : null}
+
+                  <View style={{ height: 10 }} />
+
+                  {restaurantItems.map((item) => (
+                    <View key={item.key} style={t.lineRow}>
+                      <Text style={t.lineLeft} numberOfLines={2}>
+                        {item.quantity} × {item.name}
+                      </Text>
+                      <Text style={t.lineRight}>
+                        ${(item.quantity * item.price).toFixed(2)}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )
+            )}
+
+            <View style={t.card}>
+              <Text style={t.summaryRow}>Items: {itemCount}</Text>
+              <Text style={t.summaryRow}>Subtotal: ${subtotal.toFixed(2)}</Text>
+              <Text style={t.summaryRow}>Tax: ${tax.toFixed(2)}</Text>
+              <Text style={[t.summaryRow, t.summaryTotal]}>
+                Total: ${total.toFixed(2)}
               </Text>
             </View>
-          ) : null}
 
-          <TouchableOpacity
-            style={[
-              styles.addBtn,
-              {
-                alignItems: "center",
-                paddingVertical: 14,
-                backgroundColor: "#34A853",
-                opacity: loading ? 0.7 : 1,
-              },
-            ]}
-            onPress={handleCheckout}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={[styles.addBtnText, { fontSize: 16 }]}>
-                Pay ${total.toFixed(2)}
-              </Text>
-            )}
-          </TouchableOpacity>
-        </>
-      )}
+            {error ? (
+              <View style={[t.card, { borderColor: "#B42318" }]}>
+                <Text style={t.errorText}>{error}</Text>
+              </View>
+            ) : null}
 
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-        <Text style={styles.backBtnText}>← Back</Text>
-      </TouchableOpacity>
-    </ScrollView>
+            <TouchableOpacity
+              style={[t.payBtn, loading && { opacity: 0.7 }]}
+              onPress={handleCheckout}
+              disabled={loading}
+              activeOpacity={0.85}
+            >
+              {loading ? (
+                <ActivityIndicator color={NAVY} />
+              ) : (
+                <Text style={t.payBtnText}>Pay ${total.toFixed(2)}</Text>
+              )}
+            </TouchableOpacity>
+          </>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
+
+const NAVY = "#0B2D5B";
+const GOLD = "#F5C542";
+const BG = "#F3F6FB";
+
+const t = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: BG },
+
+  header: {
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  backPill: {
+    backgroundColor: NAVY,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 999,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+    width: 86,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  backPillText: { color: "#fff", fontWeight: "900", fontSize: 14 },
+
+  headerCenter: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerLogo: {
+    width: 210,
+    height: 56,
+    marginBottom: 2,
+  },
+
+  title: {
+    marginTop: 2,
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#0B1220",
+    letterSpacing: -0.2,
+  },
+  subtitle: {
+    marginTop: 4,
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#6B7280",
+    textAlign: "center",
+  },
+
+  page: {
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === "ios" ? 6 : 10,
+    gap: 12,
+  },
+
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 22,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#E5ECF7",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 2,
+  },
+
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#0B1220",
+  },
+  cardMeta: {
+    marginTop: 6,
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#6B7280",
+  },
+
+  lineRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    paddingVertical: 6,
+  },
+  lineLeft: {
+    flex: 1,
+    paddingRight: 10,
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#111827",
+  },
+  lineRight: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: NAVY,
+  },
+
+  summaryRow: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#111827",
+    paddingVertical: 4,
+  },
+  summaryTotal: {
+    marginTop: 6,
+    fontSize: 16,
+    fontWeight: "900",
+    color: NAVY,
+  },
+
+  errorText: { fontSize: 14, fontWeight: "900", color: "#B42318" },
+
+  payBtn: {
+    backgroundColor: GOLD,
+    borderRadius: 999,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
+  },
+  payBtnText: {
+    color: NAVY,
+    fontWeight: "900",
+    fontSize: 16,
+  },
+
+  emptyCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 22,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: "#E5ECF7",
+    alignItems: "center",
+  },
+  emptyTitle: { fontSize: 18, fontWeight: "900", color: "#111827" },
+  emptySub: {
+    marginTop: 6,
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#6B7280",
+    textAlign: "center",
+  },
+});
