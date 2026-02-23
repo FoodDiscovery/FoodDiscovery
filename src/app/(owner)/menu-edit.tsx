@@ -7,7 +7,6 @@ import {
   ScrollView,
   Text,
   View,
-  Image,
   TouchableOpacity,
 } from "react-native";
 import { supabase } from "../../lib/supabase";
@@ -19,6 +18,7 @@ import type { MenuCategory, MenuItem, ItemFormData } from "../../components/menu
 import { menuEditStyles as styles } from "../../components/styles";
 import CategoryModal from "../../components/menu/CategoryModal";
 import ItemModal from "../../components/menu/ItemModal";
+import MenuEditorCategoryList from "../../components/menu/MenuEditorCategoryList";
 import PhotoModal from "../../components/menu/PhotoModal";
 
 // Screen 
@@ -497,100 +497,17 @@ export default function MenuEditScreen() {
           </Text>
         )}
 
-        {/* Category list */}
-        {categories.map((cat, idx) => {
-          const catItems = itemsByCategory.get(cat.id) ?? [];
-
-          return (
-            <View key={cat.id} style={styles.categoryCard}>
-              {/* Category header row */}
-              <View style={styles.categoryHeader}>
-                <TouchableOpacity
-                  style={{ flex: 1 }}
-                  onPress={() => openCategoryModal(cat)}
-                >
-                  <Text style={styles.categoryName}>{cat.name}</Text>
-                </TouchableOpacity>
-
-                <View style={styles.categoryActions}>
-                  <TouchableOpacity
-                    onPress={() => moveCategory(cat.id, "up")}
-                    disabled={idx === 0}
-                    style={[
-                      styles.arrowBtn,
-                      idx === 0 && styles.disabledBtn,
-                    ]}
-                  >
-                    <Text style={styles.arrowText}>▲</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={() => moveCategory(cat.id, "down")}
-                    disabled={idx === categories.length - 1}
-                    style={[
-                      styles.arrowBtn,
-                      idx === categories.length - 1 && styles.disabledBtn,
-                    ]}
-                  >
-                    <Text style={styles.arrowText}>▼</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={() => deleteCategory(cat.id)}
-                    style={styles.xBtn}
-                  >
-                    <Text style={styles.xBtnText}>✕</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* Items in this category */}
-              {catItems.map((item) => (
-                <View key={item.id} style={styles.itemRow}>
-                  <TouchableOpacity onPress={() => openPhotoModal(item)}>
-                    {item.image_url ? (
-                      <Image
-                        source={{ uri: item.image_url }}
-                        style={styles.itemThumb}
-                      />
-                    ) : (
-                      <View style={styles.itemThumbPlaceholder}>
-                        <Text style={{ fontSize: 18 }}>📷</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.itemInfo}
-                    onPress={() => openItemModal(cat.id, item)}
-                  >
-                    <Text style={styles.itemName}>{item.name}</Text>
-                    <Text style={styles.itemPrice}>
-                      ${item.price.toFixed(2)}
-                    </Text>
-                    {!item.is_available && (
-                      <Text style={styles.unavailableTag}>Unavailable</Text>
-                    )}
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={() => deleteItem(item.id)}
-                    style={styles.xBtn}
-                  >
-                    <Text style={styles.xBtnText}>✕</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-
-              <TouchableOpacity
-                style={styles.addItemBtn}
-                onPress={() => openItemModal(cat.id)}
-              >
-                <Text style={styles.addItemBtnText}>+ Add Item</Text>
-              </TouchableOpacity>
-            </View>
-          );
-        })}
+        <MenuEditorCategoryList
+          categories={categories}
+          itemsByCategory={itemsByCategory}
+          onEditCategory={openCategoryModal}
+          onMoveCategory={moveCategory}
+          onDeleteCategory={deleteCategory}
+          onOpenPhoto={openPhotoModal}
+          onEditItem={openItemModal}
+          onDeleteItem={deleteItem}
+          onAddItem={(categoryId) => openItemModal(categoryId)}
+        />
 
       </ScrollView>
 
