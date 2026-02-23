@@ -7,7 +7,6 @@ import {
   Text,
   View,
   Pressable,
-  Platform,
   StyleSheet,
   Image,
 } from "react-native";
@@ -21,6 +20,9 @@ import type { MenuCategory, MenuItem } from "../../../components/menu/types";
 import MenuCategoryCard from "../../../components/menu/MenuCategoryCard";
 import CartBar from "../../../components/menu/CartBar";
 
+// ✅ Fix: forbid require() imports
+import FoodDiscoveryLogo from "../../../../assets/images/fooddiscovery-logo.png";
+
 interface RestaurantSummary {
   id: string;
   name: string | null;
@@ -28,15 +30,17 @@ interface RestaurantSummary {
   cuisine_type: string | null;
 }
 
-type ProfileRow = { role?: string | null };
+interface ProfileRow {
+  role?: string | null;
+}
 
 const NAVY = "#0B2D5B";
-const GOLD = "#F5C542";
 const BG = "#F3F6FB";
 
 export default function RestaurantMenuScreen() {
   const { restaurantId } = useLocalSearchParams<{ restaurantId: string }>();
-  const { items: cartItems, addItem, incrementItem, decrementItem, itemCount, subtotal } = useCart();
+  const { items: cartItems, addItem, incrementItem, decrementItem, itemCount, subtotal } =
+    useCart();
   const { session } = useAuth();
   const insets = useSafeAreaInsets();
 
@@ -90,7 +94,10 @@ export default function RestaurantMenuScreen() {
           return;
         }
         if (categoriesRes.error) {
-          Alert.alert("Load failed", "Could not load menu categories: " + categoriesRes.error.message);
+          Alert.alert(
+            "Load failed",
+            "Could not load menu categories: " + categoriesRes.error.message
+          );
           setLoading(false);
           return;
         }
@@ -184,7 +191,11 @@ export default function RestaurantMenuScreen() {
 
           <Pressable
             onPress={() => router.back()}
-            style={({ pressed }) => [styles.pillSmallNavy, pressed && { opacity: 0.85 }, { marginTop: 14 }]}
+            style={({ pressed }) => [
+              styles.pillSmallNavy,
+              pressed && { opacity: 0.85 },
+              { marginTop: 14 },
+            ]}
           >
             <Text style={styles.pillSmallNavyText}>← Back</Text>
           </Pressable>
@@ -206,11 +217,7 @@ export default function RestaurantMenuScreen() {
         </Pressable>
 
         <View style={styles.topLogoWrap} pointerEvents="none">
-          <Image
-            source={require("../../../../assets/images/fooddiscovery-logo.png")}
-            style={styles.topLogo}
-            resizeMode="contain"
-          />
+          <Image source={FoodDiscoveryLogo} style={styles.topLogo} resizeMode="contain" />
         </View>
       </View>
 
@@ -231,7 +238,9 @@ export default function RestaurantMenuScreen() {
             </View>
           )}
 
-          {!!restaurant?.description && <Text style={styles.subtitle}>{restaurant.description}</Text>}
+          {!!restaurant?.description && (
+            <Text style={styles.subtitle}>{restaurant.description}</Text>
+          )}
         </View>
 
         {categories.length === 0 ? (

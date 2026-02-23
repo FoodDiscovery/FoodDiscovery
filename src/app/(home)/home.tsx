@@ -20,15 +20,18 @@ import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../lib/supabase";
 import { useLocation } from "../../Providers/LocationProvider";
 
-type RestaurantRow = {
+// ✅ Fix: forbid require() imports
+import FoodDiscoveryLogo from "../../../assets/images/fooddiscovery-logo.png";
+
+interface RestaurantRow {
   id: string;
   name: string | null;
   description: string | null;
   cuisine_type: string | null;
   image_url: string | null;
-};
+}
 
-type NearbyRestaurant = {
+interface NearbyRestaurant {
   location_id: number;
   distance_meters: number;
   latitude: number;
@@ -38,13 +41,15 @@ type NearbyRestaurant = {
     name: string;
     owner_id: string;
   };
-};
+}
 
 type SortMode = "Name" | "Distance";
 
 const NAVY = "#0B2D5B";
 const GOLD = "#F5C542";
 const BG = "#F3F6FB";
+
+type ActiveListItem = RestaurantRow | NearbyRestaurant;
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -173,7 +178,8 @@ export default function HomeScreen() {
     });
   }, [nearby, query, selectedCuisines, restaurantById]);
 
-  const activeList = sortMode === "Distance" ? filteredNearby : filteredBase;
+  const activeList: ActiveListItem[] =
+    sortMode === "Distance" ? filteredNearby : filteredBase;
 
   const headerSubtitle =
     sortMode === "Distance"
@@ -224,7 +230,8 @@ export default function HomeScreen() {
     return <Image source={{ uri }} style={styles.cardImage} resizeMode="cover" />;
   };
 
-  const renderItem = ({ item }: { item: any }) => {
+  // ✅ Fix: remove `any` by typing render item
+  const renderItem = ({ item }: { item: ActiveListItem }) => {
     if (sortMode === "Distance") {
       const n = item as NearbyRestaurant;
       const km = (n.distance_meters / 1000).toFixed(2);
@@ -286,11 +293,7 @@ export default function HomeScreen() {
         ]}
       >
         <View style={styles.logoRow}>
-          <Image
-            source={require("../../../assets/images/fooddiscovery-logo.png")}
-            style={styles.logo}
-            resizeMode="contain"
-          />
+          <Image source={FoodDiscoveryLogo} style={styles.logo} resizeMode="contain" />
           <Text style={styles.subtitle}>{headerSubtitle}</Text>
         </View>
 
@@ -363,8 +366,11 @@ export default function HomeScreen() {
       ) : (
         <FlatList
           data={activeList}
-          keyExtractor={(item: any) =>
-            sortMode === "Distance" ? String(item.location_id) : String(item.id)
+          // ✅ Fix: remove `any`
+          keyExtractor={(item: ActiveListItem) =>
+            sortMode === "Distance"
+              ? String((item as NearbyRestaurant).location_id)
+              : String((item as RestaurantRow).id)
           }
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}

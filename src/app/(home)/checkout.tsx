@@ -19,6 +19,9 @@ import { supabase } from "../../lib/supabase";
 import { useCart, type CartItem } from "../../Providers/CartProvider";
 import { useAuth } from "../../Providers/AuthProvider";
 
+// ✅ Fix: forbid require() imports
+import FoodDiscoveryLogo from "../../../assets/images/fooddiscovery-logo.png";
+
 function requiredEnv(
   name: "EXPO_PUBLIC_SUPABASE_URL" | "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
 ): string {
@@ -142,7 +145,6 @@ export default function CheckoutScreen() {
       const { error: initError } = await initPaymentSheet({
         paymentIntentClientSecret: clientSecret,
         merchantDisplayName: MERCHANT_DISPLAY_NAME,
-        // If you want to remove the Stripe warning you saw, set your returnURL:
         // returnURL: "fooddiscovery://stripe-redirect",
       });
       if (initError) throw new Error(initError.message);
@@ -177,11 +179,7 @@ export default function CheckoutScreen() {
         </TouchableOpacity>
 
         <View style={t.headerCenter}>
-          <Image
-            source={require("../../../assets/images/fooddiscovery-logo.png")}
-            style={t.headerLogo}
-            resizeMode="contain"
-          />
+          <Image source={FoodDiscoveryLogo} style={t.headerLogo} resizeMode="contain" />
           <Text style={t.title}>Checkout</Text>
           <Text style={t.subtitle}>Pay with card. Confirm after payment.</Text>
         </View>
