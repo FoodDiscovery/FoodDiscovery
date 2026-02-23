@@ -170,22 +170,11 @@ export default function CheckoutScreen() {
     <SafeAreaView style={t.safe} edges={["top"]}>
       {/* Header (matches Home theme) */}
       <View style={[t.header, { paddingTop: Math.max(10, insets.top * 0.45) }]}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={t.backPill}
-          activeOpacity={0.85}
-        >
-          <Text style={t.backPillText}>← Back</Text>
-        </TouchableOpacity>
-
         <View style={t.headerCenter}>
           <Image source={FoodDiscoveryLogo} style={t.headerLogo} resizeMode="contain" />
           <Text style={t.title}>Checkout</Text>
           <Text style={t.subtitle}>Pay with card. Confirm after payment.</Text>
         </View>
-
-        {/* spacer to balance header */}
-        <View style={{ width: 86 }} />
       </View>
 
       <ScrollView
@@ -275,22 +264,6 @@ const t = StyleSheet.create({
     alignItems: "center",
   },
 
-  backPill: {
-    backgroundColor: NAVY,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 999,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-    width: 86,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  backPillText: { color: "#fff", fontWeight: "900", fontSize: 14 },
-
   headerCenter: {
     flex: 1,
     alignItems: "center",
@@ -304,15 +277,15 @@ const t = StyleSheet.create({
 
   title: {
     marginTop: 2,
-    fontSize: 20,
-    fontWeight: "900",
+    fontSize: 22,
+    fontWeight: "700",
     color: "#0B1220",
     letterSpacing: -0.2,
   },
   subtitle: {
     marginTop: 4,
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "600",
     color: "#6B7280",
     textAlign: "center",
   },
@@ -338,13 +311,13 @@ const t = StyleSheet.create({
 
   cardTitle: {
     fontSize: 18,
-    fontWeight: "900",
+    fontWeight: "700",
     color: "#0B1220",
   },
   cardMeta: {
     marginTop: 6,
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "600",
     color: "#6B7280",
   },
 
@@ -358,29 +331,29 @@ const t = StyleSheet.create({
     flex: 1,
     paddingRight: 10,
     fontSize: 15,
-    fontWeight: "800",
+    fontWeight: "600",
     color: "#111827",
   },
   lineRight: {
     fontSize: 15,
-    fontWeight: "900",
+    fontWeight: "600",
     color: NAVY,
   },
 
   summaryRow: {
     fontSize: 15,
-    fontWeight: "800",
+    fontWeight: "600",
     color: "#111827",
     paddingVertical: 4,
   },
   summaryTotal: {
     marginTop: 6,
     fontSize: 16,
-    fontWeight: "900",
+    fontWeight: "700",
     color: NAVY,
   },
 
-  errorText: { fontSize: 14, fontWeight: "900", color: "#B42318" },
+  errorText: { fontSize: 14, fontWeight: "600", color: "#B42318" },
 
   payBtn: {
     backgroundColor: GOLD,
@@ -396,7 +369,7 @@ const t = StyleSheet.create({
   },
   payBtnText: {
     color: NAVY,
-    fontWeight: "900",
+    fontWeight: "700",
     fontSize: 16,
   },
 
@@ -408,11 +381,11 @@ const t = StyleSheet.create({
     borderColor: "#E5ECF7",
     alignItems: "center",
   },
-  emptyTitle: { fontSize: 18, fontWeight: "900", color: "#111827" },
+  emptyTitle: { fontSize: 18, fontWeight: "700", color: "#111827" },
   emptySub: {
     marginTop: 6,
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "600",
     color: "#6B7280",
     textAlign: "center",
   },
