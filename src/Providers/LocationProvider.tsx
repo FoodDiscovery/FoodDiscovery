@@ -1,4 +1,4 @@
-import React, { useCallback, createContext, useState, useContext } from 'react';
+import React, { useCallback, createContext, useState, useContext, useEffect } from 'react';
 import * as Location from 'expo-location';
 
 interface LocationContextType {
@@ -47,6 +47,11 @@ export default function LocationProvider({ children }: { children: React.ReactNo
       setIsLoading(false)
     }
   }, [])
+
+  // Request location when the provider mounts so the map and home screen have it
+  useEffect(() => {
+    fetchLocation()
+  }, [fetchLocation])
 
   // does not allow re-renders if the fields are the same as prev
   const value = React.useMemo(

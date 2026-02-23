@@ -1,5 +1,4 @@
 import { fireEvent, render, waitFor } from "@testing-library/react-native";
-import { router } from "expo-router";
 
 const mockUseLocation = jest.fn();
 const mockFrom = jest.fn();
@@ -86,6 +85,7 @@ describe("MapScreen", () => {
       location: null,
       errorMsg: null,
       isLoading: true,
+      refreshLocation: jest.fn(),
     });
 
     const { getByText } = render(<MapScreen />);
@@ -97,6 +97,7 @@ describe("MapScreen", () => {
       location: null,
       errorMsg: "Permission denied",
       isLoading: false,
+      refreshLocation: jest.fn(),
     });
 
     const { getByText } = render(<MapScreen />);
@@ -108,6 +109,7 @@ describe("MapScreen", () => {
       location: null,
       errorMsg: null,
       isLoading: false,
+      refreshLocation: jest.fn(),
     });
 
     const { getByText } = render(<MapScreen />);
@@ -120,6 +122,7 @@ describe("MapScreen", () => {
       location: { latitude: 40.0, longitude: -74.0 },
       errorMsg: null,
       isLoading: false,
+      refreshLocation: jest.fn(),
     });
     mockRpc.mockResolvedValueOnce({
       data: [
@@ -142,16 +145,18 @@ describe("MapScreen", () => {
     });
   });
 
-  it("calls router.replace when Try Again is pressed", () => {
+  it("calls refreshLocation when Try Again is pressed", () => {
+    const refreshLocation = jest.fn();
     mockUseLocation.mockReturnValue({
       location: null,
       errorMsg: "Error",
       isLoading: false,
+      refreshLocation,
     });
 
     const { getByText } = render(<MapScreen />);
     fireEvent.press(getByText("Try Again"));
 
-    expect(router.replace).toHaveBeenCalledWith("/(home)/map");
+    expect(refreshLocation).toHaveBeenCalled();
   });
 });

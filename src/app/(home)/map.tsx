@@ -35,7 +35,7 @@ interface RestaurantModalInfo {
 export default function MapScreen() {
   const mapRef = useRef<MapView>(null);
   const insets = useSafeAreaInsets();
-  const { location, errorMsg, isLoading } = useLocation();
+  const { location, errorMsg, isLoading, refreshLocation } = useLocation();
   const [restaurants, setRestaurants] = React.useState<Restaurant[]>([]);
 
   const [modalVisible, setModalVisible] = React.useState(false);
@@ -131,7 +131,7 @@ export default function MapScreen() {
     return (
       <View style={styles.container}>
         <Text>{errorMsg || "Location unavailable"}</Text>
-        <Button title="Try Again" onPress={() => router.replace("/(home)/map")} />
+        <Button title="Try Again" onPress={() => refreshLocation()} />
       </View>
     );
   }
