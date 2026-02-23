@@ -6,7 +6,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocation } from "../../Providers/LocationProvider";
 import { supabase } from "../../lib/supabase";
 import RestaurantModal from "../../components/RestaurantModal";
-import ProfileHeaderIcon from "../../components/ProfileHeaderIcon";
 import { homeMapStyles as styles } from "../../components/styles";
 import { WeeklyBusinessHours } from "../../lib/businessHours";
 
