@@ -102,14 +102,13 @@ export default function CheckoutScreen() {
 
     try {
       const metadata: Record<string, string> = {
-        restaurant_id: items[0].restaurantId,
-        restaurant_name: items[0].restaurantName,
         cart: JSON.stringify(
           items.map((i) => ({
             itemId: i.itemId,
             name: i.name,
             price: i.price,
             quantity: i.quantity,
+            restaurant_id: i.restaurantId,
           }))
         ),
       };
