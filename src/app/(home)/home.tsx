@@ -19,6 +19,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { supabase } from "../../lib/supabase";
 import { useLocation } from "../../Providers/LocationProvider";
+import { useCart } from "../../Providers/CartProvider";
 
 // ✅ Fix: forbid require() imports
 import FoodDiscoveryLogo from "../../../assets/images/fooddiscovery-logo.png";
@@ -54,6 +55,7 @@ type ActiveListItem = RestaurantRow | NearbyRestaurant;
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { location, errorMsg, isLoading } = useLocation();
+  const { itemCount } = useCart();
 
   const [loading, setLoading] = useState(true);
   const [restaurants, setRestaurants] = useState<RestaurantRow[]>([]);
@@ -306,9 +308,14 @@ export default function HomeScreen() {
           ]}
           hitSlop={12}
           accessibilityRole="button"
-          accessibilityLabel="Open cart"
+          accessibilityLabel={itemCount > 0 ? `Open cart (${itemCount} items)` : "Open cart"}
         >
           <Ionicons name="cart" size={24} color={NAVY} />
+          {itemCount > 0 && (
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>{itemCount > 99 ? "99+" : itemCount}</Text>
+            </View>
+          )}
         </Pressable>
       </View>
 
@@ -476,6 +483,23 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
+  },
+  cartBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: NAVY,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 6,
+  },
+  cartBadgeText: {
+    color: GOLD,
+    fontSize: 12,
+    fontWeight: "700",
   },
 
   searchWrap: {

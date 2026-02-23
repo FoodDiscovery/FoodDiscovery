@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 22,
-    fontWeight: "900",
+    fontWeight: "700",
     color: "#0B1220",
     letterSpacing: -0.2,
   },
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   },
   headerBackText: {
     fontSize: 18,
-    fontWeight: "900",
+    fontWeight: "600",
     color: NAVY,
   },
 
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: "#6B7280",
-    fontWeight: "700",
+    fontWeight: "600",
     marginBottom: 12,
   },
 
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     alignItems: "center",
   },
-  emptyTitle: { fontSize: 20, fontWeight: "900", color: "#111827" },
+  emptyTitle: { fontSize: 20, fontWeight: "700", color: "#111827" },
   emptySub: {
     marginTop: 6,
     fontSize: 15,
@@ -286,8 +286,8 @@ const styles = StyleSheet.create({
   },
 
   itemName: {
-    fontSize: 18,
-    fontWeight: "900",
+    fontSize: 15,
+    fontWeight: "600",
     color: "#0B1220",
     letterSpacing: -0.1,
   },
@@ -295,13 +295,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontSize: 14,
     color: "#6B7280",
-    fontWeight: "700",
+    fontWeight: "600",
   },
   itemPrice: {
     marginTop: 6,
     fontSize: 14,
     color: NAVY,
-    fontWeight: "900",
+    fontWeight: "600",
   },
 
   rowBottom: {
@@ -332,13 +332,13 @@ const styles = StyleSheet.create({
   },
   qtyBtnText: {
     fontSize: 20,
-    fontWeight: "900",
+    fontWeight: "700",
     color: NAVY,
     marginTop: Platform.OS === "ios" ? -1 : 0,
   },
   qtyText: {
     fontSize: 14,
-    fontWeight: "900",
+    fontWeight: "600",
     color: "#111827",
   },
 
@@ -350,8 +350,8 @@ const styles = StyleSheet.create({
   },
   removeBtnText: {
     color: "#FFF",
-    fontWeight: "900",
-    fontSize: 13,
+    fontWeight: "600",
+    fontSize: 12,
   },
 
   summaryCard: {
@@ -377,12 +377,12 @@ const styles = StyleSheet.create({
   summaryLabel: {
     fontSize: 15,
     color: "#6B7280",
-    fontWeight: "800",
+    fontWeight: "600",
   },
   summaryValue: {
     fontSize: 16,
     color: "#111827",
-    fontWeight: "900",
+    fontWeight: "600",
   },
 
   checkoutBtn: {
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   },
   checkoutBtnText: {
     color: "#FFF",
-    fontWeight: "900",
+    fontWeight: "700",
     fontSize: 16,
   },
 
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
   },
   clearBtnText: {
     color: NAVY,
-    fontWeight: "900",
+    fontWeight: "600",
     fontSize: 14,
   },
 
@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
   },
   pillSmallGoldText: {
     color: NAVY,
-    fontWeight: "900",
+    fontWeight: "600",
     fontSize: 14,
   },
 });
