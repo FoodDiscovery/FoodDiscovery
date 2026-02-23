@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Alert, Button, Text, View } from "react-native";
 import { Input } from "@rneui/themed";
 import { SafeAreaView } from "react-native-safe-area-context";

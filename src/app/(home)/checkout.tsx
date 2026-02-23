@@ -1,5 +1,4 @@
-// src/app/(home)/checkout.tsx
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,

@@ -1,4 +1,3 @@
-import React from "react";
 import { fireEvent, render } from "@testing-library/react-native";
 import SortButton from "../../../src/components/home/SortButton";
 import { useHome } from "../../../src/Providers/HomeProvider";

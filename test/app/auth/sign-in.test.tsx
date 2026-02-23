@@ -1,4 +1,3 @@
-import React from "react";
 import { Alert } from "react-native";
 import { fireEvent, render, waitFor } from "@testing-library/react-native";
 import SignIn from "../../../src/app/(auth)/sign-in";

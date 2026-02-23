@@ -1,4 +1,3 @@
-import React from "react";
 import { ActivityIndicator, FlatList, Text, View } from "react-native";
 import { homeStyles as styles } from "../styles";
 import RestaurantCard from "./RestaurantCard";

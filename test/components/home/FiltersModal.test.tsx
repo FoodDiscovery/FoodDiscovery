@@ -1,4 +1,3 @@
-import React from "react";
 import { fireEvent, render } from "@testing-library/react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import FiltersModal from "../../../src/components/home/FiltersModal";

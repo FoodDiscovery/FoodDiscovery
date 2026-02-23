@@ -1,4 +1,3 @@
-import React from "react";
 import { Alert, Text, TouchableOpacity } from "react-native";
 import { fireEvent, render, waitFor } from "@testing-library/react-native";
 import HomeProvider, { useHome } from "../../src/Providers/HomeProvider";

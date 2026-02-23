@@ -1,4 +1,3 @@
-import React from "react";
 import { fireEvent, render } from "@testing-library/react-native";
 import CustomerGettingStartedScreen from "../../src/app/(onboarding)/customer-getting-started";
 import { useAuth } from "../../src/Providers/AuthProvider";

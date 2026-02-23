@@ -1,5 +1,4 @@
 // src/app/(home)/cart.tsx  (or wherever your CartScreen file lives)
-import React from "react";
 import {
   Image,
   Platform,

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../Providers/AuthProvider";

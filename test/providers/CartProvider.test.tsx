@@ -1,4 +1,3 @@
-import React from "react";
 import { Text, TouchableOpacity } from "react-native";
 import { fireEvent, render, waitFor } from "@testing-library/react-native";
 import CartProvider, { useCart } from "../../src/Providers/CartProvider";

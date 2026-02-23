@@ -1,4 +1,3 @@
-import React from "react";
 import { Image } from "react-native";
 import { render } from "@testing-library/react-native";
 import RestaurantImage from "../../../src/components/home/RestaurantImage";

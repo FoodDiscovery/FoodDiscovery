@@ -1,4 +1,3 @@
-import React from "react";
 import { fireEvent, render } from "@testing-library/react-native";
 import { router } from "expo-router";
 import RestaurantCard from "../../../src/components/home/RestaurantCard";
