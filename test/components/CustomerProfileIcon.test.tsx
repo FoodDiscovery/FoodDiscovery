@@ -124,7 +124,7 @@ describe("CustomerProfileIcon", () => {
       expect(mockUpload).toHaveBeenCalled();
       expect(mockSetItem).toHaveBeenCalledWith(
         "avatar_url:user-1",
-        "https://cdn.example.com/new-avatar.png"
+        expect.stringMatching(/^https:\/\/cdn\.example\.com\/new-avatar\.png\?t=\d+$/)
       );
     });
   });

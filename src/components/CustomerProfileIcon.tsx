@@ -1,14 +1,20 @@
-import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode } from "base64-arraybuffer";
 import { File } from "expo-file-system/next";
 import { supabase } from "../lib/supabase";
- 
-// customer avatar stored in Supabase Storage and cached locally.
-const AVATAR_STORAGE_KEY_PREFIX = "avatar_url:";
-const AVATAR_BUCKET = "avatars";
+import { AVATAR_BUCKET, getAvatarStorageKey } from "../lib/avatarStorage";
+import { useStoredAvatarUrl } from "../lib/useStoredAvatarUrl";
+import { customerProfileIconStyles as styles } from "./styles";
 
 interface CustomerProfileIconProps {
   userId: string;
@@ -21,37 +27,16 @@ export default function CustomerProfileIcon({
   size = 96,
   onImageChange,
 }: CustomerProfileIconProps) {
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { avatarUri, loading, reload } = useStoredAvatarUrl(userId);
   const [uploading, setUploading] = useState(false);
 
-  const storageKey = `${AVATAR_STORAGE_KEY_PREFIX}${userId}`;
-
-  const loadStoredAvatar = useCallback(async () => {
-    if (!userId) return;
-    try {
-      const stored = await AsyncStorage.getItem(storageKey);
-      if (stored) setImageUri(stored);
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  }, [userId, storageKey]);
-
-  useEffect(() => {
-    // load saved avatar URL
-    loadStoredAvatar();
-  }, [loadStoredAvatar]);
-
   const pickAndUploadImage = async () => {
-    
     if (!userId) {
       return;
     }
 
-    // ask for permission to read from the user's photo library
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
     if (status !== "granted") {
       Alert.alert(
         "Permission needed",
@@ -60,7 +45,6 @@ export default function CustomerProfileIcon({
       return;
     }
 
-    // let user crop images
     const result = await ImagePicker.launchImageLibraryAsync({
       quality: 0.9,
       allowsEditing: true,
@@ -72,24 +56,24 @@ export default function CustomerProfileIcon({
     }
 
     const asset = result.assets[0];
-
     if (!asset?.uri) {
       return;
     }
 
     setUploading(true);
+
+    // upload image to supabase
     try {
-      // read image into array so supabase can accept into storage
+      // convert image to base64
       const file = new File(asset.uri);
       const base64 = await file.base64();
       const arrayBuffer = decode(base64);
 
+      // get file extension and content type
       const fileExt = asset.uri.toLowerCase().includes(".png") ? "png" : "jpg";
       const contentType = fileExt === "png" ? "image/png" : "image/jpeg";
-      // one avatar per user stored
       const path = `${userId}/avatar.${fileExt}`;
 
-      // upload to supabase
       const { error: uploadErr } = await supabase.storage
         .from(AVATAR_BUCKET)
         .upload(path, arrayBuffer, {
@@ -102,24 +86,32 @@ export default function CustomerProfileIcon({
         return;
       }
 
-      // get public url to display in image
       const { data } = supabase.storage
         .from(AVATAR_BUCKET)
         .getPublicUrl(path);
-      const publicUrl = data?.publicUrl ?? null;
-      
+
+      const publicUrl = data?.publicUrl
+        ? `${data.publicUrl}?t=${Date.now()}`
+        : null;
+
       if (publicUrl) {
+        // cache public url in AsyncStorage
+        const storageKey = getAvatarStorageKey(userId);
         await AsyncStorage.setItem(storageKey, publicUrl);
-        setImageUri(publicUrl);
+        await reload();
         onImageChange?.(publicUrl);
       }
     } catch (e) {
-      Alert.alert( "Error", e instanceof Error ? e.message : "Failed to set profile image.");
+      Alert.alert(
+        "Error",
+        e instanceof Error ? e.message : "Failed to set profile image."
+      );
     } finally {
       setUploading(false);
     }
   };
 
+  // show loading indicator while loading
   if (loading) {
     return (
       <View
@@ -146,10 +138,10 @@ export default function CustomerProfileIcon({
         >
           <ActivityIndicator size="small" />
         </View>
-      ) : imageUri ? (
+      ) : avatarUri ? (
         <Image
           testID="customer-profile-icon-image"
-          source={{ uri: imageUri }}
+          source={{ uri: avatarUri }}
           style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}
           resizeMode="cover"
         />
@@ -164,26 +156,3 @@ export default function CustomerProfileIcon({
     </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  ring: {
-    backgroundColor: "#f0f0f0",
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "hidden",
-  },
-  inner: {
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#e8e8e8",
-  },
-  avatar: {
-    backgroundColor: "#eee",
-  },
-  placeholder: {
-    backgroundColor: "#e0e0e0",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  placeholderText: {},
-});

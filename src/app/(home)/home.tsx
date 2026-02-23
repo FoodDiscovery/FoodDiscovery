@@ -19,6 +19,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../lib/supabase";
 import { useLocation } from "../../Providers/LocationProvider";
 import { useCart } from "../../Providers/CartProvider";
+import ProfileHeaderIcon from "../../components/ProfileHeaderIcon";
 
 // ✅ Fix: forbid require() imports
 import FoodDiscoveryLogo from "../../../assets/images/fooddiscovery-logo.png";
@@ -293,6 +294,9 @@ export default function HomeScreen() {
           },
         ]}
       >
+        <View style={styles.profileIconBtn}>
+          <ProfileHeaderIcon />
+        </View>
         <View style={styles.logoRow}>
           <Image source={FoodDiscoveryLogo} style={styles.logo} resizeMode="contain" />
           <Text style={styles.subtitle}>{headerSubtitle}</Text>
@@ -451,6 +455,12 @@ const styles = StyleSheet.create({
     position: "relative",
   },
 
+  profileIconBtn: {
+    position: "absolute",
+    left: 16,
+    top: 10,
+    zIndex: 1,
+  },
   logoRow: {
     alignItems: "center",
     justifyContent: "center",

@@ -10,6 +10,11 @@ jest.mock("expo-router", () => ({
   router: { push: jest.fn() },
 }));
 
+jest.mock("../../../src/components/ProfileHeaderIcon", () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
 jest.mock("react-native-safe-area-context", () => ({
   SafeAreaView: ({ children }: { children: React.ReactNode }) => children,
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
