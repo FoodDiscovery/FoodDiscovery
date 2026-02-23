@@ -1,8 +1,10 @@
-import React, { useEffect } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { useEffect } from "react";
+import { ActivityIndicator, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../Providers/AuthProvider";
 import { supabase } from "../lib/supabase";
+import { isCustomerOnboardingRequired } from "../lib/onboarding";
+import { appIndexStyles as styles } from "../components/styles";
 
 export default function App() {
   const { session } = useAuth();
@@ -14,12 +16,17 @@ export default function App() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role,full_name")
         .eq("id", session.user.id)
         .single();
 
       if (profile?.role === "owner") {
         router.replace("/(owner)/home");
+        return;
+      }
+
+      if (isCustomerOnboardingRequired(profile?.role, profile?.full_name)) {
+        router.replace("/(onboarding)/customer-getting-started");
         return;
       }
 
@@ -37,15 +44,3 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 10,
-  },
-  loadingText: {
-    fontSize: 16,
-    color: "#666",
-  },
-});

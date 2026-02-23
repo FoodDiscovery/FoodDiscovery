@@ -9,7 +9,7 @@ import RestaurantModal from "../../components/RestaurantModal";
 import { homeMapStyles as styles } from "../../components/styles";
 import { WeeklyBusinessHours } from "../../lib/businessHours";
 
-type Restaurant = {
+interface Restaurant {
   location_id: number;
   distance_meters: number;
   latitude: number;
@@ -19,7 +19,7 @@ type Restaurant = {
     name: string;
     owner_id: string;
   };
-};
+}
 
 interface RestaurantModalInfo {
   id: string;
@@ -115,6 +115,10 @@ export default function MapScreen() {
     router.push(`/restaurant/${restaurantId}`);
   }
 
+  const selectedRestaurantDistanceMeters = selectedRestaurant
+    ? restaurants.find((r) => r.restaurant.id === selectedRestaurant.id)?.distance_meters
+    : undefined;
+
   if (isLoading) {
     return (
       <View style={styles.container}>
@@ -173,9 +177,8 @@ export default function MapScreen() {
           visible={modalVisible}
           restaurant={selectedRestaurant}
           distance={
-            restaurants.find((r) => r.restaurant.id === selectedRestaurant.id)?.distance_meters
-              ? restaurants.find((r) => r.restaurant.id === selectedRestaurant.id)!.distance_meters /
-                1609.34
+            selectedRestaurantDistanceMeters !== undefined
+              ? selectedRestaurantDistanceMeters / 1609.34
               : undefined
           }
           onClose={closeModal}

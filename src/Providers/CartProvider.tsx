@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export type CartItem = {
+export interface CartItem {
   key: string;
   restaurantId: string;
   restaurantName: string;
@@ -10,9 +10,9 @@ export type CartItem = {
   price: number;
   imageUrl: string | null;
   quantity: number;
-};
+}
 
-type CartContextValue = {
+interface CartContextValue {
   items: CartItem[];
   addItem: (payload: {
     restaurantId: string;
@@ -28,7 +28,7 @@ type CartContextValue = {
   clearCart: () => void;
   itemCount: number;
   subtotal: number;
-};
+}
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 const CART_STORAGE_KEY = "foodDiscovery.cart.items";

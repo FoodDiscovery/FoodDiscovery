@@ -1,5 +1,4 @@
 
-import React from "react";
 import { Stack } from "expo-router";
 
 import AuthProvider from "../Providers/AuthProvider";
@@ -18,6 +17,7 @@ export default function RootLayout() {
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(home)" />
             <Stack.Screen name="(owner)" />
+            <Stack.Screen name="(onboarding)" />
           </Stack>
         </AuthProvider>
       </CartProvider>

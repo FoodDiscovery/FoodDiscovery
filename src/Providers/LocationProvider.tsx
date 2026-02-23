@@ -1,4 +1,4 @@
-import React, { useCallback, createContext, useState, useEffect, useContext } from 'react';
+import React, { useCallback, createContext, useState, useContext } from 'react';
 import * as Location from 'expo-location';
 
 interface LocationContextType {
@@ -21,7 +21,7 @@ export const useLocation = () => {
 export default function LocationProvider({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
 
   const fetchLocation = useCallback(async () => {
@@ -41,17 +41,12 @@ export default function LocationProvider({ children }: { children: React.ReactNo
       })
 
       setLocation(res.coords)
-    } catch (err) {
+    } catch {
       setErrorMsg('Could not find location. Is GPS enabled?')
     } finally {
       setIsLoading(false)
     }
   }, [])
-
-  // Run once on mount (and again only if fetchLocation identity/reference ever changes)
-  useEffect(() => {
-    fetchLocation()
-  }, [fetchLocation])
 
   // does not allow re-renders if the fields are the same as prev
   const value = React.useMemo(

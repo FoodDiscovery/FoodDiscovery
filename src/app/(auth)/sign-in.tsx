@@ -3,7 +3,7 @@ import { Alert, View, Text, TouchableOpacity } from 'react-native'
 import { supabase } from '../../lib/supabase'
 import { Button, Input } from '@rneui/themed'
 import { router } from 'expo-router'
-import styles from './authStyles'
+import { authStyles as styles } from '../../components/styles'
 
 export default function SignIn() {
   const [email, setEmail] = useState('')
@@ -12,7 +12,7 @@ export default function SignIn() {
 
   async function signInWithEmail() {
     setLoading(true)
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email: email,
       password: password,
     })

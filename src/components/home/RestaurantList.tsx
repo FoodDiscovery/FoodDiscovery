@@ -1,22 +1,23 @@
-import React from "react";
 import { ActivityIndicator, FlatList, Text, View } from "react-native";
 import { homeStyles as styles } from "../styles";
 import RestaurantCard from "./RestaurantCard";
 import { useHome } from "../../Providers/HomeProvider";
 
-type RestaurantRow = {
+interface RestaurantRow {
   id: string;
   name: string | null;
   cuisine_type: string | null;
   image_url: string | null;
   preview_images: string[] | null;
-};
+}
 
-type NearbyRestaurant = {
+interface NearbyRestaurant {
   location_id: number;
   distance_meters: number;
   restaurant: RestaurantRow;
-};
+}
+
+type RestaurantListItem = RestaurantRow | NearbyRestaurant;
 
 function getRestaurantImage(restaurant: RestaurantRow): string | null {
   if (restaurant.image_url) return restaurant.image_url;
@@ -28,7 +29,7 @@ function getRestaurantImage(restaurant: RestaurantRow): string | null {
 
 export default function RestaurantList() {
   const { loading, activeList, sortMode, restaurantDistances } = useHome();
-  const renderItem = ({ item }: { item: any }) => {
+  const renderItem = ({ item }: { item: RestaurantListItem }) => {
     if (sortMode === "distance") {
       const n = item as NearbyRestaurant;
       const miles = (n.distance_meters / 1609.34).toFixed(1);
@@ -73,8 +74,8 @@ export default function RestaurantList() {
   return (
     <FlatList
       data={activeList}
-      keyExtractor={(item: any) =>
-        sortMode === "distance" ? String(item.location_id) : String(item.id)
+      keyExtractor={(item: RestaurantListItem) =>
+        "location_id" in item ? String(item.location_id) : String(item.id)
       }
       renderItem={renderItem}
       contentContainerStyle={styles.listContent}

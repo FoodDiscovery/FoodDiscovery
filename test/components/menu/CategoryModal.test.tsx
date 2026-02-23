@@ -1,6 +1,5 @@
-import React from "react";
 import { fireEvent, render } from "@testing-library/react-native";
-import CategoryModal from "../../src/components/menu/CategoryModal";
+import CategoryModal from "../../../src/components/menu/CategoryModal";
 
 describe("CategoryModal", () => {
   it("renders new category mode and handles close/save actions", () => {

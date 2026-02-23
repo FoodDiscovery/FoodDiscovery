@@ -1,4 +1,3 @@
-import React from "react";
 import { Text, View } from "react-native";
 import type { MenuCategory, MenuItem } from "./types.d";
 import styles from "../styles/menuViewStyles";

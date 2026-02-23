@@ -1,8 +1,16 @@
 import 'expo-sqlite/localStorage/install';
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
-const supabasePublishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
+function requiredEnv(name: "EXPO_PUBLIC_SUPABASE_URL" | "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"): string {
+  const value = process.env[name]
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`)
+  }
+  return value
+}
+
+const supabaseUrl = requiredEnv("EXPO_PUBLIC_SUPABASE_URL");
+const supabasePublishableKey = requiredEnv("EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
         
 
 export const supabase = createClient(supabaseUrl, supabasePublishableKey, {

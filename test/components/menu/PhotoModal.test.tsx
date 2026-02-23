@@ -1,6 +1,5 @@
-import React from "react";
 import { fireEvent, render } from "@testing-library/react-native";
-import PhotoModal from "../../src/components/menu/PhotoModal";
+import PhotoModal from "../../../src/components/menu/PhotoModal";
 
 const itemWithPhoto = {
   id: 1,

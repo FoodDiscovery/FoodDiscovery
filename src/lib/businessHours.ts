@@ -11,13 +11,13 @@ export const DAY_ORDER = [
 export type DayKey = (typeof DAY_ORDER)[number]
 export type Meridiem = 'AM' | 'PM'
 
-export type BusinessTime = {
+export interface BusinessTime {
   hour: number
   minute: number
   period: Meridiem
 }
 
-export type BusinessDayHours = {
+export interface BusinessDayHours {
   closed: boolean
   open: BusinessTime
   close: BusinessTime

@@ -27,6 +27,17 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
   },
+  nameText: {
+    fontSize: 20,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  nameHint: {
+    fontSize: 13,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 2,
+  },
   buttonWrap: {
     marginTop: 12,
     minWidth: 160,

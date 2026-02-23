@@ -15,7 +15,7 @@ import { router } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
 import { File } from 'expo-file-system/next'
 import { decode } from 'base64-arraybuffer'
-import styles from './authStyles'
+import { authStyles as styles } from '../../components/styles'
 import BusinessHoursEditor from '../../components/BusinessHoursEditor'
 import {
   WeeklyBusinessHours,
@@ -199,6 +199,7 @@ function BusinessInfoForm({
 export default function SignUp() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [ownerFullName, setOwnerFullName] = useState('')
   const [loading, setLoading] = useState(false)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [selectedRole, setSelectedRole] = useState<RoleType>('customer')
@@ -245,6 +246,10 @@ export default function SignUp() {
   }
 
   function validateOwnerSignup(): boolean {
+    if (!ownerFullName.trim()) {
+      Alert.alert('Missing Information', 'Please enter your full name.')
+      return false
+    }
     if (!businessInfo.name.trim()) {
       Alert.alert('Missing Information', 'Please enter your business name.')
       return false
@@ -365,6 +370,34 @@ export default function SignUp() {
     return true
   }
 
+  async function upsertProfile(params: {
+    userId: string
+    userEmail: string | null | undefined
+    role: RoleType
+    fullName?: string
+  }): Promise<boolean> {
+    const { userId, userEmail, role, fullName } = params
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert(
+        {
+          id: userId,
+          email: userEmail ?? null,
+          role,
+          full_name: fullName?.trim() ? fullName.trim() : null,
+        },
+        { onConflict: 'id' }
+      )
+
+    if (profileError) {
+      Alert.alert('Registration Error', 'Unable to save your profile information.')
+      setLoading(false)
+      return false
+    }
+
+    return true
+  }
+
   async function signUpWithEmail() {
     if (!email.trim() || !password.trim()) {
       Alert.alert('Missing Information', 'Please enter both email and password.')
@@ -394,6 +427,18 @@ export default function SignUp() {
       Alert.alert('Sign Up Error', error.message)
       setLoading(false)
       return
+    }
+
+    if (user) {
+      const profileSaved = await upsertProfile({
+        userId: user.id,
+        userEmail: user.email,
+        role: selectedRole,
+        fullName: selectedRole === 'owner' ? ownerFullName : undefined,
+      })
+      if (!profileSaved) {
+        return
+      }
     }
 
     // If owner role and we have a user, create the restaurant
@@ -455,6 +500,18 @@ export default function SignUp() {
               autoCapitalize="none"
             />
           </View>
+
+          {isOwner && (
+            <View style={styles.verticallySpaced}>
+              <Input
+                label="Full Name *"
+                onChangeText={(text) => setOwnerFullName(text)}
+                value={ownerFullName}
+                placeholder="e.g., Jane Smith"
+                autoCapitalize="words"
+              />
+            </View>
+          )}
 
           {isOwner && (
             <BusinessInfoForm

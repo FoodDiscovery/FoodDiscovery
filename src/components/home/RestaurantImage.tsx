@@ -1,4 +1,3 @@
-import React from "react";
 import { Image, Text, View } from "react-native";
 import { homeStyles as styles } from "../styles";
 

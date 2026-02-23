@@ -1,4 +1,3 @@
-import React from "react";
 import { Pressable, Text } from "react-native";
 import { router } from "expo-router";
 import { homeStyles as styles } from "../styles";

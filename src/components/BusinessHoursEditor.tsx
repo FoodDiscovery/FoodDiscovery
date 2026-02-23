@@ -1,11 +1,11 @@
-import React from 'react'
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
 } from 'react-native'
+import { useState } from 'react'
+import { businessHoursEditorStyles as styles } from './styles'
 import {
   DAY_ORDER,
   DAY_LABELS,
@@ -16,7 +16,7 @@ import {
   normalizeMinuteInput,
 } from '../lib/businessHours'
 
-type BusinessHoursEditorProps = {
+interface BusinessHoursEditorProps {
   value: WeeklyBusinessHours
   onChange: (next: WeeklyBusinessHours) => void
 }
@@ -51,10 +51,58 @@ export default function BusinessHoursEditor({
   value,
   onChange,
 }: BusinessHoursEditorProps) {
+  const [minuteDrafts, setMinuteDrafts] = useState<Record<string, string>>({})
+
   const updateDay = (day: DayKey, updater: (current: WeeklyBusinessHours[DayKey]) => WeeklyBusinessHours[DayKey]) => {
     onChange({
       ...value,
       [day]: updater(value[day]),
+    })
+  }
+
+  const minuteDraftKey = (day: DayKey, boundary: 'open' | 'close') => `${day}-${boundary}`
+
+  const getMinuteInputValue = (day: DayKey, boundary: 'open' | 'close', minute: number) => {
+    const key = minuteDraftKey(day, boundary)
+    if (key in minuteDrafts) {
+      return minuteDrafts[key]
+    }
+    return minute.toString().padStart(2, '0')
+  }
+
+  const handleMinuteChange = (day: DayKey, boundary: 'open' | 'close', text: string) => {
+    const digitsOnly = text.replace(/[^0-9]/g, '').slice(0, 2)
+    const key = minuteDraftKey(day, boundary)
+
+    setMinuteDrafts((current) => ({
+      ...current,
+      [key]: digitsOnly,
+    }))
+
+    if (digitsOnly.length === 0) {
+      return
+    }
+
+    updateDay(day, (current) => ({
+      ...current,
+      [boundary]: { ...current[boundary], minute: normalizeMinuteInput(digitsOnly) },
+    }))
+  }
+
+  const handleMinuteBlur = (day: DayKey, boundary: 'open' | 'close') => {
+    const key = minuteDraftKey(day, boundary)
+    const draft = minuteDrafts[key] ?? ''
+    const normalizedMinute = normalizeMinuteInput(draft)
+
+    updateDay(day, (current) => ({
+      ...current,
+      [boundary]: { ...current[boundary], minute: normalizedMinute },
+    }))
+
+    setMinuteDrafts((current) => {
+      return Object.fromEntries(
+        Object.entries(current).filter(([draftKey]) => draftKey !== key)
+      ) as Record<string, string>
     })
   }
 
@@ -102,13 +150,10 @@ export default function BusinessHoursEditor({
                   <TextInput
                     style={styles.timeInput}
                     keyboardType="number-pad"
-                    value={dayHours.open.minute.toString().padStart(2, '0')}
-                    onChangeText={(text) =>
-                      updateDay(day, (current) => ({
-                        ...current,
-                        open: { ...current.open, minute: normalizeMinuteInput(text) },
-                      }))
-                    }
+                    value={getMinuteInputValue(day, 'open', dayHours.open.minute)}
+                    onChangeText={(text) => handleMinuteChange(day, 'open', text)}
+                    onBlur={() => handleMinuteBlur(day, 'open')}
+                    selectTextOnFocus
                     maxLength={2}
                     placeholder="00"
                   />
@@ -142,13 +187,10 @@ export default function BusinessHoursEditor({
                   <TextInput
                     style={styles.timeInput}
                     keyboardType="number-pad"
-                    value={dayHours.close.minute.toString().padStart(2, '0')}
-                    onChangeText={(text) =>
-                      updateDay(day, (current) => ({
-                        ...current,
-                        close: { ...current.close, minute: normalizeMinuteInput(text) },
-                      }))
-                    }
+                    value={getMinuteInputValue(day, 'close', dayHours.close.minute)}
+                    onChangeText={(text) => handleMinuteChange(day, 'close', text)}
+                    onBlur={() => handleMinuteBlur(day, 'close')}
+                    selectTextOnFocus
                     maxLength={2}
                     placeholder="00"
                   />
@@ -171,99 +213,3 @@ export default function BusinessHoursEditor({
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    gap: 10,
-  },
-  dayCard: {
-    borderWidth: 1,
-    borderColor: '#e4e4e7',
-    borderRadius: 10,
-    padding: 10,
-    backgroundColor: '#fff',
-    gap: 8,
-  },
-  dayHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  dayLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  closedToggle: {
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-  },
-  closedToggleActive: {
-    borderColor: '#ef4444',
-    backgroundColor: '#fef2f2',
-  },
-  closedToggleText: {
-    fontSize: 13,
-    color: '#1f2937',
-    fontWeight: '500',
-  },
-  closedToggleTextActive: {
-    color: '#b91c1c',
-  },
-  timeRows: {
-    gap: 8,
-  },
-  timeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    flexWrap: 'wrap',
-  },
-  timeLabel: {
-    width: 44,
-    fontSize: 13,
-    color: '#4b5563',
-    fontWeight: '600',
-  },
-  timeInput: {
-    width: 44,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    textAlign: 'center',
-    fontSize: 14,
-  },
-  timeColon: {
-    fontSize: 16,
-    color: '#374151',
-    marginHorizontal: -2,
-  },
-  periodWrap: {
-    flexDirection: 'row',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginLeft: 2,
-  },
-  periodButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: '#fff',
-  },
-  periodButtonActive: {
-    backgroundColor: '#1d4ed8',
-  },
-  periodButtonText: {
-    fontSize: 12,
-    color: '#1f2937',
-    fontWeight: '600',
-  },
-  periodButtonTextActive: {
-    color: '#fff',
-  },
-})
