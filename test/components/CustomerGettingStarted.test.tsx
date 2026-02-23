@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, waitFor } from "@testing-library/react-native";
+import { fireEvent, render } from "@testing-library/react-native";
 import CustomerGettingStartedScreen from "../../src/app/(onboarding)/customer-getting-started";
 import { useAuth } from "../../src/Providers/AuthProvider";
 import { useLocation } from "../../src/Providers/LocationProvider";
@@ -69,20 +69,28 @@ describe("CustomerGettingStartedScreen", () => {
         },
       },
     });
-    (useLocation as jest.Mock).mockReturnValue({ refreshLocation });
+
+    // ✅ Fix: provide full shape so component renders the expected UI
+    (useLocation as jest.Mock).mockReturnValue({
+      location: null,
+      isLoading: false,
+      errorMsg: null,
+      refreshLocation,
+    });
+
     (supabase.from as jest.Mock).mockReturnValue({ upsert });
 
-    const { getByPlaceholderText, getByText, queryByText } = render(
+    const { getByPlaceholderText, getByText, findByText } = render(
       <CustomerGettingStartedScreen />
     );
 
     fireEvent.changeText(getByPlaceholderText("e.g., Jane Smith"), "Jane Smith");
     fireEvent.press(getByText("Continue"));
 
-    await waitFor(() => {
-      expect(upsert).toHaveBeenCalledTimes(1);
-    });
+    // ✅ Wait for upsert to have been called (screen step 1 complete)
+    await findByText("Enable Location");
 
+    expect(upsert).toHaveBeenCalledTimes(1);
     expect(upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         id: "user-123",
@@ -92,15 +100,11 @@ describe("CustomerGettingStartedScreen", () => {
       { onConflict: "id" }
     );
 
-    await waitFor(() => {
-      expect(queryByText("Enable Location")).toBeTruthy();
-    });
-
     fireEvent.press(getByText("Allow Location Access"));
 
-    await waitFor(() => {
-      expect(refreshLocation).toHaveBeenCalledTimes(1);
-      expect(router.replace).toHaveBeenCalledWith("/(home)/home");
-    });
+    // ✅ Wait until navigation happens
+    await findByText("Enable Location"); // keep screen mounted while async runs
+    expect(refreshLocation).toHaveBeenCalledTimes(1);
+    expect(router.replace).toHaveBeenCalledWith("/(home)/home");
   });
 });
