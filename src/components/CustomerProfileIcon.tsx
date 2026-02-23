@@ -1,21 +1,14 @@
 import React, { useCallback, useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode } from "base64-arraybuffer";
 import { File } from "expo-file-system/next";
 import { supabase } from "../lib/supabase";
-
-const AVATAR_STORAGE_KEY_PREFIX = "customer_avatar_url:";
-const AVATAR_BUCKET = "customer-avatars";
+ 
+// storage bucket from supabase
+const AVATAR_STORAGE_KEY_PREFIX = "avatar_url:";
+const AVATAR_BUCKET = "avatars";
 
 type CustomerProfileIconProps = {
   userId: string;
@@ -51,7 +44,10 @@ export default function CustomerProfileIcon({
   }, [loadStoredAvatar]);
 
   const pickAndUploadImage = async () => {
-    if (!userId) return;
+    
+    if (!userId) {
+      return;
+    }
 
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
@@ -69,10 +65,15 @@ export default function CustomerProfileIcon({
       aspect: [1, 1],
     });
 
-    if (result.canceled) return;
+    if (result.canceled) {
+      return;
+    }
 
     const asset = result.assets[0];
-    if (!asset?.uri) return;
+
+    if (!asset?.uri) {
+      return;
+    }
 
     setUploading(true);
     try {
@@ -84,6 +85,7 @@ export default function CustomerProfileIcon({
       const contentType = fileExt === "png" ? "image/png" : "image/jpeg";
       const path = `${userId}/avatar.${fileExt}`;
 
+      // upload to supabase
       const { error: uploadErr } = await supabase.storage
         .from(AVATAR_BUCKET)
         .upload(path, arrayBuffer, {
@@ -100,17 +102,15 @@ export default function CustomerProfileIcon({
         .from(AVATAR_BUCKET)
         .getPublicUrl(path);
       const publicUrl = data?.publicUrl ?? null;
-
+      
+      // should be public
       if (publicUrl) {
         await AsyncStorage.setItem(storageKey, publicUrl);
         setImageUri(publicUrl);
         onImageChange?.(publicUrl);
       }
     } catch (e) {
-      Alert.alert(
-        "Error",
-        e instanceof Error ? e.message : "Failed to set profile image."
-      );
+      Alert.alert( "Error", e instanceof Error ? e.message : "Failed to set profile image.");
     } finally {
       setUploading(false);
     }
