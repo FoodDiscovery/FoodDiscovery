@@ -1,3 +1,8 @@
+process.env.EXPO_PUBLIC_SUPABASE_URL =
+  process.env.EXPO_PUBLIC_SUPABASE_URL ?? "https://test.supabase.co";
+process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY =
+  process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "test-anon-key";
+
 jest.mock("react-native/Libraries/Modal/Modal", () => {
   const mockReact = jest.requireActual("react") as typeof import("react");
   const MockModal = ({ children }: { children?: import("react").ReactNode }) =>

@@ -86,6 +86,12 @@ function buildNearbyRestaurant(
   };
 }
 
+async function waitForProviderLoadToFinish(getByTestId: (testID: string) => { props: { children: string } }) {
+  await waitFor(() => {
+    expect(getByTestId("loading").props.children).toBe("false");
+  });
+}
+
 describe("HomeProvider", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -174,9 +180,7 @@ describe("HomeProvider", () => {
       </HomeProvider>
     );
 
-    await waitFor(() => {
-      expect(getByTestId("loading").props.children).toBe("false");
-    });
+    await waitForProviderLoadToFinish(getByTestId);
 
     expect(getByTestId("cuisines").props.children).toBe("Japanese,Mexican");
     expect(getByTestId("filteredCount").props.children).toBe("2");
@@ -201,9 +205,8 @@ describe("HomeProvider", () => {
       </HomeProvider>
     );
 
-    await waitFor(() => {
-      expect(getByTestId("sort").props.children).toBe("name");
-    });
+    await waitForProviderLoadToFinish(getByTestId);
+    expect(getByTestId("sort").props.children).toBe("name");
 
     fireEvent.press(getByText("Toggle Sort"));
 
@@ -222,7 +225,7 @@ describe("HomeProvider", () => {
       isLoading: true,
     });
 
-    const { getByText } = render(
+    const { getByText, getByTestId } = render(
       <HomeProvider>
         <HomeHarness />
       </HomeProvider>
@@ -234,6 +237,7 @@ describe("HomeProvider", () => {
       "Location",
       "Getting your location… try again in a moment."
     );
+    await waitForProviderLoadToFinish(getByTestId);
   });
 
   it("switches to distance mode, filters nearby items, and switches back to name", async () => {
@@ -249,9 +253,8 @@ describe("HomeProvider", () => {
       </HomeProvider>
     );
 
-    await waitFor(() => {
-      expect(getByTestId("sort").props.children).toBe("name");
-    });
+    await waitForProviderLoadToFinish(getByTestId);
+    expect(getByTestId("sort").props.children).toBe("name");
 
     fireEvent.press(getByText("Toggle Sort"));
 
@@ -287,9 +290,8 @@ describe("HomeProvider", () => {
       </HomeProvider>
     );
 
-    await waitFor(() => {
-      expect(getByTestId("filteredCount").props.children).toBe("2");
-    });
+    await waitForProviderLoadToFinish(getByTestId);
+    expect(getByTestId("filteredCount").props.children).toBe("2");
 
     fireEvent.press(getByText("Toggle Japanese"));
     await waitFor(() => {
@@ -322,9 +324,7 @@ describe("HomeProvider", () => {
       </HomeProvider>
     );
 
-    await waitFor(() => {
-      expect(getByTestId("loading").props.children).toBe("false");
-    });
+    await waitForProviderLoadToFinish(getByTestId);
     expect(alertSpy).toHaveBeenCalledWith("Failed to load restaurants", "db down");
   });
 });
