@@ -19,6 +19,7 @@ import { useAuth } from "../../../Providers/AuthProvider";
 import type { MenuCategory, MenuItem } from "../../../components/menu/types";
 import MenuCategoryCard from "../../../components/menu/MenuCategoryCard";
 import CartBar from "../../../components/menu/CartBar";
+import ProfileHeaderIcon from "../../../components/ProfileHeaderIcon";
 
 // ✅ Fix: forbid require() imports
 import FoodDiscoveryLogo from "../../../../assets/images/fooddiscovery-logo.png";
@@ -206,8 +207,9 @@ export default function RestaurantMenuScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      {/* Top row: back + centered logo (optional) */}
+      {/* Top row: profile icon + back + centered logo */}
       <View style={[styles.topRow, { paddingTop: Math.max(8, insets.top * 0.25) }]}>
+        <ProfileHeaderIcon />
         <Pressable
           onPress={() => router.back()}
           hitSlop={12}

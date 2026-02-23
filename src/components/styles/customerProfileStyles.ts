@@ -12,6 +12,12 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 8,
   },
+  avatarHint: {
+    fontSize: 13,
+    color: "#888",
+    textAlign: "center",
+    marginTop: 8,
+  },
   title: {
     fontSize: 24,
     fontWeight: "700",

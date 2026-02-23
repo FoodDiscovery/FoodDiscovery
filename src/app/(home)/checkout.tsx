@@ -17,6 +17,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { supabase } from "../../lib/supabase";
 import { useCart, type CartItem } from "../../Providers/CartProvider";
 import { useAuth } from "../../Providers/AuthProvider";
+import ProfileHeaderIcon from "../../components/ProfileHeaderIcon";
 
 // ✅ Fix: forbid require() imports
 import FoodDiscoveryLogo from "../../../assets/images/fooddiscovery-logo.png";
@@ -168,6 +169,9 @@ export default function CheckoutScreen() {
     <SafeAreaView style={t.safe} edges={["top"]}>
       {/* Header (matches Home theme) */}
       <View style={[t.header, { paddingTop: Math.max(10, insets.top * 0.45) }]}>
+        <View style={t.headerProfileIcon}>
+          <ProfileHeaderIcon />
+        </View>
         <View style={t.headerCenter}>
           <Image source={FoodDiscoveryLogo} style={t.headerLogo} resizeMode="contain" />
           <Text style={t.title}>Checkout</Text>
@@ -260,8 +264,14 @@ const t = StyleSheet.create({
     paddingBottom: 10,
     flexDirection: "row",
     alignItems: "center",
+    position: "relative",
   },
-
+  headerProfileIcon: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    zIndex: 1,
+  },
   headerCenter: {
     flex: 1,
     alignItems: "center",
