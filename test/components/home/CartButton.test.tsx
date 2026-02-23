@@ -1,8 +1,8 @@
 import React from "react";
 import { fireEvent, render } from "@testing-library/react-native";
 import { router } from "expo-router";
-import CartButton from "../../src/components/home/CartButton";
-import { useCart } from "../../src/Providers/CartProvider";
+import CartButton from "../../../src/components/home/CartButton";
+import { useCart } from "../../../src/Providers/CartProvider";
 
 jest.mock("expo-router", () => ({
   router: {
@@ -10,7 +10,7 @@ jest.mock("expo-router", () => ({
   },
 }));
 
-jest.mock("../../src/Providers/CartProvider", () => ({
+jest.mock("../../../src/Providers/CartProvider", () => ({
   useCart: jest.fn(),
 }));
 

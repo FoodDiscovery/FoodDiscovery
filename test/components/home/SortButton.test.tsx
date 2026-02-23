@@ -1,9 +1,9 @@
 import React from "react";
 import { fireEvent, render } from "@testing-library/react-native";
-import SortButton from "../../src/components/home/SortButton";
-import { useHome } from "../../src/Providers/HomeProvider";
+import SortButton from "../../../src/components/home/SortButton";
+import { useHome } from "../../../src/Providers/HomeProvider";
 
-jest.mock("../../src/Providers/HomeProvider", () => ({
+jest.mock("../../../src/Providers/HomeProvider", () => ({
   useHome: jest.fn(),
 }));
 

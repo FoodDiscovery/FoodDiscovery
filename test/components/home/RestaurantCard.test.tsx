@@ -1,7 +1,7 @@
 import React from "react";
 import { fireEvent, render } from "@testing-library/react-native";
 import { router } from "expo-router";
-import RestaurantCard from "../../src/components/home/RestaurantCard";
+import RestaurantCard from "../../../src/components/home/RestaurantCard";
 
 jest.mock("expo-router", () => ({
   router: {

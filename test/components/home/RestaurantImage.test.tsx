@@ -1,7 +1,7 @@
 import React from "react";
 import { Image } from "react-native";
 import { render } from "@testing-library/react-native";
-import RestaurantImage from "../../src/components/home/RestaurantImage";
+import RestaurantImage from "../../../src/components/home/RestaurantImage";
 
 describe("RestaurantImage", () => {
   it("renders placeholder when image url is missing", () => {

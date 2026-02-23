@@ -1,7 +1,7 @@
 import React from "react";
 import { fireEvent, render } from "@testing-library/react-native";
 import { Switch } from "react-native";
-import ItemModal from "../../src/components/menu/ItemModal";
+import ItemModal from "../../../src/components/menu/ItemModal";
 
 describe("ItemModal", () => {
   it("prefills fields from an existing item", () => {

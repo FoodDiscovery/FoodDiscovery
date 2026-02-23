@@ -1,10 +1,10 @@
 import React from "react";
 import { Image } from "react-native";
 import { render } from "@testing-library/react-native";
-import RestaurantList from "../../src/components/home/RestaurantList";
-import { useHome } from "../../src/Providers/HomeProvider";
+import RestaurantList from "../../../src/components/home/RestaurantList";
+import { useHome } from "../../../src/Providers/HomeProvider";
 
-jest.mock("../../src/Providers/HomeProvider", () => ({
+jest.mock("../../../src/Providers/HomeProvider", () => ({
   useHome: jest.fn(),
 }));
 

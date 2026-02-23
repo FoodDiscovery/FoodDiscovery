@@ -1,14 +1,14 @@
 import React from "react";
 import { fireEvent, render } from "@testing-library/react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import FiltersModal from "../../src/components/home/FiltersModal";
-import { useHome } from "../../src/Providers/HomeProvider";
+import FiltersModal from "../../../src/components/home/FiltersModal";
+import { useHome } from "../../../src/Providers/HomeProvider";
 
 jest.mock("react-native-safe-area-context", () => ({
   useSafeAreaInsets: jest.fn(),
 }));
 
-jest.mock("../../src/Providers/HomeProvider", () => ({
+jest.mock("../../../src/Providers/HomeProvider", () => ({
   useHome: jest.fn(),
 }));
 
