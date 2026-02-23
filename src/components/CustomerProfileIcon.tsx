@@ -10,11 +10,11 @@ import { supabase } from "../lib/supabase";
 const AVATAR_STORAGE_KEY_PREFIX = "avatar_url:";
 const AVATAR_BUCKET = "avatars";
 
-type CustomerProfileIconProps = {
+interface CustomerProfileIconProps {
   userId: string;
   size?: number;
   onImageChange?: (uri: string | null) => void;
-};
+}
 
 export default function CustomerProfileIcon({
   userId,
