@@ -15,3 +15,4 @@ export { default as appIndexStyles } from "./appIndexStyles";
 export { default as businessHoursEditorStyles } from "./businessHoursEditorStyles";
 export { default as authStyles } from "./authStyles";
 export { default as gettingStartedStyles } from "./gettingStartedStyles";
+export { default as ownerHomeStyles } from "./ownerHomeStyles";
