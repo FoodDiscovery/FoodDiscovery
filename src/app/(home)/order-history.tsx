@@ -34,3 +34,14 @@ export default function OrderHistoryScreen() {
     </SafeAreaView>
   );
 }
+
+const localStyles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 8,
+  },
+});

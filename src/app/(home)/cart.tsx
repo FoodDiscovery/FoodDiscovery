@@ -12,6 +12,7 @@ import { router } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useCart } from "../../Providers/CartProvider";
+import ProfileHeaderIcon from "../../components/ProfileHeaderIcon";
 
 export default function CartScreen() {
   const insets = useSafeAreaInsets();
@@ -37,6 +38,9 @@ export default function CartScreen() {
           },
         ]}
       >
+        <View style={styles.headerProfileIcon}>
+          <ProfileHeaderIcon />
+        </View>
         <Text style={styles.headerTitle}>Your Cart</Text>
 
         <TouchableOpacity
@@ -182,6 +186,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     position: "relative",
   },
+  headerProfileIcon: {
+    position: "absolute",
+    left: 16,
+    top: 10,
+    zIndex: 1,
+  },
   headerTitle: {
     fontSize: 22,
     fontWeight: "700",
@@ -190,7 +200,8 @@ const styles = StyleSheet.create({
   },
   headerBackBtn: {
     position: "absolute",
-    left: 16,
+    right: 16,
+    left: undefined,
     top: 10,
     width: 44,
     height: 44,
