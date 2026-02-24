@@ -16,11 +16,26 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 5 },
     elevation: 2,
   },
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   orderId: {
+    flex: 1,
     fontSize: 15,
     fontWeight: "600",
     color: "#0B1220",
   },
+  statusWrap: {},
+  statusText: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  statusTextConfirmed: { color: "#2563EB" },
+  statusTextReady: { color: "#16A34A" },
+  statusTextCompleted: { color: "#DC2626" },
+  statusTextDefault: { color: "#6B7280" },
   date: {
     marginTop: 6,
     fontSize: 14,
@@ -34,6 +49,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   itemCount: {
+    flex: 1,
     fontSize: 14,
     fontWeight: "600",
     color: "#111827",

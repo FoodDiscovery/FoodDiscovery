@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useState } from "react";
 import { supabase } from "../lib/supabase";
+import type { OrderHistoryItem } from "../components/home/OrderHistoryCard";
 
 export interface OrderDetailData {
   restaurantName: string;
@@ -20,6 +21,7 @@ interface OrderDetailCacheContextValue {
     orderId: string,
     userId: string
   ) => Promise<{ data: OrderDetailData } | { error: string }>;
+  fetchOrderList: (userId: string) => Promise<{ data: OrderHistoryItem[] } | { error: string }>;
 }
 
 const OrderDetailCacheContext = createContext<OrderDetailCacheContextValue | undefined>(undefined);
@@ -34,6 +36,7 @@ export function useOrderDetailCache() {
   return ctx;
 }
 
+// used for single order details
 async function fetchOrderDetailImpl(
   orderId: string,
   userId: string
@@ -91,8 +94,65 @@ async function fetchOrderDetailImpl(
   };
 }
 
+function formatOrderDate(createdAt: string): string {
+  const d = new Date(createdAt);
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${month}/${day}/${year}`;
+}
+
+// used for list or orders
+async function fetchOrderListImpl(
+  userId: string
+): Promise<{ data: OrderHistoryItem[] } | { error: string }> {
+
+  // load orders from the current user
+  const { data, error: fetchError } = await supabase
+    .from("orders")
+    .select("id, created_at, total_amount, status")
+    .eq("customer_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (fetchError) {
+    return { error: fetchError.message };
+  }
+
+  // handle no orders
+  const orderRows = data ?? [];
+  if (orderRows.length === 0) {
+    return { data: [] };
+  }
+
+  // load item count for the orders
+  const orderIds = orderRows.map((r: { id: string }) => r.id);
+  const { data: itemsData } = await supabase
+    .from("order_items")
+    .select("order_id, quantity")
+    .in("order_id", orderIds);
+
+  const itemCountByOrderId: Record<string, number> = {};
+  for (const row of itemsData ?? []) {
+    const r = row as { order_id: string; quantity: number };
+    itemCountByOrderId[r.order_id] = (itemCountByOrderId[r.order_id] ?? 0) + Number(r.quantity);
+  }
+
+  // build and set the list state
+  const list = orderRows.map(
+    (row: { id: string; created_at: string; total_amount: number; status?: string | null }) => ({
+      id: row.id,
+      date: formatOrderDate(row.created_at),
+      totalPrice: Number(row.total_amount),
+      itemCount: itemCountByOrderId[row.id] ?? 0,
+      status: row.status ?? undefined,
+    })
+  );
+  return { data: list };
+}
+
 // re-render is the function call to this
 export default function OrderDetailCacheProvider({ children }: { children: React.ReactNode }) {
+  // this is what is cached
   const [cache, setCache] = useState<Record<string, OrderDetailData>>({});
 
   // get cached order_id if it exists
@@ -117,10 +177,13 @@ export default function OrderDetailCacheProvider({ children }: { children: React
     []
   );
 
-  // value object only changes when one of the functions changes
+  // no caching, list is refetched when needed
+  // same function reference entire time
+  const fetchOrderList = useCallback(async (userId: string) => fetchOrderListImpl(userId), []);
+
   const value = React.useMemo(
-    () => ({ getCached, setCached, fetchOrderDetail }),
-    [getCached, setCached, fetchOrderDetail]
+    () => ({ getCached, setCached, fetchOrderDetail, fetchOrderList }),
+    [getCached, setCached, fetchOrderDetail, fetchOrderList]
   );
 
   return (
