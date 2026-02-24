@@ -1,10 +1,12 @@
 import { Tabs } from "expo-router";
 import FontAwesome from "@react-native-vector-icons/fontawesome";
 import HomeProvider from "../../Providers/HomeProvider";
+import OrderDetailCacheProvider from "../../Providers/OrderDetailCacheProvider";
 
 export default function HomeLayout() {
   return (
     <HomeProvider>
+      <OrderDetailCacheProvider>
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -50,8 +52,10 @@ export default function HomeLayout() {
 
       <Tabs.Screen name="cart" options={{ href: null }} />
       <Tabs.Screen name="checkout" options={{ href: null }} />
+      <Tabs.Screen name="order/[orderId]" options={{ href: null }} />
       <Tabs.Screen name="restaurant/[restaurantId]" options={{ href: null }} />
       </Tabs>
+      </OrderDetailCacheProvider>
     </HomeProvider>
   );
 }
