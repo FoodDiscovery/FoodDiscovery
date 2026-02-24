@@ -133,7 +133,7 @@ export default function OwnerHomeScreen() {
       setUpdatingOrderId(orderId);
       const { error } = await supabase
         .from("orders")
-        .update({ status: "picked_up" })
+        .update({ status: "completed" })
         .eq("id", orderId);
 
       if (error) {
