@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Linking,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -124,7 +132,21 @@ export default function OrderDetailScreen() {
       >
         <View style={style.card}>
           <Text style={style.cardTitle}>{restaurantName}</Text>
-          {address ? <Text style={style.cardMeta}>{address}</Text> : null}
+          {address ? (
+            <Pressable
+              onPress={() => {
+                const encoded = encodeURIComponent(address);
+                const url =
+                  Platform.OS === "ios"
+                    ? `maps://?daddr=${encoded}`
+                    : `https://www.google.com/maps/dir/?api=1&destination=${encoded}`;
+                Linking.openURL(url);
+              }}
+              style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+            >
+              <Text style={style.cardMeta}>{address}</Text>
+            </Pressable>
+          ) : null}
           <View style={{ height: 10 }} />
           {lineItems.map((item, idx) => (
             <View key={idx} style={style.lineRow}>
