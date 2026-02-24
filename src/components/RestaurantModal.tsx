@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import {
     Modal,
     View,
@@ -15,6 +16,13 @@ import {
     getRestaurantOpenStatus,
     isWeeklyBusinessHours,
 } from '../lib/businessHours';
+import Rating from "./reviews/ratings";
+import {
+    fetchRestaurantRating,
+    getSavedUserRestaurantRating,
+    type RestaurantRatingSummary
+} from "../lib/ratings";
+import { useAuth } from "../Providers/AuthProvider";
 
 interface RestaurantModalInfo {
     id: string;
@@ -142,6 +150,36 @@ export default function RestaurantModal({
     onViewMenu
 }: RestaurantModalProps) {
     if (!restaurant) return null;
+
+    const { session } = useAuth();
+    const [ratingSummary, setRatingSummary] = useState<RestaurantRatingSummary | null>(null);
+    const [savedUserRating, setSavedUserRating] = useState<number | null>(null);
+
+    useEffect(() => {
+        let isCancelled = false;
+
+        const loadRating = async () => {
+            const summary = await fetchRestaurantRating(restaurant.id);
+            if (!isCancelled) {
+                setRatingSummary(summary);
+            }
+
+            if (session?.user?.id) {
+                const savedRating = await getSavedUserRestaurantRating(session.user.id, restaurant.id);
+                if (!isCancelled) {
+                    setSavedUserRating(savedRating);
+                }
+            } else if (!isCancelled) {
+                setSavedUserRating(null);
+            }
+        };
+
+        loadRating();
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [restaurant.id, session?.user?.id]);
 
     const { isOpen, statusText, displayText } = getRestaurantHoursDisplay(restaurant.business_hours);
 
@@ -277,7 +315,25 @@ export default function RestaurantModal({
                                         <Text style={styles.sectionIcon}>⭐</Text>
                                         <Text style={styles.sectionTitle}>Reviews</Text>
                                     </View>
-                                    <Text style={styles.comingSoonText}>Coming soon...</Text>
+                                    <View style={styles.ratingRow}>
+                                        <Rating
+                                            value={savedUserRating ?? ratingSummary?.average_rating ?? 0}
+                                            size="md"
+                                            label={
+                                                savedUserRating != null
+                                                    ? `Your rating: ${savedUserRating.toFixed(1)}`
+                                                    :
+                                                ratingSummary &&
+                                                ratingSummary.rating_count > 0 &&
+                                                ratingSummary.average_rating != null
+                                                    ? `Ratings: ${ratingSummary.average_rating.toFixed(
+                                                          1
+                                                      )} (${ratingSummary.rating_count})`
+                                                    : undefined
+                                            }
+                                        />
+                                    </View>
+                                    <Text style={styles.comingSoonText}>Reviews coming soon...</Text>
                                 </View>
 
                                 {/* Menu section */}
@@ -490,6 +546,10 @@ const styles = StyleSheet.create({
         color: '#9AA0A6',
         fontStyle: 'italic',
         marginLeft: 26,
+    },
+    ratingRow: {
+        marginLeft: 26,
+        marginBottom: 8,
     },
     buttonContainer: {
         paddingHorizontal: 20,

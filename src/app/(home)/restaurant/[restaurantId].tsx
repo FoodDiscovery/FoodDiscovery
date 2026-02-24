@@ -21,6 +21,13 @@ import MenuCategoryCard from "../../../components/menu/MenuCategoryCard";
 import CartBar from "../../../components/menu/CartBar";
 import ProfileHeaderIcon from "../../../components/ProfileHeaderIcon";
 import styles from "../../../components/styles/restaurantMenuStyles";
+import Rating from "../../../components/reviews/ratings";
+import {
+  fetchRestaurantRating,
+  getSavedUserRestaurantRating,
+  saveUserRestaurantRating,
+  type RestaurantRatingSummary,
+} from "../../../lib/ratings";
 
 // ✅ Fix: forbid require() imports
 import FoodDiscoveryLogo from "../../../../assets/images/fooddiscovery-logo.png";
@@ -48,6 +55,8 @@ export default function RestaurantMenuScreen() {
   const [restaurant, setRestaurant] = useState<RestaurantSummary | null>(null);
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
+  const [ratingSummary, setRatingSummary] = useState<RestaurantRatingSummary | null>(null);
+  const [userRating, setUserRating] = useState(0);
 
   const itemsByCategory = useMemo(() => {
     const map = new Map<number, MenuItem[]>();
@@ -67,6 +76,8 @@ export default function RestaurantMenuScreen() {
       }
 
       setLoading(true);
+      setUserRating(0);
+      setRatingSummary(null);
 
       try {
         const [restaurantRes, categoriesRes, profileRes] = await Promise.all([
@@ -104,6 +115,22 @@ export default function RestaurantMenuScreen() {
         const prof = (profileRes.data as ProfileRow | null) ?? null;
         setIsOwner((prof?.role ?? "").toLowerCase() === "owner");
         setRestaurant(restaurantRes.data as RestaurantSummary);
+
+        // Load rating summary for this restaurant (non-blocking)
+        fetchRestaurantRating(restaurantRes.data.id as string)
+          .then((summary) => setRatingSummary(summary))
+          .catch((ratingsError) => {
+            console.error("Failed to load rating summary", ratingsError);
+          });
+
+        getSavedUserRestaurantRating(session.user.id, restaurantRes.data.id as string)
+          .then((savedRating) => {
+            setUserRating(savedRating ?? 0);
+          })
+          .catch((ratingsError) => {
+            console.error("Failed to load saved user rating", ratingsError);
+            setUserRating(0);
+          });
 
         const loadedCategories = (categoriesRes.data ?? []) as MenuCategory[];
         setCategories(loadedCategories);
@@ -166,6 +193,24 @@ export default function RestaurantMenuScreen() {
     const key = `${restaurant.id}:${item.id}`;
     decrementItem(key);
   };
+
+  const handleRatingChange = async (nextRating: number) => {
+    if (!session?.user?.id || !restaurant?.id) return;
+
+    setUserRating(nextRating);
+    try {
+      await saveUserRestaurantRating(session.user.id, restaurant.id, nextRating);
+    } catch (error) {
+      console.error("Failed to save user rating", error);
+    }
+  };
+
+  const ratingLabel =
+    userRating > 0
+      ? `Your rating: ${userRating.toFixed(1)}`
+      : ratingSummary?.rating_count && ratingSummary.average_rating != null
+      ? `Ratings: ${ratingSummary.average_rating.toFixed(1)} (${ratingSummary.rating_count})`
+      : "No ratings yet";
 
   if (loading) {
     return (
@@ -232,6 +277,15 @@ export default function RestaurantMenuScreen() {
         {/* Restaurant header card */}
         <View style={styles.headerCard}>
           <Text style={styles.heading}>{restaurant?.name ?? "Restaurant Menu"}</Text>
+
+          <View style={styles.ratingRow}>
+            <Rating
+              value={userRating || ratingSummary?.average_rating || 0}
+              onChange={handleRatingChange}
+              size="md"
+              label={ratingLabel}
+            />
+          </View>
 
           {!!restaurant?.cuisine_type && (
             <View style={styles.cuisineTag}>

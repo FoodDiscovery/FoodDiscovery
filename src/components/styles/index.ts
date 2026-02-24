@@ -4,11 +4,7 @@ export { default as homeMapStyles } from "./homeMapStyles";
 export { default as tabPlaceholderStyles } from "./tabPlaceholderStyles";
 export { default as customerProfileStyles } from "./customerProfileStyles";
 export { default as customerProfileIconStyles } from "./customerProfileIconStyles";
-export {
-  default as profileHeaderIconStyles,
-  PROFILE_HEADER_ICON_COLOR,
-  PROFILE_HEADER_ICON_SIZE,
-} from "./profileHeaderIconStyles";
+export { default as profileHeaderIconStyles, PROFILE_HEADER_ICON_COLOR, PROFILE_HEADER_ICON_SIZE } from "./profileHeaderIconStyles";
 export { default as orderDetailStyles, NAVY } from "./orderDetailStyles";
 export { default as orderHistoryCardStyles } from "./orderHistoryCardStyles";
 export { default as menuEditStyles } from "./menuEditStyles";
@@ -19,3 +15,4 @@ export { default as authStyles } from "./authStyles";
 export { default as gettingStartedStyles } from "./gettingStartedStyles";
 export { default as ownerHomeStyles } from "./ownerHomeStyles";
 export { default as restaurantMenuStyles } from "./restaurantMenuStyles";
+export { ratingStyles, ratingSizeStyles } from "./ratingStyles";

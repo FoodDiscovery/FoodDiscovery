@@ -78,6 +78,10 @@ export default StyleSheet.create({
     letterSpacing: -0.2,
   },
 
+  ratingRow: {
+    marginTop: 8,
+  },
+
   subtitle: {
     marginTop: 10,
     fontSize: 16,

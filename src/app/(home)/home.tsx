@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -12,14 +12,21 @@ import {
   View,
   Image,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
 import { supabase } from "../../lib/supabase";
 import { useLocation } from "../../Providers/LocationProvider";
 import { useCart } from "../../Providers/CartProvider";
+import { useAuth } from "../../Providers/AuthProvider";
 import ProfileHeaderIcon from "../../components/ProfileHeaderIcon";
+import Rating from "../../components/reviews/ratings";
+import {
+  fetchAllRestaurantRatings,
+  fetchUserRestaurantRatings,
+  type RestaurantRatingSummary,
+} from "../../lib/ratings";
 
 // ✅ Fix: forbid require() imports
 import FoodDiscoveryLogo from "../../../assets/images/fooddiscovery-logo.png";
@@ -56,10 +63,14 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { location, errorMsg, isLoading } = useLocation();
   const { itemCount } = useCart();
+  const { session } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [restaurants, setRestaurants] = useState<RestaurantRow[]>([]);
   const [nearby, setNearby] = useState<NearbyRestaurant[]>([]);
+  const [restaurantRatings, setRestaurantRatings] =
+    useState<Map<string, RestaurantRatingSummary>>(new Map());
+  const [savedUserRatings, setSavedUserRatings] = useState<Map<string, number>>(new Map());
 
   const [query, setQuery] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>("Name");
@@ -91,7 +102,15 @@ export default function HomeScreen() {
       }
 
       setRestaurants((data ?? []) as RestaurantRow[]);
-      setLoading(false);
+      // Non-blocking: fetch rating summaries for all restaurants.
+      fetchAllRestaurantRatings()
+        .then((map) => setRestaurantRatings(map))
+        .catch((ratingsError) => {
+          console.error("Failed to load restaurant ratings", ratingsError);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     };
 
     load();
@@ -119,6 +138,39 @@ export default function HomeScreen() {
 
     loadNearby();
   }, [sortMode, location]);
+
+  const loadSavedRatings = useCallback(async () => {
+    if (!session?.user?.id) {
+      setSavedUserRatings(new Map());
+      return;
+    }
+
+    const restaurantIds = new Set<string>();
+    restaurants.forEach((r) => restaurantIds.add(r.id));
+    nearby.forEach((n) => restaurantIds.add(n.restaurant.id));
+
+    if (restaurantIds.size === 0) {
+      setSavedUserRatings(new Map());
+      return;
+    }
+
+    const nextMap = await fetchUserRestaurantRatings(session.user.id, Array.from(restaurantIds));
+    setSavedUserRatings(nextMap);
+  }, [nearby, restaurants, session?.user?.id]);
+
+  useEffect(() => {
+    loadSavedRatings().catch((error) => {
+      console.error("Failed to load saved user ratings for home", error);
+    });
+  }, [loadSavedRatings]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadSavedRatings().catch((error) => {
+        console.error("Failed to refresh saved user ratings on focus", error);
+      });
+    }, [loadSavedRatings])
+  );
 
   const cuisineOptions = useMemo(() => {
     const set = new Set<string>();
@@ -238,6 +290,19 @@ export default function HomeScreen() {
       const n = item as NearbyRestaurant;
       const km = (n.distance_meters / 1000).toFixed(2);
       const base = restaurantById.get(n.restaurant.id);
+      const ratingSummary = restaurantRatings.get(n.restaurant.id);
+      const savedUserRating = savedUserRatings.get(n.restaurant.id);
+      const avgRating =
+        ratingSummary && ratingSummary.average_rating != null
+          ? ratingSummary.average_rating
+          : 0;
+      const displayedRating = savedUserRating ?? avgRating;
+      const ratingLabel =
+        savedUserRating != null
+          ? `Your rating: ${savedUserRating.toFixed(1)}`
+          : ratingSummary && ratingSummary.rating_count > 0
+          ? `Ratings: ${avgRating.toFixed(1)} (${ratingSummary.rating_count})`
+          : undefined;
 
       return (
         <Pressable
@@ -248,6 +313,7 @@ export default function HomeScreen() {
             <RestaurantImage uri={base?.image_url} />
             <View style={styles.cardBody}>
               <Text style={styles.cardTitle}>{n.restaurant.name}</Text>
+              <Rating value={displayedRating} size="sm" label={ratingLabel} />
               <Text style={styles.cardMeta}>{km} km away</Text>
 
               {!!base?.cuisine_type && (
@@ -263,6 +329,19 @@ export default function HomeScreen() {
     }
 
     const r = item as RestaurantRow;
+    const ratingSummary = restaurantRatings.get(r.id);
+    const savedUserRating = savedUserRatings.get(r.id);
+    const avgRating =
+      ratingSummary && ratingSummary.average_rating != null
+        ? ratingSummary.average_rating
+        : 0;
+    const displayedRating = savedUserRating ?? avgRating;
+    const ratingLabel =
+      savedUserRating != null
+        ? `Your rating: ${savedUserRating.toFixed(1)}`
+        : ratingSummary && ratingSummary.rating_count > 0
+        ? `Ratings: ${avgRating.toFixed(1)} (${ratingSummary.rating_count})`
+        : undefined;
 
     return (
       <Pressable
@@ -273,6 +352,7 @@ export default function HomeScreen() {
           <RestaurantImage uri={r.image_url} />
           <View style={styles.cardBody}>
             <Text style={styles.cardTitle}>{r.name ?? "Unnamed restaurant"}</Text>
+            <Rating value={displayedRating} size="md" label={ratingLabel} />
             {!!r.cuisine_type && (
               <Text style={styles.cardCuisine}>{r.cuisine_type}</Text>
             )}

@@ -28,12 +28,17 @@ function getRestaurantImage(restaurant: RestaurantRow): string | null {
 }
 
 export default function RestaurantList() {
-  const { loading, activeList, sortMode, restaurantDistances } = useHome();
+  const { loading, activeList, sortMode, restaurantDistances, restaurantRatings } = useHome();
   const renderItem = ({ item }: { item: RestaurantListItem }) => {
     if (sortMode === "distance") {
       const n = item as NearbyRestaurant;
       const miles = (n.distance_meters / 1609.34).toFixed(1);
       const imageUrl = getRestaurantImage(n.restaurant);
+      const ratingSummary = restaurantRatings.get(n.restaurant.id);
+      const avgRating =
+        ratingSummary && ratingSummary.average_rating != null
+          ? ratingSummary.average_rating
+          : 0;
       return (
         <RestaurantCard
           id={n.restaurant.id}
@@ -41,6 +46,7 @@ export default function RestaurantList() {
           cuisineType={n.restaurant.cuisine_type}
           imageUrl={imageUrl}
           distance={`${miles} mi`}
+          rating={avgRating}
         />
       );
     }
@@ -51,6 +57,11 @@ export default function RestaurantList() {
     const distance = distanceMeters !== undefined 
       ? `${(distanceMeters / 1609.34).toFixed(1)} mi`
       : undefined;
+    const ratingSummary = restaurantRatings.get(r.id);
+    const avgRating =
+      ratingSummary && ratingSummary.average_rating != null
+        ? ratingSummary.average_rating
+        : 0;
     return (
       <RestaurantCard
         id={r.id}
@@ -58,6 +69,7 @@ export default function RestaurantList() {
         cuisineType={r.cuisine_type}
         imageUrl={imageUrl}
         distance={distance}
+        rating={avgRating}
       />
     );
   };

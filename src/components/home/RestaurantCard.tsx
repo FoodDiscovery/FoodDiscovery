@@ -2,6 +2,7 @@ import { Pressable, Text, View } from "react-native";
 import { router } from "expo-router";
 import { homeStyles as styles } from "../styles";
 import RestaurantImage from "./RestaurantImage";
+import Rating from "../reviews/ratings";
 
 interface RestaurantCardProps {
   id: string;
@@ -9,6 +10,7 @@ interface RestaurantCardProps {
   cuisineType: string | null;
   imageUrl: string | null;
   distance?: string;
+  rating?: number;
 }
 
 export default function RestaurantCard({
@@ -17,7 +19,11 @@ export default function RestaurantCard({
   cuisineType,
   imageUrl,
   distance,
+  rating = 0,
 }: RestaurantCardProps) {
+  const hasRating = rating > 0;
+  const ratingLabel = hasRating ? rating.toFixed(1) : undefined;
+
   return (
     <Pressable
       style={({ pressed }) => [styles.card, pressed && styles.pressedOpacity85]}
@@ -26,8 +32,7 @@ export default function RestaurantCard({
       <RestaurantImage imageUrl={imageUrl} />
       <Text style={styles.restaurantName}>{name ?? "Unnamed restaurant"}</Text>
       <View style={styles.metaRow}>
-        {/* for future ratings */}
-        <Text style={styles.rating}>⭐</Text>
+        <Rating value={rating} size="sm" label={ratingLabel} />
         <Text style={styles.metaText}>{distance ?? ""}</Text>
       </View>
       {cuisineType && (
