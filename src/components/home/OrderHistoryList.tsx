@@ -24,11 +24,6 @@ export default function OrderHistoryList() {
   const [loadingOrderId, setLoadingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!session?.user?.id) {
-      setOrders([]);
-      setLoading(false);
-      return;
-    }
     let cancelled = false;
     (async () => {
       setLoading(true);
@@ -38,7 +33,7 @@ export default function OrderHistoryList() {
       const { data, error: fetchError } = await supabase
         .from("orders")
         .select("id, created_at, total_amount")
-        .eq("customer_id", session.user.id)
+        .eq("customer_id", session?.user?.id ?? "")
         .order("created_at", { ascending: false });
 
       if (cancelled) return;
@@ -85,14 +80,6 @@ export default function OrderHistoryList() {
     };
   }, [session?.user?.id]);
 
-  if (!session?.user?.id) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.subtitle}>Sign in to see your orders.</Text>
-      </View>
-    );
-  }
-
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: "center" }]}>
@@ -129,14 +116,15 @@ export default function OrderHistoryList() {
           <Pressable
             key={order.id}
             onPress={async () => {
-              if (!session?.user?.id) return;
               const cached = getCached(order.id);
               if (cached) {
                 router.push(`/(home)/order/${order.id}`);
                 return;
               }
+              const userId = session?.user?.id;
+              if (!userId) return;
               setLoadingOrderId(order.id);
-              const result = await fetchOrderDetail(order.id, session.user.id);
+              const result = await fetchOrderDetail(order.id, userId);
               setLoadingOrderId(null);
               if ("data" in result) setCached(order.id, result.data);
               router.push(`/(home)/order/${order.id}`);
