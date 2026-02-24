@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from "react";
 import MapView, { Marker } from "react-native-maps";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { useLocation } from "../../Providers/LocationProvider";
 import { supabase } from "../../lib/supabase";
 import RestaurantModal from "../../components/RestaurantModal";
@@ -166,10 +167,12 @@ export default function MapScreen() {
       </MapView>
 
       <TouchableOpacity
-        style={[styles.buttonContainer, { bottom: insets.bottom + 64 }]}
+        testID="re-center"
+        style={[styles.recenterButton, { top: Math.max(24, insets.top * 0.45 + 14 + 44) }]}
         onPress={focusOnLocation}
+        activeOpacity={0.8}
       >
-        <Text style={styles.buttonText}>Get Location</Text>
+        <Ionicons name="navigate" size={24} color="#0B2D5B" />
       </TouchableOpacity>
 
       {selectedRestaurant && (

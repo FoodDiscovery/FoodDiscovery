@@ -15,16 +15,23 @@ const styles = StyleSheet.create({
     position: "absolute",
     zIndex: 10,
   },
-  buttonContainer: {
+  recenterButton: {
     position: "absolute",
+    right: 16,
+    zIndex: 10,
+    width: 44,
+    height: 44,
     borderRadius: 10,
-    width: "100%",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E5ECF7",
     alignItems: "center",
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
 });
 

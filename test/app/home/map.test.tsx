@@ -117,7 +117,7 @@ describe("MapScreen", () => {
     expect(getByText("Try Again")).toBeTruthy();
   });
 
-  it("renders the map and Get Location button when location is available", async () => {
+  it("renders the map and re-center button when location is available", async () => {
     mockUseLocation.mockReturnValue({
       location: { latitude: 40.0, longitude: -74.0 },
       errorMsg: null,
@@ -137,9 +137,9 @@ describe("MapScreen", () => {
       error: null,
     });
 
-    const { getByTestId, getByText } = render(<MapScreen />);
+    const { getByTestId } = render(<MapScreen />);
     expect(getByTestId("map-view")).toBeTruthy();
-    expect(getByText("Get Location")).toBeTruthy();
+    expect(getByTestId("re-center")).toBeTruthy();
     await waitFor(() => {
       expect(getByTestId("marker-Sushi Bay")).toBeTruthy();
     });
