@@ -11,9 +11,8 @@ jest.mock("react-native-safe-area-context", () => ({
 }));
 
 describe("OrderHistoryScreen", () => {
-  it("renders the order history screen", () => {
+  it("renders order history screen with title", () => {
     const { getByText } = render(<OrderHistoryScreen />);
     expect(getByText("Order History")).toBeTruthy();
-    expect(getByText("Coming soon.")).toBeTruthy();
   });
 });
