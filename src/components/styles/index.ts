@@ -18,3 +18,4 @@ export { default as businessHoursEditorStyles } from "./businessHoursEditorStyle
 export { default as authStyles } from "./authStyles";
 export { default as gettingStartedStyles } from "./gettingStartedStyles";
 export { default as ownerHomeStyles } from "./ownerHomeStyles";
+export { default as restaurantMenuStyles } from "./restaurantMenuStyles";

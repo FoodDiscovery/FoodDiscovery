@@ -17,7 +17,6 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { supabase } from "../../lib/supabase";
 import { useCart, type CartItem } from "../../Providers/CartProvider";
 import { useAuth } from "../../Providers/AuthProvider";
-import ProfileHeaderIcon from "../../components/ProfileHeaderIcon";
 
 // ✅ Fix: forbid require() imports
 import FoodDiscoveryLogo from "../../../assets/images/fooddiscovery-logo.png";
@@ -169,14 +168,18 @@ export default function CheckoutScreen() {
     <SafeAreaView style={t.safe} edges={["top"]}>
       {/* Header (matches Home theme) */}
       <View style={[t.header, { paddingTop: Math.max(10, insets.top * 0.45) }]}>
-        <View style={t.headerProfileIcon}>
-          <ProfileHeaderIcon />
-        </View>
         <View style={t.headerCenter}>
           <Image source={FoodDiscoveryLogo} style={t.headerLogo} resizeMode="contain" />
           <Text style={t.title}>Checkout</Text>
           <Text style={t.subtitle}>Pay with card. Confirm after payment.</Text>
         </View>
+        <TouchableOpacity
+          onPress={() => router.replace("/(home)/cart")}
+          style={t.headerBackBtn}
+          activeOpacity={0.8}
+        >
+          <Text style={t.headerBackText}>←</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -266,16 +269,33 @@ const t = StyleSheet.create({
     alignItems: "center",
     position: "relative",
   },
-  headerProfileIcon: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    zIndex: 1,
-  },
   headerCenter: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+  },
+  headerBackBtn: {
+    position: "absolute",
+    right: 16,
+    top: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E5ECF7",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
+  },
+  headerBackText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: NAVY,
   },
   headerLogo: {
     width: 210,
