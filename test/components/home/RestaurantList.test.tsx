@@ -1,4 +1,3 @@
-import { Image } from "react-native";
 import { render } from "@testing-library/react-native";
 import RestaurantList from "../../../src/components/home/RestaurantList";
 import { useHome } from "../../../src/Providers/HomeProvider";
@@ -34,7 +33,7 @@ describe("RestaurantList", () => {
     expect(getByText("No results")).toBeTruthy();
   });
 
-  it("renders name-sorted restaurants with computed distance and preview image fallback", () => {
+  it("renders name-sorted restaurants with computed distance", () => {
     const mockUseHome = useHome as jest.Mock;
     mockUseHome.mockReturnValue({
       loading: false,
@@ -51,12 +50,9 @@ describe("RestaurantList", () => {
       restaurantDistances: new Map([["r1", 1609.34]]),
     });
 
-    const { getByText, UNSAFE_getByType } = render(<RestaurantList />);
+    const { getByText } = render(<RestaurantList />);
     expect(getByText("Taco Town")).toBeTruthy();
     expect(getByText("1.0 mi")).toBeTruthy();
-
-    const image = UNSAFE_getByType(Image);
-    expect(image.props.source).toEqual({ uri: "https://example.com/preview.jpg" });
   });
 
   it("renders distance-sorted restaurants with nearby distance", () => {

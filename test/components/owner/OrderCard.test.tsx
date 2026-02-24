@@ -26,8 +26,8 @@ describe("OrderCard", () => {
     const { getByText, getAllByText } = render(<OrderCard {...baseOrder} />);
 
     expect(getByText("Jane D.")).toBeTruthy();
-    expect(getByText("2 × Margherita Pizza")).toBeTruthy();
-    expect(getByText("1 × Garlic Bread")).toBeTruthy();
+    expect(getByText("2 x Margherita Pizza")).toBeTruthy();
+    expect(getByText("1 x Garlic Bread")).toBeTruthy();
     expect(getAllByText("$25.98").length).toBeGreaterThan(0);
     expect(getByText("Confirmed")).toBeTruthy();
   });
@@ -90,7 +90,7 @@ describe("OrderCard", () => {
         ]}
       />
     );
-    expect(getByText("1 × Unknown item")).toBeTruthy();
+    expect(getByText("1 x Unknown item")).toBeTruthy();
   });
 
   it("disables buttons when isUpdating", () => {

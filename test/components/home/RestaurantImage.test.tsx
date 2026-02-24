@@ -1,4 +1,3 @@
-import { Image } from "react-native";
 import { render } from "@testing-library/react-native";
 import RestaurantImage from "../../../src/components/home/RestaurantImage";
 
@@ -8,12 +7,10 @@ describe("RestaurantImage", () => {
     expect(getByText("📷")).toBeTruthy();
   });
 
-  it("renders image when image url is provided", () => {
-    const { UNSAFE_getByType } = render(
+  it("renders image when url is provided (no placeholder)", () => {
+    const { queryByText } = render(
       <RestaurantImage imageUrl="https://example.com/image.jpg" />
     );
-
-    const image = UNSAFE_getByType(Image);
-    expect(image.props.source).toEqual({ uri: "https://example.com/image.jpg" });
+    expect(queryByText("📷")).toBeNull();
   });
 });

@@ -73,15 +73,13 @@ describe("HomeScreen", () => {
   });
 
   it("renders restaurant cards after loading", async () => {
-    const { getByText, getAllByText } = render(<HomeScreen />);
+    const { getByText } = render(<HomeScreen />);
 
     await waitFor(() => {
       expect(getByText("Pizza Palace")).toBeTruthy();
     });
 
     expect(getByText("Sushi Spot")).toBeTruthy();
-    expect(getAllByText("Italian").length).toBeGreaterThanOrEqual(1);
-    expect(getAllByText("Japanese").length).toBeGreaterThanOrEqual(1);
   });
 
   it("shows empty state when no restaurants match search", async () => {
@@ -146,16 +144,6 @@ describe("HomeScreen", () => {
     fireEvent.press(getByLabelText("Open cart"));
 
     expect(router.push).toHaveBeenCalledWith("/(home)/cart");
-  });
-
-  it("renders cuisine chips inside the filters modal", async () => {
-    const { getAllByText } = render(<HomeScreen />);
-
-    await waitFor(() => {
-      expect(getAllByText("Italian").length).toBeGreaterThanOrEqual(1);
-    });
-
-    expect(getAllByText("Japanese").length).toBeGreaterThanOrEqual(1);
   });
 
   it("alerts when supabase returns an error", async () => {

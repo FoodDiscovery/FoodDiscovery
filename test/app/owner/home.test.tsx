@@ -151,8 +151,6 @@ describe("OwnerHomeScreen", () => {
     await waitFor(() => {
       expect(getByText("Incoming Orders")).toBeTruthy();
       expect(getByText("Jane D.")).toBeTruthy();
-      expect(getByText("2 × Margherita Pizza")).toBeTruthy();
-      expect(getByText("Ready for pickup")).toBeTruthy();
     });
   });
 

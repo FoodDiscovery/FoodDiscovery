@@ -17,7 +17,7 @@ export default function OrderItemRow({
     <View style={styles.itemRow}>
       <View style={styles.itemLeft}>
         <Text style={styles.itemQtyName} numberOfLines={2}>
-          {quantity} × {itemName}
+          {quantity} x {itemName}
         </Text>
       </View>
       <Text style={styles.itemPrice}>${lineTotal.toFixed(2)}</Text>
