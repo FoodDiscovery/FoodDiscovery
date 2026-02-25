@@ -8,6 +8,7 @@ export interface OrderHistoryItem {
   itemCount?: number; // optional when coming from orders table (no line items)
   totalPrice: number;
   status?: string; // order_status from orders table (e.g. confirmed, ready, completed)
+  orderNumber?: number; // from orders.order_number, displayed as Order ID when present
 }
 
 interface OrderHistoryCardProps {
@@ -18,13 +19,13 @@ interface OrderHistoryCardProps {
 
 const SHORT_ID_LENGTH = 8;
 
-function getStatusTextStyle(status: string | undefined): object | null {
+function getStatusBadgeStyles(status: string | undefined): { badge: object; text: object } | null {
   if (!status) return null;
   const s = status.toLowerCase();
-  if (s === "confirmed") return styles.statusTextConfirmed;
-  if (s === "ready") return styles.statusTextReady;
-  if (s === "completed") return styles.statusTextCompleted;
-  return styles.statusTextDefault;
+  if (s === "confirmed") return { badge: styles.statusBadgeConfirmed, text: styles.statusTextConfirmed };
+  if (s === "ready") return { badge: styles.statusBadgeReady, text: styles.statusTextReady };
+  if (s === "completed") return { badge: styles.statusBadgeCompleted, text: styles.statusTextCompleted };
+  return { badge: styles.statusBadgeDefault, text: styles.statusTextDefault };
 }
 
 // takes in the order_items as props from its caller
@@ -37,21 +38,31 @@ export default function OrderHistoryCard({ order, displayNumber }: OrderHistoryC
         })()
       : order.date;
   const idLabel =
-    displayNumber != null ? String(displayNumber) : order.id.length > SHORT_ID_LENGTH ? `${order.id.slice(0, SHORT_ID_LENGTH)}...` : order.id;
-  const statusTextStyle = getStatusTextStyle(order.status);
+    order.orderNumber != null
+      ? String(order.orderNumber)
+      : displayNumber != null
+        ? String(displayNumber)
+        : order.id.length > SHORT_ID_LENGTH
+          ? `${order.id.slice(0, SHORT_ID_LENGTH)}...`
+          : order.id;
+  const statusBadgeStyles = getStatusBadgeStyles(order.status);
   const statusDisplay = order.status ? order.status.toLowerCase() : null;
 
   return (
     <View style={styles.card}>
-      <View style={styles.topRow}>
-        <Text style={styles.orderId}>Order ID: {idLabel}</Text>
-        {statusDisplay && statusTextStyle ? (
-          <Text style={[styles.statusText, statusTextStyle]}>{statusDisplay}</Text>
-        ) : (
-          <View style={styles.statusWrap} />
-        )}
+      <View style={styles.cardHeader}>
+        <View style={styles.topRow}>
+          <Text style={styles.orderId}>Order ID: {idLabel}</Text>
+          {statusDisplay && statusBadgeStyles ? (
+            <View style={[styles.statusBadge, statusBadgeStyles.badge]}>
+              <Text style={[styles.statusText, statusBadgeStyles.text]}>{statusDisplay}</Text>
+            </View>
+          ) : (
+            <View style={styles.statusWrap} />
+          )}
+        </View>
+        <Text style={styles.date}>{dateDisplay}</Text>
       </View>
-      <Text style={styles.date}>{dateDisplay}</Text>
       <View style={styles.row}>
         <Text style={styles.itemCount}>
           {order.itemCount != null ? `${order.itemCount} item${order.itemCount === 1 ? "" : "s"}` : "—"}

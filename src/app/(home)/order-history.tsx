@@ -4,12 +4,15 @@ import OrderHistoryList from "../../components/home/OrderHistoryList";
 import { tabPlaceholderStyles as styles } from "../../components/styles";
 
 const BG = "#F3F6FB";
+const NAVY = "#0B2D5B";
 
 export default function OrderHistoryScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: BG }]} edges={["top"]}>
       <View style={[styles.container, { justifyContent: "flex-start", paddingTop: 24 }]}>
-        <Text style={styles.title}>Order History</Text>
+        <Text style={[styles.title, { fontSize: 28, fontWeight: "800", color: NAVY }]}>
+          Order History
+        </Text>
         <OrderHistoryList />
       </View>
     </SafeAreaView>
