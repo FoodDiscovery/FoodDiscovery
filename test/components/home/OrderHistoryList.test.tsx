@@ -13,21 +13,14 @@ jest.mock("../../../src/Providers/AuthProvider", () => ({
   useAuth: () => mockUseAuth(),
 }));
 
+const mockFetchOrderList = jest.fn();
 jest.mock("../../../src/Providers/OrderDetailCacheProvider", () => ({
   useOrderDetailCache: () => mockUseOrderDetailCache(),
-}));
-
-const mockFrom = jest.fn();
-jest.mock("../../../src/lib/supabase", () => ({
-  supabase: {
-    from: (...args: unknown[]) => mockFrom(...args),
-  },
 }));
 
 describe("OrderHistoryList", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockFrom.mockReset();
     mockUseOrderDetailCache.mockReturnValue({
       getCached: jest.fn(() => null),
       setCached: jest.fn(),
@@ -38,6 +31,7 @@ describe("OrderHistoryList", () => {
           lineItems: [],
         },
       }),
+      fetchOrderList: mockFetchOrderList,
     });
   });
 
@@ -45,9 +39,7 @@ describe("OrderHistoryList", () => {
     mockUseAuth.mockReturnValue({
       session: { user: { id: "user-1" } },
     });
-    mockFrom.mockReturnValue({
-      select: () => ({ eq: () => ({ order: () => new Promise<never>(() => undefined) }) }),
-    });
+    mockFetchOrderList.mockReturnValue(new Promise<never>(() => undefined));
 
     const { queryByText } = render(<OrderHistoryList />);
     expect(queryByText("No orders yet.")).toBeNull();
@@ -57,17 +49,7 @@ describe("OrderHistoryList", () => {
     mockUseAuth.mockReturnValue({
       session: { user: { id: "user-1" } },
     });
-    mockFrom.mockReturnValue({
-      select: () => ({
-        eq: () => ({
-          order: () =>
-            Promise.resolve({
-              data: null,
-              error: { message: "Network error" },
-            }),
-        }),
-      }),
-    });
+    mockFetchOrderList.mockResolvedValue({ error: "Network error" });
 
     const { getByText } = render(<OrderHistoryList />);
     await waitFor(() => {
@@ -79,17 +61,7 @@ describe("OrderHistoryList", () => {
     mockUseAuth.mockReturnValue({
       session: { user: { id: "user-1" } },
     });
-    mockFrom
-      .mockReturnValueOnce({
-        select: () => ({
-          eq: () => ({
-            order: () => Promise.resolve({ data: [], error: null }),
-          }),
-        }),
-      })
-      .mockReturnValueOnce({
-        select: () => ({ in: () => Promise.resolve({ data: [], error: null }) }),
-      });
+    mockFetchOrderList.mockResolvedValue({ data: [] });
 
     const { getByText } = render(<OrderHistoryList />);
     await waitFor(() => {
@@ -101,44 +73,23 @@ describe("OrderHistoryList", () => {
     mockUseAuth.mockReturnValue({
       session: { user: { id: "user-1" } },
     });
-    mockFrom.mockImplementation((table: string) => {
-      if (table === "orders") {
-        return {
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              order: jest.fn().mockResolvedValue({
-                data: [
-                  {
-                    id: "order-1",
-                    created_at: "2026-02-23T12:00:00Z",
-                    total_amount: 18.66,
-                  },
-                ],
-                error: null,
-              }),
-            }),
-          }),
-        };
-      }
-      if (table === "order_items") {
-        return {
-          select: jest.fn().mockReturnValue({
-            in: jest.fn().mockResolvedValue({
-              data: [{ order_id: "order-1", quantity: 2 }],
-              error: null,
-            }),
-          }),
-        };
-      }
-      return {};
+    mockFetchOrderList.mockResolvedValue({
+      data: [
+        {
+          id: "order-1",
+          date: "02/23/2026",
+          totalPrice: 18.66,
+          itemCount: 2,
+        },
+      ],
     });
 
     const { getByText } = render(<OrderHistoryList />);
     await waitFor(() => {
-      expect(getByText("Order ID: order-1")).toBeTruthy();
+      expect(getByText("Order ID: 1")).toBeTruthy();
     });
 
-    fireEvent.press(getByText("Order ID: order-1"));
+    fireEvent.press(getByText("Order ID: 1"));
     await waitFor(() => {
       expect(router.push).toHaveBeenCalledWith("/(home)/order/order-1");
     });
