@@ -25,7 +25,6 @@ import Rating from "../../../components/reviews/ratings";
 import {
   fetchRestaurantRating,
   getSavedUserRestaurantRating,
-  saveUserRestaurantRating,
   type RestaurantRatingSummary,
 } from "../../../lib/ratings";
 
@@ -194,17 +193,6 @@ export default function RestaurantMenuScreen() {
     decrementItem(key);
   };
 
-  const handleRatingChange = async (nextRating: number) => {
-    if (!session?.user?.id || !restaurant?.id) return;
-
-    setUserRating(nextRating);
-    try {
-      await saveUserRestaurantRating(session.user.id, restaurant.id, nextRating);
-    } catch (error) {
-      console.error("Failed to save user rating", error);
-    }
-  };
-
   const ratingLabel =
     userRating > 0
       ? `Your rating: ${userRating.toFixed(1)}`
@@ -281,7 +269,6 @@ export default function RestaurantMenuScreen() {
           <View style={styles.ratingRow}>
             <Rating
               value={userRating || ratingSummary?.average_rating || 0}
-              onChange={handleRatingChange}
               size="md"
               label={ratingLabel}
             />

@@ -4,6 +4,7 @@ import { orderHistoryCardStyles as styles } from "../styles";
 
 export interface OrderHistoryItem {
   id: string;
+  restaurantId?: string;
   date: string; // ISO or "DD/MM/YYYY" for display
   itemCount?: number; // optional when coming from orders table (no line items)
   totalPrice: number;

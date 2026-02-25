@@ -1,5 +1,4 @@
 import { supabase } from "./supabase";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export interface RestaurantRatingSummary {
   restaurant_id: string;
@@ -7,11 +6,7 @@ export interface RestaurantRatingSummary {
   rating_count: number;
 }
 
-const USER_RATING_STORAGE_KEY_PREFIX = "restaurant_user_rating";
-const USER_RATINGS_TABLE = "restaurant_ratings";
-
-const getUserRatingStorageKey = (userId: string, restaurantId: string): string =>
-  `${USER_RATING_STORAGE_KEY_PREFIX}:${userId}:${restaurantId}`;
+const USER_REVIEWS_TABLE = "restaurant_ratings";
 
 const normalizeRating = (value: number): number => Math.max(0, Math.min(5, value));
 
@@ -58,51 +53,55 @@ export async function getSavedUserRestaurantRating(
   userId: string,
   restaurantId: string
 ): Promise<number | null> {
-  const key = getUserRatingStorageKey(userId, restaurantId);
   const { data, error } = await supabase
-    .from(USER_RATINGS_TABLE)
+    .from(USER_REVIEWS_TABLE)
     .select("rating")
     .eq("user_id", userId)
     .eq("restaurant_id", restaurantId)
-    .maybeSingle();
-
-  if (!error && data && typeof data.rating === "number" && Number.isFinite(data.rating)) {
-    const normalized = normalizeRating(data.rating);
-    // Keep local cache warm for quick reads/fallback.
-    await AsyncStorage.setItem(key, String(normalized));
-    return normalized;
-  }
-
-  // Fallback for older local-only ratings or temporary backend failures.
-  const raw = await AsyncStorage.getItem(key);
-  if (!raw) return null;
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed)) return null;
-  return normalizeRating(parsed);
-}
-
-export async function saveUserRestaurantRating(
-  userId: string,
-  restaurantId: string,
-  rating: number
-): Promise<void> {
-  const key = getUserRatingStorageKey(userId, restaurantId);
-  const normalized = normalizeRating(rating);
-  const { error } = await supabase.from(USER_RATINGS_TABLE).upsert(
-    {
-      user_id: userId,
-      restaurant_id: restaurantId,
-      rating: normalized,
-    },
-    { onConflict: "user_id,restaurant_id" }
-  );
+    .limit(1);
 
   if (error) {
     throw error;
   }
+  const first = Array.isArray(data) ? data[0] : null;
+  if (!first || typeof first.rating !== "number" || !Number.isFinite(first.rating)) return null;
+  return normalizeRating(first.rating);
+}
 
-  // Keep local cache aligned with remote source of truth.
-  await AsyncStorage.setItem(key, String(normalized));
+export async function saveUserRestaurantReview(
+  userId: string,
+  restaurantId: string,
+  rating: number,
+  reviewDescription: string
+): Promise<void> {
+  const normalized = normalizeRating(rating);
+  const trimmedDescription = reviewDescription.trim();
+
+  const { data: existing, error: existingError } = await supabase
+    .from(USER_REVIEWS_TABLE)
+    .select("id")
+    .eq("user_id", userId)
+    .eq("restaurant_id", restaurantId)
+    .limit(1);
+
+  if (existingError) {
+    throw existingError;
+  }
+
+  const existingRow = Array.isArray(existing) ? existing[0] : null;
+  const payload = {
+    user_id: userId,
+    restaurant_id: restaurantId,
+    rating: normalized,
+    review_description: trimmedDescription,
+  };
+
+  const { error } = existingRow
+    ? await supabase.from(USER_REVIEWS_TABLE).update(payload).eq("id", existingRow.id)
+    : await supabase.from(USER_REVIEWS_TABLE).insert(payload);
+  if (error) {
+    throw error;
+  }
 }
 
 export async function fetchUserRestaurantRatings(
@@ -114,7 +113,7 @@ export async function fetchUserRestaurantRatings(
 
   const uniqueIds = Array.from(new Set(restaurantIds));
   const { data, error } = await supabase
-    .from(USER_RATINGS_TABLE)
+    .from(USER_REVIEWS_TABLE)
     .select("restaurant_id,rating")
     .eq("user_id", userId)
     .in("restaurant_id", uniqueIds);

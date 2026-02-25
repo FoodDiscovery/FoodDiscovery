@@ -110,7 +110,7 @@ async function fetchOrderListImpl(
   // load orders from the current user
   const { data, error: fetchError } = await supabase
     .from("orders")
-    .select("id, created_at, total_amount, status")
+    .select("id, restaurant_id, created_at, total_amount, status")
     .eq("customer_id", userId)
     .order("created_at", { ascending: false });
 
@@ -139,8 +139,15 @@ async function fetchOrderListImpl(
 
   // build and set the list state
   const list = orderRows.map(
-    (row: { id: string; created_at: string; total_amount: number; status?: string | null }) => ({
+    (row: {
+      id: string;
+      restaurant_id: string;
+      created_at: string;
+      total_amount: number;
+      status?: string | null;
+    }) => ({
       id: row.id,
+      restaurantId: row.restaurant_id,
       date: formatOrderDate(row.created_at),
       totalPrice: Number(row.total_amount),
       itemCount: itemCountByOrderId[row.id] ?? 0,
