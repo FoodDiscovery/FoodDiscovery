@@ -29,12 +29,13 @@ function getRestaurantImage(restaurant: RestaurantRow): string | null {
 
 export default function RestaurantList() {
   const { loading, activeList, sortMode, restaurantDistances, restaurantRatings } = useHome();
+  const ratingsMap = restaurantRatings ?? new Map();
   const renderItem = ({ item }: { item: RestaurantListItem }) => {
     if (sortMode === "distance") {
       const n = item as NearbyRestaurant;
       const miles = (n.distance_meters / 1609.34).toFixed(1);
       const imageUrl = getRestaurantImage(n.restaurant);
-      const ratingSummary = restaurantRatings.get(n.restaurant.id);
+      const ratingSummary = ratingsMap.get(n.restaurant.id);
       const avgRating =
         ratingSummary && ratingSummary.average_rating != null
           ? ratingSummary.average_rating
@@ -57,7 +58,7 @@ export default function RestaurantList() {
     const distance = distanceMeters !== undefined 
       ? `${(distanceMeters / 1609.34).toFixed(1)} mi`
       : undefined;
-    const ratingSummary = restaurantRatings.get(r.id);
+    const ratingSummary = ratingsMap.get(r.id);
     const avgRating =
       ratingSummary && ratingSummary.average_rating != null
         ? ratingSummary.average_rating

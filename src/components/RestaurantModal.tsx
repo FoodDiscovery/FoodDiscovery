@@ -159,18 +159,26 @@ export default function RestaurantModal({
         let isCancelled = false;
 
         const loadRating = async () => {
-            const summary = await fetchRestaurantRating(restaurant.id);
-            if (!isCancelled) {
-                setRatingSummary(summary);
-            }
-
-            if (session?.user?.id) {
-                const savedRating = await getSavedUserRestaurantRating(session.user.id, restaurant.id);
+            try {
+                const summary = await fetchRestaurantRating(restaurant.id);
                 if (!isCancelled) {
-                    setSavedUserRating(savedRating);
+                    setRatingSummary(summary);
                 }
-            } else if (!isCancelled) {
-                setSavedUserRating(null);
+
+                if (session?.user?.id) {
+                    const savedRating = await getSavedUserRestaurantRating(session.user.id, restaurant.id);
+                    if (!isCancelled) {
+                        setSavedUserRating(savedRating);
+                    }
+                } else if (!isCancelled) {
+                    setSavedUserRating(null);
+                }
+            } catch (error) {
+                console.error("Failed to load rating data", error);
+                if (!isCancelled) {
+                    setRatingSummary(null);
+                    setSavedUserRating(null);
+                }
             }
         };
 
