@@ -9,6 +9,12 @@ jest.mock("expo-router", () => ({
   router: { push: jest.fn(), replace: jest.fn() },
 }));
 
+jest.mock("@react-navigation/native", () => ({
+  useFocusEffect: (callback: () => void) => {
+    queueMicrotask(() => callback());
+  },
+}));
+
 jest.mock("../../../src/Providers/AuthProvider", () => ({
   useAuth: () => mockUseAuth(),
 }));
