@@ -16,6 +16,17 @@ describe("OrderHistoryCard", () => {
     expect(getByText("$18.66")).toBeTruthy();
   });
 
+  it("shows displayNumber when provided (1 = oldest, n = newest)", () => {
+    const order: OrderHistoryItem = {
+      id: "uuid-xyz",
+      date: "02/23/2026",
+      itemCount: 1,
+      totalPrice: 10.0,
+    };
+    const { getByText } = render(<OrderHistoryCard order={order} displayNumber={3} />);
+    expect(getByText("Order ID: 3")).toBeTruthy();
+  });
+
   it("shortens long order id with ellipsis", () => {
     const order: OrderHistoryItem = {
       id: "bf0424b3-6542-4e47-a63c-b317268ffb5f",

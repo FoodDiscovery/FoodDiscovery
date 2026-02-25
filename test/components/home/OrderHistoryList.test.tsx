@@ -86,10 +86,10 @@ describe("OrderHistoryList", () => {
 
     const { getByText } = render(<OrderHistoryList />);
     await waitFor(() => {
-      expect(getByText("Order ID: order-1")).toBeTruthy();
+      expect(getByText("Order ID: 1")).toBeTruthy();
     });
 
-    fireEvent.press(getByText("Order ID: order-1"));
+    fireEvent.press(getByText("Order ID: 1"));
     await waitFor(() => {
       expect(router.push).toHaveBeenCalledWith("/(home)/order/order-1");
     });

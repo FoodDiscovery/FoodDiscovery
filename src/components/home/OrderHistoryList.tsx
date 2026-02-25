@@ -79,8 +79,9 @@ export default function OrderHistoryList() {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      {orders.map((order) => {
+      {orders.map((order, index) => {
         const isOpening = loadingOrderId === order.id;
+        const displayNumber = orders.length - index; // 1 = oldest, n = newest
         return (
           <Pressable
             key={order.id}
@@ -101,7 +102,7 @@ export default function OrderHistoryList() {
             style={({ pressed }) => [{ opacity: pressed || isOpening ? 0.7 : 1 }]}
             disabled={isOpening}
           >
-            <OrderHistoryCard order={order} />
+            <OrderHistoryCard order={order} displayNumber={displayNumber} />
           </Pressable>
         );
       })}
