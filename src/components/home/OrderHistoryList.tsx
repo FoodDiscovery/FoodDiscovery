@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -11,6 +11,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import { useAuth } from "../../Providers/AuthProvider";
 import { useOrderDetailCache } from "../../Providers/OrderDetailCacheProvider";
@@ -31,8 +32,9 @@ export default function OrderHistoryList() {
   const [draftRating, setDraftRating] = useState(0);
   const [draftReview, setDraftReview] = useState("");
   const [savingReview, setSavingReview] = useState(false);
+  // loading for initial render
+  const hasLoadedOnce = useRef(false);
 
-  // if user changes or new function reference for fetchOrderList
   const loadOrders = useCallback(async () => {
     const userId = session?.user?.id ?? "";
     setError(null);
@@ -45,11 +47,17 @@ export default function OrderHistoryList() {
     }
   }, [session?.user?.id, fetchOrderList]);
 
-  // load list on mount and when user changes
-  useEffect(() => {
-    setLoading(true);
-    loadOrders().finally(() => setLoading(false));
-  }, [loadOrders]);
+  // Refetch whenever the Order History tab is focused (including first load)
+  useFocusEffect(
+    useCallback(() => {
+      const isInitial = !hasLoadedOnce.current;
+      if (isInitial) setLoading(true);
+      loadOrders().finally(() => {
+        setLoading(false);
+        hasLoadedOnce.current = true;
+      });
+    }, [loadOrders])
+  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
