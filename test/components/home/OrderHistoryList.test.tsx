@@ -43,7 +43,9 @@ describe("OrderHistoryList", () => {
   });
 
   it("shows loading state while fetching orders", () => {
-    mockFetchOrderList.mockImplementation(() => new Promise(() => {}));
+    mockFetchOrderList.mockImplementation(
+      () => new Promise<void>(() => { /* never resolves */ })
+    );
 
     const { queryByText } = render(<OrderHistoryList />);
 
