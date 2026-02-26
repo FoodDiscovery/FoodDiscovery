@@ -13,8 +13,22 @@ import { useAuth } from "../../Providers/AuthProvider";
 import { useOrderDetailCache } from "../../Providers/OrderDetailCacheProvider";
 import OrderHistoryCard, { type OrderHistoryItem } from "./OrderHistoryCard";
 import { tabPlaceholderStyles as styles } from "../styles";
+import { toDateOnlyForFilter } from "../../lib/dateUtils";
 
-export default function OrderHistoryList() {
+interface OrderHistoryListProps {
+  startDate?: string | null;
+  endDate?: string | null;
+}
+
+function withinDateFilter(orderDate: string, startDate?: string | null, endDate?: string | null): boolean {
+  if (!startDate) return true;
+  const normalized = toDateOnlyForFilter(orderDate);
+  if (!normalized) return false;
+  if (!endDate) return normalized === startDate;
+  return normalized >= startDate && normalized <= endDate;
+}
+
+export default function OrderHistoryList({ startDate = null, endDate = null }: OrderHistoryListProps) {
   const { session } = useAuth();
   const { getCached, setCached, fetchOrderDetail, fetchOrderList } = useOrderDetailCache();
   const [orders, setOrders] = useState<OrderHistoryItem[]>([]);
@@ -78,6 +92,18 @@ export default function OrderHistoryList() {
     );
   }
 
+  const filteredOrders = orders.filter((order) =>
+    withinDateFilter(order.createdAt ?? order.date, startDate, endDate)
+  );
+
+  if (filteredOrders.length === 0) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.subtitle}>No orders match those date filters.</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView
       style={{ flex: 1, width: "100%", marginTop: 16 }}
@@ -87,9 +113,9 @@ export default function OrderHistoryList() {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      {orders.map((order, index) => {
+      {filteredOrders.map((order, index) => {
         const isOpening = loadingOrderId === order.id;
-        const displayNumber = orders.length - index; // 1 = oldest, n = newest
+        const displayNumber = filteredOrders.length - index; // 1 = oldest, n = newest
         return (
           <Pressable
             key={order.id}

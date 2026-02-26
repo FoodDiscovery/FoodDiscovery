@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useState } from "react";
+import { formatIsoToPstDisplay } from "../lib/dateUtils";
 import { supabase } from "../lib/supabase";
 import type { OrderHistoryItem } from "../components/home/OrderHistoryCard";
 
@@ -94,13 +95,6 @@ async function fetchOrderDetailImpl(
   };
 }
 
-function formatOrderDate(createdAt: string): string {
-  const d = new Date(createdAt);
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const year = d.getFullYear();
-  return `${month}/${day}/${year}`;
-}
 
 // used for list or orders
 async function fetchOrderListImpl(
@@ -147,7 +141,8 @@ async function fetchOrderListImpl(
       order_number?: number | null;
     }) => ({
       id: row.id,
-      date: formatOrderDate(row.created_at),
+      date: formatIsoToPstDisplay(row.created_at),
+      createdAt: row.created_at,
       totalPrice: Number(row.total_amount),
       itemCount: itemCountByOrderId[row.id] ?? 0,
       status: row.status ?? undefined,

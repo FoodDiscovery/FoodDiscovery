@@ -15,6 +15,8 @@ export { default as menuEditStyles } from "./menuEditStyles";
 export { default as menuViewStyles } from "./menuViewStyles";
 export { default as appIndexStyles } from "./appIndexStyles";
 export { default as businessHoursEditorStyles } from "./businessHoursEditorStyles";
+export { default as dateRangePickerModalStyles } from "./dateRangePickerModalStyles";
+export { default as analyticsStyles } from "./analyticsStyles";
 export { default as authStyles } from "./authStyles";
 export { default as gettingStartedStyles } from "./gettingStartedStyles";
 export { default as ownerHomeStyles } from "./ownerHomeStyles";
