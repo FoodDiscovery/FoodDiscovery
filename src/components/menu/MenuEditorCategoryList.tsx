@@ -1,5 +1,6 @@
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import { menuEditStyles as styles } from "../../components/styles";
+import { sharedStyles } from "../styles";
 import type { MenuCategory, MenuItem } from "./types";
 
 interface MenuEditorCategoryListProps {
@@ -33,7 +34,7 @@ export default function MenuEditorCategoryList({
         return (
           <View key={cat.id} style={styles.categoryCard}>
             <View style={styles.categoryHeader}>
-              <TouchableOpacity style={{ flex: 1 }} onPress={() => onEditCategory(cat)}>
+              <TouchableOpacity style={sharedStyles.flex1} onPress={() => onEditCategory(cat)}>
                 <Text style={styles.categoryName}>{cat.name}</Text>
               </TouchableOpacity>
 
@@ -70,7 +71,7 @@ export default function MenuEditorCategoryList({
                     <Image source={{ uri: item.image_url }} style={styles.itemThumb} />
                   ) : (
                     <View style={styles.itemThumbPlaceholder}>
-                      <Text style={{ fontSize: 18 }}>📷</Text>
+                      <Text style={sharedStyles.emojiIcon}>📷</Text>
                     </View>
                   )}
                 </TouchableOpacity>

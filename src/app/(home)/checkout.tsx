@@ -6,8 +6,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  StyleSheet,
-  Platform,
   Image,
 } from "react-native";
 import { router } from "expo-router";
@@ -17,6 +15,11 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { supabase } from "../../lib/supabase";
 import { useCart, type CartItem } from "../../Providers/CartProvider";
 import { useAuth } from "../../Providers/AuthProvider";
+import {
+  checkoutStyles as styles,
+  sharedStyles,
+  NAVY,
+} from "../../components/styles";
 
 // ✅ Fix: forbid require() imports
 import FoodDiscoveryLogo from "../../../assets/images/fooddiscovery-logo.png";
@@ -165,54 +168,51 @@ export default function CheckoutScreen() {
   };
 
   return (
-    <SafeAreaView style={t.safe} edges={["top"]}>
+    <SafeAreaView style={styles.safe} edges={["top"]}>
       {/* Header (matches Home theme) */}
-      <View style={[t.header, { paddingTop: Math.max(10, insets.top * 0.45) }]}>
-        <View style={t.headerCenter}>
-          <Image source={FoodDiscoveryLogo} style={t.headerLogo} resizeMode="contain" />
-          <Text style={t.title}>Checkout</Text>
-          <Text style={t.subtitle}>Pay with card. Confirm after payment.</Text>
+      <View style={[styles.header, { paddingTop: Math.max(10, insets.top * 0.45) }]}>
+        <View style={styles.headerCenter}>
+          <Image source={FoodDiscoveryLogo} style={styles.headerLogo} resizeMode="contain" />
+          <Text style={styles.title}>Checkout</Text>
+          <Text style={styles.subtitle}>Pay with card. Confirm after payment.</Text>
         </View>
         <TouchableOpacity
           onPress={() => router.replace("/(home)/cart")}
-          style={t.headerBackBtn}
+          style={styles.headerBackBtn}
           activeOpacity={0.8}
         >
-          <Text style={t.headerBackText}>←</Text>
+          <Text style={styles.headerBackText}>←</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView
-        contentContainerStyle={[
-          t.page,
-          { paddingBottom: Math.max(24, insets.bottom + 18) },
-        ]}
+        contentContainerStyle={[styles.page, { paddingBottom: Math.max(24, insets.bottom + 18) }]}
         showsVerticalScrollIndicator={false}
       >
         {items.length === 0 ? (
-          <View style={t.emptyCard}>
-            <Text style={t.emptyTitle}>Your cart is empty</Text>
-            <Text style={t.emptySub}>Add items from a restaurant first.</Text>
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyTitle}>Your cart is empty</Text>
+            <Text style={styles.emptySub}>Add items from a restaurant first.</Text>
           </View>
         ) : (
           <>
             {groupByRestaurant(items).map(
               ({ restaurantId, restaurantName, items: restaurantItems }) => (
-                <View key={restaurantId} style={t.card}>
-                  <Text style={t.cardTitle}>{restaurantName}</Text>
+                <View key={restaurantId} style={styles.card}>
+                  <Text style={styles.cardTitle}>{restaurantName}</Text>
 
                   {restaurantAddresses[restaurantId] ? (
-                    <Text style={t.cardMeta}>{restaurantAddresses[restaurantId]}</Text>
+                    <Text style={styles.cardMeta}>{restaurantAddresses[restaurantId]}</Text>
                   ) : null}
 
-                  <View style={{ height: 10 }} />
+                  <View style={sharedStyles.spacerHeight10} />
 
                   {restaurantItems.map((item) => (
-                    <View key={item.key} style={t.lineRow}>
-                      <Text style={t.lineLeft} numberOfLines={2}>
+                    <View key={item.key} style={styles.lineRow}>
+                      <Text style={styles.lineLeft} numberOfLines={2}>
                         {item.quantity} × {item.name}
                       </Text>
-                      <Text style={t.lineRight}>
+                      <Text style={styles.lineRight}>
                         ${(item.quantity * item.price).toFixed(2)}
                       </Text>
                     </View>
@@ -221,23 +221,23 @@ export default function CheckoutScreen() {
               )
             )}
 
-            <View style={t.card}>
-              <Text style={t.summaryRow}>Items: {itemCount}</Text>
-              <Text style={t.summaryRow}>Subtotal: ${subtotal.toFixed(2)}</Text>
-              <Text style={t.summaryRow}>Tax: ${tax.toFixed(2)}</Text>
-              <Text style={[t.summaryRow, t.summaryTotal]}>
+            <View style={styles.card}>
+              <Text style={styles.summaryRow}>Items: {itemCount}</Text>
+              <Text style={styles.summaryRow}>Subtotal: ${subtotal.toFixed(2)}</Text>
+              <Text style={styles.summaryRow}>Tax: ${tax.toFixed(2)}</Text>
+              <Text style={[styles.summaryRow, styles.summaryTotal]}>
                 Total: ${total.toFixed(2)}
               </Text>
             </View>
 
             {error ? (
-              <View style={[t.card, { borderColor: "#B42318" }]}>
-                <Text style={t.errorText}>{error}</Text>
+              <View style={[styles.card, styles.errorCardBorder]}>
+                <Text style={styles.errorText}>{error}</Text>
               </View>
             ) : null}
 
             <TouchableOpacity
-              style={[t.payBtn, loading && { opacity: 0.7 }]}
+              style={[styles.payBtn, loading && styles.loadingOpacity]}
               onPress={handleCheckout}
               disabled={loading}
               activeOpacity={0.85}
@@ -245,7 +245,7 @@ export default function CheckoutScreen() {
               {loading ? (
                 <ActivityIndicator color={NAVY} />
               ) : (
-                <Text style={t.payBtnText}>Pay ${total.toFixed(2)}</Text>
+                <Text style={styles.payBtnText}>Pay ${total.toFixed(2)}</Text>
               )}
             </TouchableOpacity>
           </>
@@ -254,167 +254,3 @@ export default function CheckoutScreen() {
     </SafeAreaView>
   );
 }
-
-const NAVY = "#0B2D5B";
-const GOLD = "#F5C542";
-const BG = "#F3F6FB";
-
-const t = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BG },
-
-  header: {
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    position: "relative",
-  },
-  headerCenter: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerBackBtn: {
-    position: "absolute",
-    right: 16,
-    top: 10,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E5ECF7",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
-  },
-  headerBackText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: NAVY,
-  },
-  headerLogo: {
-    width: 210,
-    height: 56,
-    marginBottom: 2,
-  },
-
-  title: {
-    marginTop: 2,
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#0B1220",
-    letterSpacing: -0.2,
-  },
-  subtitle: {
-    marginTop: 4,
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#6B7280",
-    textAlign: "center",
-  },
-
-  page: {
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === "ios" ? 6 : 10,
-    gap: 12,
-  },
-
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 22,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#E5ECF7",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 2,
-  },
-
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#0B1220",
-  },
-  cardMeta: {
-    marginTop: 6,
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#6B7280",
-  },
-
-  lineRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    paddingVertical: 6,
-  },
-  lineLeft: {
-    flex: 1,
-    paddingRight: 10,
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#111827",
-  },
-  lineRight: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: NAVY,
-  },
-
-  summaryRow: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#111827",
-    paddingVertical: 4,
-  },
-  summaryTotal: {
-    marginTop: 6,
-    fontSize: 16,
-    fontWeight: "700",
-    color: NAVY,
-  },
-
-  errorText: { fontSize: 14, fontWeight: "600", color: "#B42318" },
-
-  payBtn: {
-    backgroundColor: GOLD,
-    borderRadius: 999,
-    paddingVertical: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 3,
-  },
-  payBtnText: {
-    color: NAVY,
-    fontWeight: "700",
-    fontSize: 16,
-  },
-
-  emptyCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 22,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: "#E5ECF7",
-    alignItems: "center",
-  },
-  emptyTitle: { fontSize: 18, fontWeight: "700", color: "#111827" },
-  emptySub: {
-    marginTop: 6,
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#6B7280",
-    textAlign: "center",
-  },
-});

@@ -5,11 +5,8 @@ import OrderHistoryList from "../../components/home/OrderHistoryList";
 import DateRangePickerModal, {
   type DateRangeSelection,
 } from "../../components/DateRangePickerModal";
-import { tabPlaceholderStyles as styles } from "../../components/styles";
+import { orderHistoryStyles as styles } from "../../components/styles";
 import { dateRangeLabel } from "../../lib/dateUtils";
-
-const BG = "#F3F6FB";
-const NAVY = "#0B2D5B";
 
 export default function OrderHistoryScreen() {
   const [dateFilterOpen, setDateFilterOpen] = useState(false);
@@ -20,23 +17,14 @@ export default function OrderHistoryScreen() {
   const rangeLabel = dateRangeLabel(dateFilter);
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: BG }]} edges={["top"]}>
-      <View style={[styles.container, { justifyContent: "flex-start", paddingTop: 24 }]}>
-        <Text style={[styles.title, { fontSize: 28, fontWeight: "800", color: NAVY }]}>
-          Order History
-        </Text>
+    <SafeAreaView style={styles.safe} edges={["top"]}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Order History</Text>
         <Pressable
           onPress={() => setDateFilterOpen(true)}
-          style={{
-            marginTop: 14,
-            marginBottom: 6,
-            borderRadius: 20,
-            backgroundColor: "#E8EEF8",
-            paddingHorizontal: 12,
-            paddingVertical: 8,
-          }}
+          style={styles.filterButton}
         >
-          <Text style={{ color: NAVY, fontWeight: "700" }}>Filter dates: {rangeLabel}</Text>
+          <Text style={styles.filterButtonText}>Filter dates: {rangeLabel}</Text>
         </Pressable>
         <OrderHistoryList startDate={dateFilter.startDate} endDate={dateFilter.endDate} />
       </View>

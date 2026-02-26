@@ -1,6 +1,7 @@
 import { StyleSheet } from "react-native";
 
 const styles = StyleSheet.create({
+  emojiIcon: { fontSize: 18 },
   centered: {
     flex: 1,
     alignItems: "center",

@@ -176,6 +176,11 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 4,
   },
+  subtitleWithMargin: { marginBottom: 12 },
+  noPhotoText: { color: "#999" },
+  saveBtnSpacing: { marginTop: 16 },
+  cancelBtnSpacing: { marginTop: 10 },
+  loadingText: { marginTop: 10 },
   fieldLabel: {
     fontSize: 14,
     fontWeight: "600",

@@ -10,6 +10,7 @@ import {
   profileHeaderIconStyles as styles,
   PROFILE_HEADER_ICON_COLOR,
 } from "./styles";
+import { sharedStyles } from "./styles";
 
 // use only for small icons on top left of screens
 export default function ProfileHeaderIcon() {
@@ -27,7 +28,7 @@ export default function ProfileHeaderIcon() {
     <Pressable
       testID="profile-header-icon"
       onPress={() => router.push("/(home)/profile")}
-      style={({ pressed }) => [styles.icon, pressed && { opacity: 0.8 }]}
+      style={({ pressed }) => [styles.icon, pressed && sharedStyles.pressedOpacity80]}
       hitSlop={12}
       accessibilityRole="button"
       accessibilityLabel="Go to profile"

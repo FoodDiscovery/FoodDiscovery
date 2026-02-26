@@ -27,7 +27,7 @@ export default function PhotoModal({
       <View style={styles.modalOverlay}>
         <View style={styles.modalCard}>
           <Text style={styles.modalTitle}>Item Photo</Text>
-          <Text style={[styles.subtitle, { marginBottom: 12 }]}>
+          <Text style={[styles.subtitle, styles.subtitleWithMargin]}>
             {item?.name ?? ""}
           </Text>
 
@@ -38,14 +38,14 @@ export default function PhotoModal({
             />
           ) : (
             <View style={styles.photoPlaceholder}>
-              <Text style={{ color: "#999" }}>No photo yet</Text>
+              <Text style={styles.noPhotoText}>No photo yet</Text>
             </View>
           )}
 
           <TouchableOpacity
             style={[
               styles.saveBtn,
-              { marginTop: 16 },
+              styles.saveBtnSpacing,
               uploading && styles.disabledBtn,
             ]}
             onPress={onPickPhoto}
@@ -61,7 +61,7 @@ export default function PhotoModal({
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.cancelBtn, { marginTop: 10 }]}
+            style={[styles.cancelBtn, styles.cancelBtnSpacing]}
             onPress={onClose}
           >
             <Text style={styles.cancelBtnText}>Close</Text>

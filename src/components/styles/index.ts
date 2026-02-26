@@ -1,5 +1,12 @@
 export { default as homeStyles } from "./homeStyles";
 export { default as ownerStyles } from "./ownerStyles";
+export { default as sharedStyles } from "./sharedStyles";
+export { getAvatarStyle } from "./sharedStyles";
+export { default as checkoutStyles } from "./checkoutStyles";
+export { default as cartStyles } from "./cartStyles";
+export { default as restaurantModalStyles } from "./restaurantModalStyles";
+export { default as customerHomeScreenStyles } from "./customerHomeScreenStyles";
+export { default as orderHistoryStyles } from "./orderHistoryStyles";
 export { default as homeMapStyles } from "./homeMapStyles";
 export { default as tabPlaceholderStyles } from "./tabPlaceholderStyles";
 export { default as customerProfileStyles } from "./customerProfileStyles";

@@ -16,6 +16,7 @@ import { decode } from "base64-arraybuffer";
 
 import type { MenuCategory, MenuItem, ItemFormData } from "../../components/menu/types";
 import { menuEditStyles as styles } from "../../components/styles";
+import { sharedStyles } from "../../components/styles";
 import CategoryModal from "../../components/menu/CategoryModal";
 import ItemModal from "../../components/menu/ItemModal";
 import MenuEditorCategoryList from "../../components/menu/MenuEditorCategoryList";
@@ -445,7 +446,7 @@ export default function MenuEditScreen() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator />
-        <Text style={{ marginTop: 10 }}>Loading menu...</Text>
+        <Text style={styles.loadingText}>Loading menu...</Text>
       </View>
     );
   }
@@ -474,7 +475,7 @@ export default function MenuEditScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={sharedStyles.flex1}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView contentContainerStyle={styles.page}>

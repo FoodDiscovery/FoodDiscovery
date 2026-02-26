@@ -11,6 +11,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 16,
   },
+  containerCenter: { justifyContent: "center" },
+  orderListScroll: { flex: 1, width: "100%", marginTop: 16 },
+  orderListContent: { paddingHorizontal: 16, paddingBottom: 24 },
   title: {
     fontSize: 24,
     fontWeight: "700",

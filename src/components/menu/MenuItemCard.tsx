@@ -21,7 +21,7 @@ export default function MenuItemCard({
         <Image source={{ uri: item.image_url }} style={styles.itemThumb} />
       ) : (
         <View style={styles.itemThumbPlaceholder}>
-          <Text style={{ fontSize: 18 }}>📷</Text>
+          <Text style={styles.emojiIcon}>📷</Text>
         </View>
       )}
       <View style={styles.itemInfo}>

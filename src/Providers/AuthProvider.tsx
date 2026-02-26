@@ -2,7 +2,8 @@ import { useEffect, useState, createContext, useContext } from 'react'
 import { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { useRouter, useSegments } from 'expo-router'
-import { View, ActivityIndicator } from 'react-native'
+import { View, ActivityIndicator } from "react-native";
+import { authStyles } from "../components/styles";
 
 // Create a context to share the session with child components
 const AuthContext = createContext<{ session: Session | null }>({ session: null })
@@ -52,7 +53,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
   if (!initialized) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={authStyles.loadingCenter}>
         <ActivityIndicator size="large" />
       </View>
     )

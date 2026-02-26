@@ -13,6 +13,7 @@ import { useAuth } from "../../Providers/AuthProvider";
 import { useOrderDetailCache } from "../../Providers/OrderDetailCacheProvider";
 import OrderHistoryCard, { type OrderHistoryItem } from "./OrderHistoryCard";
 import { tabPlaceholderStyles as styles } from "../styles";
+import { sharedStyles } from "../styles";
 import { toDateOnlyForFilter } from "../../lib/dateUtils";
 
 interface OrderHistoryListProps {
@@ -70,7 +71,7 @@ export default function OrderHistoryList({ startDate = null, endDate = null }: O
 
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: "center" }]}>
+      <View style={[styles.container, styles.containerCenter]}>
         <ActivityIndicator size="large" />
       </View>
     );
@@ -106,8 +107,8 @@ export default function OrderHistoryList({ startDate = null, endDate = null }: O
 
   return (
     <ScrollView
-      style={{ flex: 1, width: "100%", marginTop: 16 }}
-      contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
+      style={styles.orderListScroll}
+      contentContainerStyle={styles.orderListContent}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -133,7 +134,9 @@ export default function OrderHistoryList({ startDate = null, endDate = null }: O
               if ("data" in result) setCached(order.id, result.data);
               router.push(`/(home)/order/${order.id}`);
             }}
-            style={({ pressed }) => [{ opacity: pressed || isOpening ? 0.7 : 1 }]}
+            style={({ pressed }) =>
+              pressed || isOpening ? sharedStyles.pressedOpacity70 : {}
+            }
             disabled={isOpening}
           >
             <OrderHistoryCard order={order} displayNumber={displayNumber} />
