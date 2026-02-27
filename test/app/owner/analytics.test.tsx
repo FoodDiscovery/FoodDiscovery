@@ -11,7 +11,7 @@ jest.mock("expo-router", () => ({
   router: {
     replace: (...args: unknown[]) => mockReplace(...args),
   },
-  useFocusEffect: (fn: () => void | (() => void)) => {
+  useFocusEffect: (fn: () => (() => void) | undefined) => {
     if (mockRunFocusEffect.current) {
       mockRunFocusEffect.current = false;
       fn();

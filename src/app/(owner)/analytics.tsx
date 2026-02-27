@@ -49,9 +49,12 @@ export default function OwnerAnalyticsScreen() {
     startDate: null,
     endDate: null,
   });
+  const hasLoadedOnce = useRef(false);
 
-  const loadAnalytics = useCallback(async () => {
-    setLoading(true);
+  const loadAnalytics = useCallback(async (isBackgroundRefresh = false) => {
+    if (!isBackgroundRefresh) {
+      setLoading(true);
+    }
 
     const {
       data: { user },
@@ -125,13 +128,14 @@ export default function OwnerAnalyticsScreen() {
     }
 
     setOrders((data ?? []) as AnalyticsOrderRow[]);
+    hasLoadedOnce.current = true;
     setLoading(false);
   }, [dateFilter.endDate, dateFilter.startDate]);
 
-  // Refetch whenever the Analytics tab is focused (including first load)
+  // Refetch whenever the Analytics tab is focused (first load shows loading; subsequent loads refresh in background)
   useFocusEffect(
     useCallback(() => {
-      loadAnalytics();
+      loadAnalytics(hasLoadedOnce.current);
     }, [loadAnalytics])
   );
 
@@ -142,7 +146,7 @@ export default function OwnerAnalyticsScreen() {
       isInitialMount.current = false;
       return;
     }
-    loadAnalytics();
+    loadAnalytics(hasLoadedOnce.current);
   }, [loadAnalytics]);
 
   const totalSales = useMemo(
