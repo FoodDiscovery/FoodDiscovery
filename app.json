@@ -3,6 +3,7 @@
     "name": "Food-Discovery",
     "slug": "food-discovery",
     "version": "1.0.0",
+    "scheme": "fooddiscovery",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",

@@ -147,7 +147,6 @@ export default function OwnerProfileScreen() {
   const [initialValues, setInitialValues] = useState<FormState | null>(null);
 
   const [ordersCount, setOrdersCount] = useState<number | null>(null);
-  const [salesTotal, setSalesTotal] = useState<number | null>(null);
 
   const currentValues = useMemo<FormState>(
     () => ({
@@ -177,20 +176,11 @@ export default function OwnerProfileScreen() {
 
       if (!countErr) setOrdersCount(count ?? 0);
 
-      const { data, error: salesErr } = await supabase
+      // Keep this query for backend parity while sales display moved to analytics.
+      await supabase
         .from("orders")
         .select("total_amount")
         .eq("restaurant_id", rid);
-
-      if (!salesErr && Array.isArray(data)) {
-        const sum = data.reduce((acc: number, row: { total_amount: number | string | null }) => {
-          return acc + (Number(row.total_amount) || 0);
-        }, 0);
-        setSalesTotal(sum);
-        return;
-      }
-
-      setSalesTotal(0);
     };
 
     const loadLocation = async (rid: string) => {
@@ -452,15 +442,6 @@ export default function OwnerProfileScreen() {
               <Text style={styles.statsTitle}>Business Stats</Text>
               <Text style={styles.statsLine}>
                 Orders: <Text style={styles.statsValue}>{ordersCount ?? 0}</Text>
-              </Text>
-              <Text style={styles.statsLine}>
-                Sales:{" "}
-                <Text style={styles.statsValue}>
-                  ${Number(salesTotal ?? 0).toFixed(2)}
-                </Text>
-              </Text>
-              <Text style={styles.statsHint}>
-                (Sales total TBD.)
               </Text>
             </View>
 

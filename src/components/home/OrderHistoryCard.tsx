@@ -1,11 +1,12 @@
-import React from "react";
 import { Text, View } from "react-native";
+import { formatDateOnlyForDisplay, formatIsoToPstDisplay } from "../../lib/dateUtils";
 import { orderHistoryCardStyles as styles } from "../styles";
 
 export interface OrderHistoryItem {
   id: string;
   restaurantId?: string;
-  date: string; // ISO or "DD/MM/YYYY" for display
+  date: string; // ISO, YYYY-MM-DD, or MM/DD/YYYY for display
+  createdAt?: string; // raw timestamp for filtering
   itemCount?: number; // optional when coming from orders table (no line items)
   totalPrice: number;
   status?: string; // order_status from orders table (e.g. confirmed, ready, completed)
@@ -36,11 +37,10 @@ export default function OrderHistoryCard({
 }: OrderHistoryCardProps) {
   const dateDisplay =
     order.date.length === 10 && order.date.includes("-")
-      ? (() => {
-          const [y, m, d] = order.date.split("-");
-          return `${m}/${d}/${y}`; // ISO -> MM/DD/YYYY
-        })()
-      : order.date;
+      ? formatDateOnlyForDisplay(order.date)
+      : /^\d{4}-\d{2}-\d{2}T/.test(order.date)
+        ? formatIsoToPstDisplay(order.date)
+        : order.date;
   const idLabel =
     order.orderNumber != null
       ? String(order.orderNumber)
@@ -76,3 +76,4 @@ export default function OrderHistoryCard({
     </View>
   );
 }
+ 

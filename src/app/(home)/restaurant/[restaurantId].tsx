@@ -20,7 +20,6 @@ import type { MenuCategory, MenuItem } from "../../../components/menu/types";
 import MenuCategoryCard from "../../../components/menu/MenuCategoryCard";
 import CartBar from "../../../components/menu/CartBar";
 import ProfileHeaderIcon from "../../../components/ProfileHeaderIcon";
-import styles from "../../../components/styles/restaurantMenuStyles";
 import Rating from "../../../components/reviews/ratings";
 import {
   fetchRestaurantReviews,
@@ -28,6 +27,7 @@ import {
   type RestaurantReview,
   type RestaurantRatingSummary,
 } from "../../../lib/ratings";
+import { restaurantMenuStyles as styles } from "../../../components/styles";
 
 // ✅ Fix: forbid require() imports
 import FoodDiscoveryLogo from "../../../../assets/images/fooddiscovery-logo.png";

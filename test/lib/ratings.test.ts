@@ -1,8 +1,6 @@
 import {
   fetchAllRestaurantRatings,
   fetchRestaurantRating,
-  fetchRestaurantReviews,
-  fetchUserRestaurantRatings,
   fetchUserRestaurantReviews,
   getSavedUserRestaurantRating,
   saveUserRestaurantReview,

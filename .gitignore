@@ -6,6 +6,9 @@ node_modules/
 dist/
 web-build/
 
+# Supabase
+supabase/
+
 # Native
 ios/
 android/

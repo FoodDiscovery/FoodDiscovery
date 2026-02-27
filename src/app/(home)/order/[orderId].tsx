@@ -23,6 +23,7 @@ import {
   saveUserRestaurantReview,
 } from "../../../lib/ratings";
 import { orderDetailStyles as style, NAVY } from "../../../components/styles";
+import { sharedStyles } from "../../../components/styles";
 
 const SALES_TAX_RATE = 0.0975;
 
@@ -207,7 +208,7 @@ export default function OrderDetailScreen() {
           <Ionicons name="chevron-back" size={24} color={NAVY} />
         </Pressable>
         <Text style={style.title}>Order details</Text>
-        <View style={{ width: 40 }} />
+        <View style={sharedStyles.spacerWidth40} />
       </View>
 
       <ScrollView
@@ -226,12 +227,12 @@ export default function OrderDetailScreen() {
                     : `https://www.google.com/maps/dir/?api=1&destination=${encoded}`;
                 Linking.openURL(url);
               }}
-              style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+              style={({ pressed }) => (pressed ? sharedStyles.pressedOpacity70 : {})}
             >
               <Text style={style.cardMeta}>{address}</Text>
             </Pressable>
           ) : null}
-          <View style={{ height: 10 }} />
+          <View style={sharedStyles.spacerHeight10} />
           {lineItems.map((item, idx) => (
             <View key={idx} style={style.lineRow}>
               <Text style={style.lineLeft} numberOfLines={2}>

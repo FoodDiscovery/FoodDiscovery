@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Image } from "react-native";
+import { getAvatarStyle } from "./styles";
 import FontAwesome from "@react-native-vector-icons/fontawesome";
 import { supabase } from "../lib/supabase";
 
@@ -42,7 +43,7 @@ export default function OwnerProfileTabIcon({
     return (
       <Image
         source={{ uri: logoUrl }}
-        style={{ width: size, height: size, borderRadius: size / 2 }}
+        style={getAvatarStyle(size)}
       />
     );
 
