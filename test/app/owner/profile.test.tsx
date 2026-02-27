@@ -219,10 +219,6 @@ describe("OwnerProfileScreen", () => {
       .mockReturnValueOnce(
         selectMaybeSingle({ data: { id: 88, address_text: "Old Address" }, error: null })
       )
-      .mockReturnValueOnce(selectEqResult({ count: 2, error: null }))
-      .mockReturnValueOnce(
-        selectEqResult({ data: [{ total_amount: 10 }, { total_amount: "7.5" }], error: null })
-      )
       .mockReturnValueOnce(updateEq({ error: null }, (payload) => updateRestaurantPayloads.push(payload)))
       .mockReturnValueOnce(updateEq({ error: null }, (payload) => updateProfilePayloads.push(payload)))
       .mockReturnValueOnce(updateEq({ error: null }, (payload) => updateLocationPayloads.push(payload)));
@@ -231,7 +227,6 @@ describe("OwnerProfileScreen", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Owner Profile")).toBeTruthy();
-      expect(screen.getByText("Business Stats")).toBeTruthy();
     });
 
     fireEvent.changeText(screen.getByPlaceholderText("e.g., FoodDiscovery Cafe"), "Cafe Two");
@@ -274,9 +269,7 @@ describe("OwnerProfileScreen", () => {
           error: null,
         })
       )
-      .mockReturnValueOnce(selectMaybeSingle({ data: null, error: null }))
-      .mockReturnValueOnce(selectEqResult({ count: 0, error: null }))
-      .mockReturnValueOnce(selectEqResult({ data: [], error: null }));
+      .mockReturnValueOnce(selectMaybeSingle({ data: null, error: null }));
 
     const screen = render(<OwnerProfileScreen />);
 
@@ -292,7 +285,7 @@ describe("OwnerProfileScreen", () => {
       expect(Alert.alert).toHaveBeenCalledWith("Invalid business hours", "Bad hours");
     });
 
-    fireEvent.press(screen.getByText("No logo"));
+    fireEvent.press(screen.getByText("No Image"));
 
     await waitFor(() => {
       expect(mockStorageUpload).toHaveBeenCalled();
@@ -369,8 +362,6 @@ describe("OwnerProfileScreen", () => {
         })
       )
       .mockReturnValueOnce(selectMaybeSingle({ data: null, error: { message: "location gone" } }))
-      .mockReturnValueOnce(selectEqResult({ count: 1, error: null }))
-      .mockReturnValueOnce(selectEqResult({ data: null, error: { message: "sales unavailable" } }))
       .mockReturnValueOnce(updateEq({ error: { message: "save failed one" } }));
 
     const screen = render(<OwnerProfileScreen />);
@@ -389,14 +380,14 @@ describe("OwnerProfileScreen", () => {
 
   it("shows not-ready alert and missing field validation alerts", async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: "owner-10" } }, error: null });
-    mockFrom.mockReturnValueOnce(
-      selectSingle({ data: { role: "customer", full_name: "Guest" }, error: null })
-    );
+    mockFrom
+      .mockReturnValueOnce(selectSingle({ data: { role: "owner", full_name: "Guest" }, error: null }))
+      .mockReturnValueOnce(selectMaybeSingle({ data: null, error: { message: "rest load failed" } }));
     const notReadyScreen = render(<OwnerProfileScreen />);
     await waitFor(() => {
       expect(notReadyScreen.getByText("Owner Profile")).toBeTruthy();
     });
-    fireEvent.press(notReadyScreen.getByText("No logo"));
+    fireEvent.press(notReadyScreen.getByText("No Image"));
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith("Not ready", "Restaurant not loaded yet.");
     });
@@ -419,9 +410,7 @@ describe("OwnerProfileScreen", () => {
           error: null,
         })
       )
-      .mockReturnValueOnce(selectMaybeSingle({ data: null, error: null }))
-      .mockReturnValueOnce(selectEqResult({ count: 0, error: null }))
-      .mockReturnValueOnce(selectEqResult({ data: [], error: null }));
+      .mockReturnValueOnce(selectMaybeSingle({ data: null, error: null }));
     const missingNameScreen = render(<OwnerProfileScreen />);
     await waitFor(() => {
       expect(missingNameScreen.getByText("Save profile")).toBeTruthy();
@@ -453,9 +442,7 @@ describe("OwnerProfileScreen", () => {
           error: null,
         })
       )
-      .mockReturnValueOnce(selectMaybeSingle({ data: null, error: null }))
-      .mockReturnValueOnce(selectEqResult({ count: 0, error: null }))
-      .mockReturnValueOnce(selectEqResult({ data: [], error: null }));
+      .mockReturnValueOnce(selectMaybeSingle({ data: null, error: null }));
     const missingOwnerScreen = render(<OwnerProfileScreen />);
     await waitFor(() => {
       expect(missingOwnerScreen.getByText("Save profile")).toBeTruthy();
@@ -489,17 +476,15 @@ describe("OwnerProfileScreen", () => {
           error: null,
         })
       )
-      .mockReturnValueOnce(selectMaybeSingle({ data: null, error: null }))
-      .mockReturnValueOnce(selectEqResult({ count: 0, error: null }))
-      .mockReturnValueOnce(selectEqResult({ data: [], error: null }));
+      .mockReturnValueOnce(selectMaybeSingle({ data: null, error: null }));
 
     const screen = render(<OwnerProfileScreen />);
     await waitFor(() => {
-      expect(screen.getByText("No logo")).toBeTruthy();
+      expect(screen.getByText("No Image")).toBeTruthy();
     });
 
     mockRequestMediaLibraryPermissionsAsync.mockResolvedValueOnce({ granted: false });
-    fireEvent.press(screen.getByText("No logo"));
+    fireEvent.press(screen.getByText("No Image"));
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith(
         "Permission needed",
@@ -509,7 +494,7 @@ describe("OwnerProfileScreen", () => {
 
     mockRequestMediaLibraryPermissionsAsync.mockResolvedValueOnce({ granted: true });
     mockStorageUpload.mockResolvedValueOnce({ error: { message: "upload image bad" } });
-    fireEvent.press(screen.getByText("No logo"));
+    fireEvent.press(screen.getByText("No Image"));
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith("Upload failed", "upload image bad");
     });
@@ -535,9 +520,7 @@ describe("OwnerProfileScreen", () => {
           error: null,
         })
       )
-      .mockReturnValueOnce(selectMaybeSingle({ data: null, error: null }))
-      .mockReturnValueOnce(selectEqResult({ count: 0, error: null }))
-      .mockReturnValueOnce(selectEqResult({ data: [], error: null }));
+      .mockReturnValueOnce(selectMaybeSingle({ data: null, error: null }));
 
     const screen = render(<OwnerProfileScreen />);
     await waitFor(() => {
