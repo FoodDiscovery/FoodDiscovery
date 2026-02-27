@@ -107,14 +107,6 @@ function selectMaybeSingle(result: unknown) {
   };
 }
 
-function selectEqResult(result: unknown) {
-  return {
-    select: jest.fn().mockReturnValue({
-      eq: jest.fn().mockResolvedValue(result),
-    }),
-  };
-}
-
 function updateEq(result: unknown, onUpdate?: (payload: unknown) => void) {
   return {
     update: jest.fn().mockImplementation((payload: unknown) => {
