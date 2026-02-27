@@ -1,10 +1,14 @@
-import { fireEvent, render, waitFor } from "@testing-library/react-native";
+import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
 import { Alert } from "react-native";
 import HomeScreen from "../../../src/app/(home)/home";
 import { router } from "expo-router";
 
 const mockFrom = jest.fn();
 const mockRpc = jest.fn();
+
+jest.mock("../../../src/Providers/AuthProvider", () => ({
+  useAuth: () => ({ session: null }),
+}));
 
 jest.mock("expo-router", () => ({
   router: { push: jest.fn() },
@@ -63,6 +67,13 @@ const restaurants = [
   },
 ];
 
+/** Flush effects (e.g. loadSavedRatings) so state updates run inside act(). */
+async function flushEffects() {
+  await act(async () => {
+    await Promise.resolve();
+  });
+}
+
 describe("HomeScreen", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -75,6 +86,7 @@ describe("HomeScreen", () => {
 
   it("renders restaurant cards after loading", async () => {
     const { getByText } = render(<HomeScreen />);
+    await flushEffects();
 
     await waitFor(() => {
       expect(getByText("Pizza Palace")).toBeTruthy();
@@ -85,6 +97,7 @@ describe("HomeScreen", () => {
 
   it("shows empty state when no restaurants match search", async () => {
     const { getByText, getByPlaceholderText } = render(<HomeScreen />);
+    await flushEffects();
 
     await waitFor(() => {
       expect(getByText("Pizza Palace")).toBeTruthy();
@@ -104,6 +117,7 @@ describe("HomeScreen", () => {
     const { getByText, getByPlaceholderText, queryByText } = render(
       <HomeScreen />
     );
+    await flushEffects();
 
     await waitFor(() => {
       expect(getByText("Pizza Palace")).toBeTruthy();
@@ -122,6 +136,7 @@ describe("HomeScreen", () => {
 
   it("navigates to restaurant page on card press", async () => {
     const { getByText } = render(<HomeScreen />);
+    await flushEffects();
 
     await waitFor(() => {
       expect(getByText("Pizza Palace")).toBeTruthy();
@@ -137,6 +152,7 @@ describe("HomeScreen", () => {
 
   it("navigates to cart when cart icon is pressed", async () => {
     const { getByLabelText } = render(<HomeScreen />);
+    await flushEffects();
 
     await waitFor(() => {
       expect(getByLabelText("Open cart")).toBeTruthy();
@@ -157,6 +173,7 @@ describe("HomeScreen", () => {
 
     const alertSpy = jest.spyOn(Alert, "alert");
     render(<HomeScreen />);
+    await flushEffects();
 
     await waitFor(() => {
       expect(alertSpy).toHaveBeenCalledWith(

@@ -96,8 +96,14 @@ describe("HomeProvider", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(Alert, "alert").mockImplementation(jest.fn());
-    mockRpc.mockImplementation((_fn: string, args: { radius_meters: number }) => {
-      if (args.radius_meters === 50000) {
+    mockRpc.mockImplementation((fn: string, args?: { radius_meters?: number }) => {
+      if (fn === "get_restaurant_ratings") {
+        return Promise.resolve({
+          data: [],
+          error: null,
+        });
+      }
+      if (fn === "get_nearby_restaurants" && args?.radius_meters === 50000) {
         return Promise.resolve({
           data: [
             buildNearbyRestaurant("r1", "Sushi Bay", 1000),

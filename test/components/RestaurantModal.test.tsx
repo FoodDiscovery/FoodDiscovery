@@ -2,6 +2,15 @@ import { fireEvent, render } from "@testing-library/react-native";
 import RestaurantModal from "../../src/components/RestaurantModal";
 import { createDefaultBusinessHours } from "../../src/lib/businessHours";
 
+jest.mock("../../src/lib/ratings", () => ({
+  fetchRestaurantRating: jest.fn().mockResolvedValue(null),
+  getSavedUserRestaurantRating: jest.fn().mockResolvedValue(null),
+}));
+
+jest.mock("../../src/Providers/AuthProvider", () => ({
+  useAuth: () => ({ session: null }),
+}));
+
 const baseRestaurant = {
   id: "r1",
   name: "Test Restaurant",
