@@ -169,9 +169,10 @@ describe("RestaurantMenuScreen", () => {
   it("shows owner notice when user is an owner", async () => {
     setupMocks({ profileRole: "owner" });
 
-    const { getByText, queryByText } = render(<RestaurantMenuScreen />);
+    const { getByText } = render(<RestaurantMenuScreen />);
 
-    await waitForMenuLoadToFinish(queryByText);
-    expect(getByText("Customer Menu Page")).toBeTruthy();
+    await waitFor(() => {
+      expect(getByText("Customer Menu Page")).toBeTruthy();
+    });
   });
 });
