@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 
 import DateRangePickerModal, {
   type DateRangeSelection,
@@ -128,7 +128,20 @@ export default function OwnerAnalyticsScreen() {
     setLoading(false);
   }, [dateFilter.endDate, dateFilter.startDate]);
 
+  // Refetch whenever the Analytics tab is focused (including first load)
+  useFocusEffect(
+    useCallback(() => {
+      loadAnalytics();
+    }, [loadAnalytics])
+  );
+
+  // Refetch when date filter changes (skip initial mount; useFocusEffect handles that)
+  const isInitialMount = useRef(true);
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     loadAnalytics();
   }, [loadAnalytics]);
 
