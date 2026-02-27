@@ -78,7 +78,7 @@ export default function ItemModal({
               value={name}
               onChangeText={setName}
               placeholder="e.g., Margherita Pizza"
-              placeholderTextColor="#888"
+              placeholderTextColor="#9AA0A6"
               style={styles.input}
             />
 
@@ -87,7 +87,7 @@ export default function ItemModal({
               value={description}
               onChangeText={setDescription}
               placeholder="Optional description"
-              placeholderTextColor="#888"
+              placeholderTextColor="#9AA0A6"
               multiline
               style={[styles.input, { minHeight: 70 }]}
             />
@@ -97,7 +97,7 @@ export default function ItemModal({
               value={price}
               onChangeText={setPrice}
               placeholder="e.g., 12.99"
-              placeholderTextColor="#888"
+              placeholderTextColor="#9AA0A6"
               keyboardType="decimal-pad"
               style={styles.input}
             />
@@ -109,7 +109,7 @@ export default function ItemModal({
               value={dietaryTags}
               onChangeText={setDietaryTags}
               placeholder="e.g., vegan, gluten-free"
-              placeholderTextColor="#888"
+              placeholderTextColor="#9AA0A6"
               style={styles.input}
             />
 

@@ -4,11 +4,12 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   Text,
   View,
-  TouchableOpacity,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "../../lib/supabase";
 import * as ImagePicker from "expo-image-picker";
 import { File } from "expo-file-system/next";
@@ -16,7 +17,6 @@ import { decode } from "base64-arraybuffer";
 
 import type { MenuCategory, MenuItem, ItemFormData } from "../../components/menu/types";
 import { menuEditStyles as styles } from "../../components/styles";
-import { sharedStyles } from "../../components/styles";
 import CategoryModal from "../../components/menu/CategoryModal";
 import ItemModal from "../../components/menu/ItemModal";
 import MenuEditorCategoryList from "../../components/menu/MenuEditorCategoryList";
@@ -444,53 +444,64 @@ export default function MenuEditScreen() {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator />
-        <Text style={styles.loadingText}>Loading menu...</Text>
-      </View>
+      <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color="#0B2D5B" />
+          <Text style={styles.loadingText}>Loading menu...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   if (!isOwner) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.heading}>Access Denied</Text>
-        <Text style={styles.subtitle}>
-          This page is only available for business owners.
-        </Text>
-      </View>
+      <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+        <View style={styles.centered}>
+          <Text style={styles.heading}>Access Denied</Text>
+          <Text style={styles.subtitle}>
+            This page is only available for business owners.
+          </Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   if (!restaurantId) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.heading}>No Restaurant Found</Text>
-        <Text style={styles.subtitle}>
-          Please create a restaurant profile first.
-        </Text>
-      </View>
+      <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+        <View style={styles.centered}>
+          <Text style={styles.heading}>No Restaurant Found</Text>
+          <Text style={styles.subtitle}>
+            Please create a restaurant profile first.
+          </Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <KeyboardAvoidingView
-      style={sharedStyles.flex1}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.page}>
+    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+      <View style={styles.topBar}>
         <Text style={styles.heading}>Edit Menu</Text>
         <Text style={styles.subtitle}>
           Manage categories and items for your restaurant.
         </Text>
+      </View>
 
-        {/* Add Category */}
-        <TouchableOpacity
-          style={styles.primaryBtn}
-          onPress={() => openCategoryModal()}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={styles.container}
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.primaryBtnText}>+ Add Category</Text>
-        </TouchableOpacity>
+          <Pressable
+            style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.9 }]}
+            onPress={() => openCategoryModal()}
+          >
+            <Text style={styles.primaryBtnText}>+ Add Category</Text>
+          </Pressable>
 
         {categories.length === 0 && (
           <Text style={styles.emptyText}>
@@ -498,19 +509,19 @@ export default function MenuEditScreen() {
           </Text>
         )}
 
-        <MenuEditorCategoryList
-          categories={categories}
-          itemsByCategory={itemsByCategory}
-          onEditCategory={openCategoryModal}
-          onMoveCategory={moveCategory}
-          onDeleteCategory={deleteCategory}
-          onOpenPhoto={openPhotoModal}
-          onEditItem={openItemModal}
-          onDeleteItem={deleteItem}
-          onAddItem={(categoryId) => openItemModal(categoryId)}
-        />
-
-      </ScrollView>
+          <MenuEditorCategoryList
+            categories={categories}
+            itemsByCategory={itemsByCategory}
+            onEditCategory={openCategoryModal}
+            onMoveCategory={moveCategory}
+            onDeleteCategory={deleteCategory}
+            onOpenPhoto={openPhotoModal}
+            onEditItem={openItemModal}
+            onDeleteItem={deleteItem}
+            onAddItem={(categoryId) => openItemModal(categoryId)}
+          />
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Modals */}
       <CategoryModal
@@ -536,6 +547,6 @@ export default function MenuEditScreen() {
         onClose={() => setPhotoModalVisible(false)}
         onPickPhoto={pickAndUploadPhoto}
       />
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }

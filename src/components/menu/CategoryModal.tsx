@@ -45,6 +45,7 @@ export default function CategoryModal({
             value={name}
             onChangeText={setName}
             placeholder="e.g., Appetizers"
+            placeholderTextColor="#9AA0A6"
             style={styles.input}
             autoFocus
           />
