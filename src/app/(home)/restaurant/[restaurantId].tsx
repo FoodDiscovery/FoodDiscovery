@@ -23,8 +23,9 @@ import ProfileHeaderIcon from "../../../components/ProfileHeaderIcon";
 import styles from "../../../components/styles/restaurantMenuStyles";
 import Rating from "../../../components/reviews/ratings";
 import {
+  fetchRestaurantReviews,
   fetchRestaurantRating,
-  getSavedUserRestaurantRating,
+  type RestaurantReview,
   type RestaurantRatingSummary,
 } from "../../../lib/ratings";
 
@@ -42,6 +43,16 @@ interface ProfileRow {
   role?: string | null;
 }
 
+interface ReviewSectionStyles {
+  reviewsCard: object;
+  reviewsTitle: object;
+  reviewsEmptyText: object;
+  reviewItem: object;
+  reviewText: object;
+  reviewsListScroll: object;
+  reviewsListContent: object;
+}
+
 export default function RestaurantMenuScreen() {
   const { restaurantId } = useLocalSearchParams<{ restaurantId: string }>();
   const { items: cartItems, addItem, incrementItem, decrementItem, itemCount, subtotal } =
@@ -55,7 +66,8 @@ export default function RestaurantMenuScreen() {
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
   const [ratingSummary, setRatingSummary] = useState<RestaurantRatingSummary | null>(null);
-  const [userRating, setUserRating] = useState(0);
+  const [reviews, setReviews] = useState<RestaurantReview[]>([]);
+  const reviewStyles = styles as typeof styles & ReviewSectionStyles;
 
   const itemsByCategory = useMemo(() => {
     const map = new Map<number, MenuItem[]>();
@@ -75,8 +87,8 @@ export default function RestaurantMenuScreen() {
       }
 
       setLoading(true);
-      setUserRating(0);
       setRatingSummary(null);
+      setReviews([]);
 
       try {
         const [restaurantRes, categoriesRes, profileRes] = await Promise.all([
@@ -122,13 +134,13 @@ export default function RestaurantMenuScreen() {
             console.error("Failed to load rating summary", ratingsError);
           });
 
-        getSavedUserRestaurantRating(session.user.id, restaurantRes.data.id as string)
-          .then((savedRating) => {
-            setUserRating(savedRating ?? 0);
+        fetchRestaurantReviews(restaurantRes.data.id as string)
+          .then((rows) => {
+            setReviews(rows);
           })
           .catch((ratingsError) => {
-            console.error("Failed to load saved user rating", ratingsError);
-            setUserRating(0);
+            console.error("Failed to load restaurant reviews", ratingsError);
+            setReviews([]);
           });
 
         const loadedCategories = (categoriesRes.data ?? []) as MenuCategory[];
@@ -194,9 +206,7 @@ export default function RestaurantMenuScreen() {
   };
 
   const ratingLabel =
-    userRating > 0
-      ? `Your rating: ${userRating.toFixed(1)}`
-      : ratingSummary?.rating_count && ratingSummary.average_rating != null
+    ratingSummary?.rating_count && ratingSummary.average_rating != null
       ? `Ratings: ${ratingSummary.average_rating.toFixed(1)} (${ratingSummary.rating_count})`
       : "No ratings yet";
 
@@ -266,12 +276,9 @@ export default function RestaurantMenuScreen() {
         <View style={styles.headerCard}>
           <Text style={styles.heading}>{restaurant?.name ?? "Restaurant Menu"}</Text>
 
+          {/* display the rating for the restaurant */}
           <View style={styles.ratingRow}>
-            <Rating
-              value={userRating || ratingSummary?.average_rating || 0}
-              size="md"
-              label={ratingLabel}
-            />
+            <Rating value={ratingSummary?.average_rating || 0} size="md" label={ratingLabel} />
           </View>
 
           {!!restaurant?.cuisine_type && (
@@ -282,6 +289,48 @@ export default function RestaurantMenuScreen() {
 
           {!!restaurant?.description && (
             <Text style={styles.subtitle}>{restaurant.description}</Text>
+          )}
+        </View>
+
+        {/* display the reviews for the restaurant */}
+        <View style={reviewStyles.reviewsCard}>
+          <Text style={reviewStyles.reviewsTitle}>Reviews</Text>
+          {reviews.length === 0 ? (
+            <Text style={reviewStyles.reviewsEmptyText}>No reviews yet.</Text>
+          ) : reviews.length > 2 ? (
+            // display the reviews in a scroll view if more than 2 reviews
+            <ScrollView
+              style={reviewStyles.reviewsListScroll}
+              contentContainerStyle={reviewStyles.reviewsListContent}
+              showsVerticalScrollIndicator
+              nestedScrollEnabled
+            >
+              {reviews.map((review) => (
+                <View key={review.id} style={reviewStyles.reviewItem}>
+                  <Rating
+                    value={review.rating}
+                    size="sm"
+                    label={`${review.rating.toFixed(1)} / 5`} // display label as one decimal (4.0 / 5)
+                  />
+                  <Text style={reviewStyles.reviewText}>
+                    {review.reviewDescription || "No written review."}
+                  </Text>
+                </View>
+              ))}
+            </ScrollView>
+          ) : (
+            reviews.map((review) => (
+              <View key={review.id} style={reviewStyles.reviewItem}>
+                <Rating
+                  value={review.rating}
+                  size="sm"
+                  label={`${review.rating.toFixed(1)} / 5`}
+                />
+                <Text style={reviewStyles.reviewText}>
+                  {review.reviewDescription || "No written review."}
+                </Text>
+              </View>
+            ))
           )}
         </View>
 

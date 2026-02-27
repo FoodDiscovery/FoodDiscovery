@@ -160,11 +160,15 @@ export default function RestaurantModal({
 
         const loadRating = async () => {
             try {
+                
+                // fetch the rating summary for the restaurant
                 const summary = await fetchRestaurantRating(restaurant.id);
+                // if the rating summary is not cancelled, set the rating summary
                 if (!isCancelled) {
                     setRatingSummary(summary);
                 }
 
+                // if the user is logged in, get the user's rating for the restaurant
                 if (session?.user?.id) {
                     const savedRating = await getSavedUserRestaurantRating(session.user.id, restaurant.id);
                     if (!isCancelled) {

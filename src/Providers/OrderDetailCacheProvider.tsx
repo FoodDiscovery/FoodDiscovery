@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabase";
 import type { OrderHistoryItem } from "../components/home/OrderHistoryCard";
 
 export interface OrderDetailData {
+  restaurantId?: string;
   restaurantName: string;
   address: string | null;
   // array of objects
@@ -90,7 +91,7 @@ async function fetchOrderDetailImpl(
   });
 
   return {
-    data: { restaurantName, address, lineItems },
+    data: { restaurantId: rid, restaurantName, address, lineItems },
   };
 }
 

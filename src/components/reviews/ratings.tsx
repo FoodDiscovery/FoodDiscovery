@@ -7,15 +7,16 @@ type Size = keyof typeof ratingSizeStyles;
 const STAR_FULL = "★";
 const STAR_EMPTY = "☆";
 
+// props for the Rating component
 interface RatingProps {
   value: number;
   onChange?: (rating: number) => void;
   max?: number;
   label?: string;
   size?: Size;
-  accessibilityLabel?: string;
+  accessibilityLabel?: string; 
 }
-
+// star rating component that displays a rating and allows the user to rate it
 export default function Rating({
   value,
   onChange,
@@ -47,6 +48,7 @@ export default function Rating({
       );
     }
 
+    // render a pressable star that allows the user to rate it
     return (
       <Pressable
         key={index}
@@ -60,11 +62,12 @@ export default function Rating({
     );
   });
   
-  // accessibility label
+  // accessibility label for the rating component
   const ariaLabel =
     accessibilityLabel ??
     `Rating: ${value.toFixed(1)} out of ${max} star${max === 1 ? "" : "s"}`;
 
+  // render the rating component with the stars and label
   return (
     <View style={styles.container} accessible accessibilityLabel={ariaLabel}>
       <View style={styles.starsRow}>{stars}</View>

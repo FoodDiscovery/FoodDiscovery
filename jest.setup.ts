@@ -7,13 +7,16 @@ jest.mock("expo-sqlite/localStorage/install", () => ({}));
 
 jest.mock(
   "@react-native-async-storage/async-storage",
-  () => require("@react-native-async-storage/async-storage/jest/async-storage-mock")
+  () => jest.requireActual("@react-native-async-storage/async-storage/jest/async-storage-mock")
 );
 
 if (!(globalThis as { localStorage?: Storage }).localStorage) {
   const store = new Map<string, string>();
   (globalThis as { localStorage: Storage }).localStorage = {
-    getItem: (key: string) => (store.has(key) ? store.get(key)! : null),
+    getItem: (key: string) => {
+      const value = store.get(key);
+      return value ?? null;
+    },
     setItem: (key: string, value: string) => {
       store.set(key, value);
     },

@@ -2,6 +2,7 @@ import { render, waitFor } from "@testing-library/react-native";
 import RestaurantMenuScreen from "../../../src/app/(home)/restaurant/[restaurantId]";
 
 const mockFromFn = jest.fn();
+const mockRpc = jest.fn();
 const mockUseAuth = jest.fn();
 
 jest.mock("expo-router", () => ({
@@ -22,6 +23,7 @@ jest.mock("react-native-safe-area-context", () => ({
 jest.mock("../../../src/lib/supabase", () => ({
   supabase: {
     from: (...args: unknown[]) => mockFromFn(...args),
+    rpc: (...args: unknown[]) => mockRpc(...args),
   },
 }));
 
@@ -105,10 +107,20 @@ function setupMocks(opts: {
             in: jest.fn().mockResolvedValue({ data: menuItems, error: null }),
           }),
         };
+      case "restaurant_ratings":
+        return {
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({
+              order: jest.fn().mockResolvedValue({ data: [], error: null }),
+            }),
+          }),
+        };
       default:
         return { select: jest.fn().mockResolvedValue({ data: null, error: null }) };
     }
   });
+
+  mockRpc.mockResolvedValue({ data: [], error: null });
 }
 
 async function waitForMenuLoadToFinish(queryByText: (text: string) => unknown) {

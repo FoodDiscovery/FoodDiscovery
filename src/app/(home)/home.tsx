@@ -68,8 +68,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [restaurants, setRestaurants] = useState<RestaurantRow[]>([]);
   const [nearby, setNearby] = useState<NearbyRestaurant[]>([]);
-  const [restaurantRatings, setRestaurantRatings] =
-    useState<Map<string, RestaurantRatingSummary>>(new Map());
+  const [restaurantRatings, setRestaurantRatings] = useState<Map<string, RestaurantRatingSummary>>(new Map());
   const [savedUserRatings, setSavedUserRatings] = useState<Map<string, number>>(new Map());
 
   const [query, setQuery] = useState("");
@@ -102,7 +101,8 @@ export default function HomeScreen() {
       }
 
       setRestaurants((data ?? []) as RestaurantRow[]);
-      // Non-blocking: fetch rating summaries for all restaurants.
+
+      // fetch rating summaries for all restaurants, for quick display of stars
       fetchAllRestaurantRatings()
         .then((map) => setRestaurantRatings(map))
         .catch((ratingsError) => {
@@ -145,25 +145,30 @@ export default function HomeScreen() {
       return;
     }
 
+    // get all restaurant ids from the restaurants and nearby restaurants
     const restaurantIds = new Set<string>();
     restaurants.forEach((r) => restaurantIds.add(r.id));
     nearby.forEach((n) => restaurantIds.add(n.restaurant.id));
 
+    // if no restaurant ids, return empty map
     if (restaurantIds.size === 0) {
       setSavedUserRatings(new Map());
       return;
     }
 
+    // fetch the user's ratings for the restaurants and nearby restaurants
     const nextMap = await fetchUserRestaurantRatings(session.user.id, Array.from(restaurantIds));
     setSavedUserRatings(nextMap);
   }, [nearby, restaurants, session?.user?.id]);
 
+  // load the user's ratings for the restaurants and nearby restaurants
   useEffect(() => {
     loadSavedRatings().catch((error) => {
       console.error("Failed to load saved user ratings for home", error);
     });
   }, [loadSavedRatings]);
 
+  // load the user's ratings for the restaurants and nearby restaurants when the screen is focused
   useFocusEffect(
     useCallback(() => {
       loadSavedRatings().catch((error) => {

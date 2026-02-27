@@ -30,7 +30,10 @@ function getStatusBadgeStyles(status: string | undefined): { badge: object; text
 }
 
 // takes in the order_items as props from its caller
-export default function OrderHistoryCard({ order, displayNumber }: OrderHistoryCardProps) {
+export default function OrderHistoryCard({
+  order,
+  displayNumber,
+}: OrderHistoryCardProps) {
   const dateDisplay =
     order.date.length === 10 && order.date.includes("-")
       ? (() => {
