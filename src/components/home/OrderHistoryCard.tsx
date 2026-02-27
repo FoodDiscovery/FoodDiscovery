@@ -53,7 +53,7 @@ export default function OrderHistoryCard({
   const statusDisplay = order.status
     ? order.status.toLowerCase() === "picked_up"
       ? "Picked up"
-      : order.status
+      : order.status.toLowerCase()
     : null;
 
   return (
