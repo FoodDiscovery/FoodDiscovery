@@ -17,6 +17,7 @@ import { decode } from "base64-arraybuffer";
 
 import type { MenuCategory, MenuItem, ItemFormData } from "../../components/menu/types";
 import { menuEditStyles as styles } from "../../components/styles";
+import sharedStyles from "../../components/styles/sharedStyles";
 import CategoryModal from "../../components/menu/CategoryModal";
 import ItemModal from "../../components/menu/ItemModal";
 import MenuEditorCategoryList from "../../components/menu/MenuEditorCategoryList";
@@ -481,9 +482,9 @@ export default function MenuEditScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
-      <View style={styles.topBar}>
-        <Text style={styles.heading}>Edit Menu</Text>
-        <Text style={styles.subtitle}>
+      <View style={sharedStyles.ownerPageHeader}>
+        <Text style={sharedStyles.ownerPageTitle}>Edit Menu</Text>
+        <Text style={sharedStyles.ownerPageSubtitle}>
           Manage categories and items for your restaurant.
         </Text>
       </View>

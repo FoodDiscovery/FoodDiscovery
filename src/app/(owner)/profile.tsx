@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { supabase } from "../../lib/supabase";
 import { ownerStyles as styles } from "../../components/styles";
+import sharedStyles from "../../components/styles/sharedStyles";
 import * as ImagePicker from "expo-image-picker";
 import { File } from "expo-file-system/next";
 import { decode } from "base64-arraybuffer";
@@ -411,8 +412,11 @@ export default function OwnerProfileScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
-      <View style={styles.topBar}>
-        <Text style={styles.topTitle}>Owner Profile</Text>
+      <View style={sharedStyles.ownerPageHeader}>
+        <Text style={sharedStyles.ownerPageTitle}>Owner Profile</Text>
+        <Text style={sharedStyles.ownerPageSubtitle}>
+          Edit your restaurant profile and business details
+        </Text>
       </View>
 
       <KeyboardAvoidingView

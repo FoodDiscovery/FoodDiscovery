@@ -15,6 +15,7 @@ import OrderCard, {
   type OrderStatus,
 } from "../../components/owner/OrderCard";
 import { ownerHomeStyles as styles } from "../../components/styles";
+import sharedStyles from "../../components/styles/sharedStyles";
 
 interface OrderRow {
   id: string;
@@ -159,9 +160,9 @@ export default function OwnerHomeScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Incoming Orders</Text>
-        <Text style={styles.subtitle}>
+      <View style={sharedStyles.ownerPageHeader}>
+        <Text style={sharedStyles.ownerPageTitle}>Incoming Orders</Text>
+        <Text style={sharedStyles.ownerPageSubtitle}>
           Manage pickup orders for your restaurant
         </Text>
       </View>

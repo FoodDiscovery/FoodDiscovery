@@ -204,19 +204,41 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 24,
   },
+  itemModalOverlay: {
+    justifyContent: "flex-start",
+    paddingTop: 150,
+  },
   modalCard: {
     backgroundColor: "#fff",
     borderRadius: 20,
     padding: 20,
     gap: 10,
+    // move it up 25 px
+    marginTop: -50,
     borderWidth: 1,
     borderColor: BORDER,
+  },
+  modalHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  modalHeaderBtns: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flexShrink: 0,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: "900",
-    marginBottom: 4,
     color: "#0B1220",
+  },
+  modalScrollContent: {
+    paddingBottom: 8,
   },
   subtitleWithMargin: { marginBottom: 12 },
   noPhotoText: { color: "#6B7280", fontWeight: "600" },

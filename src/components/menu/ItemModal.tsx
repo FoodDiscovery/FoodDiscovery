@@ -66,13 +66,34 @@ export default function ItemModal({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
+      <View style={[styles.modalOverlay, styles.itemModalOverlay]}>
         <View style={[styles.modalCard, { maxHeight: "85%" }]}>
-          <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Header: title on left, Save/Cancel on right - always visible above keyboard */}
+          <View style={styles.modalHeaderRow}>
             <Text style={styles.modalTitle}>
               {item ? "Edit Item" : "New Item"}
             </Text>
+            <View style={styles.modalHeaderBtns}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.saveBtn, saving && styles.disabledBtn]}
+                onPress={handleSave}
+                disabled={saving}
+              >
+                <Text style={styles.saveBtnText}>
+                  {saving ? "Saving..." : "Save"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
 
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.modalScrollContent}
+          >
             <Text style={styles.fieldLabel}>Name</Text>
             <TextInput
               value={name}
@@ -80,6 +101,7 @@ export default function ItemModal({
               placeholder="e.g., Margherita Pizza"
               placeholderTextColor="#9AA0A6"
               style={styles.input}
+              autoFocus
             />
 
             <Text style={styles.fieldLabel}>Description</Text>
@@ -102,6 +124,11 @@ export default function ItemModal({
               style={styles.input}
             />
 
+            <View style={styles.switchRow}>
+              <Text style={styles.fieldLabel}>Available</Text>
+              <Switch value={isAvailable} onValueChange={setIsAvailable} />
+            </View>
+
             <Text style={styles.fieldLabel}>
               Dietary Tags (comma-separated)
             </Text>
@@ -112,27 +139,6 @@ export default function ItemModal({
               placeholderTextColor="#9AA0A6"
               style={styles.input}
             />
-
-            <View style={styles.switchRow}>
-              <Text style={styles.fieldLabel}>Available</Text>
-              <Switch value={isAvailable} onValueChange={setIsAvailable} />
-            </View>
-
-            <View style={styles.modalBtnRow}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.saveBtn, saving && styles.disabledBtn]}
-                onPress={handleSave}
-                disabled={saving}
-              >
-                <Text style={styles.saveBtnText}>
-                  {saving ? "Saving..." : "Save"}
-                </Text>
-              </TouchableOpacity>
-            </View>
           </ScrollView>
         </View>
       </View>

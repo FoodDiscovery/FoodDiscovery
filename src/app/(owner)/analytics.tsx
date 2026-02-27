@@ -14,6 +14,7 @@ import DateRangePickerModal, {
   type DateRangeSelection,
 } from "../../components/DateRangePickerModal";
 import { analyticsStyles as styles } from "../../components/styles";
+import sharedStyles from "../../components/styles/sharedStyles";
 import {
   dateRangeLabel,
   dateOnlyToUtcEnd,
@@ -160,10 +161,13 @@ export default function OwnerAnalyticsScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
+      <View style={sharedStyles.ownerPageHeader}>
+        <Text style={sharedStyles.ownerPageTitle}>Business Analytics</Text>
+        <Text style={sharedStyles.ownerPageSubtitle}>
+          Completed orders and sales performance
+        </Text>
+      </View>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Business Analytics</Text>
-        <Text style={styles.subtitle}>Completed orders and sales performance</Text>
-
         <Pressable style={styles.filterButton} onPress={() => setDateFilterOpen(true)}>
           <Text style={styles.filterButtonText}>
             Date filter: {dateRangeLabel(dateFilter)}

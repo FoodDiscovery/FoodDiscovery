@@ -13,18 +13,9 @@ const styles = StyleSheet.create({
   },
   container: {
     paddingHorizontal: 16,
-    paddingTop: 24,
+    paddingTop: 16,
     paddingBottom: 28,
     gap: 14,
-  },
-  title: {
-    fontSize: 30,
-    fontWeight: "800",
-    color: "#0B2D5B",
-  },
-  subtitle: {
-    fontSize: 15,
-    color: "#4A5E7D",
   },
   filterButton: {
     alignSelf: "flex-start",
