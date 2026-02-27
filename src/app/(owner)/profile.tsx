@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Button,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
@@ -71,6 +71,7 @@ function Field({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
+        placeholderTextColor="#9AA0A6"
         multiline={multiline}
         keyboardType={keyboardType ?? "default"}
         style={[styles.input, multiline ? styles.multilineInput : null]}
@@ -146,8 +147,6 @@ export default function OwnerProfileScreen() {
   const [imageUrl, setImageUrl] = useState("");
   const [initialValues, setInitialValues] = useState<FormState | null>(null);
 
-  const [ordersCount, setOrdersCount] = useState<number | null>(null);
-
   const currentValues = useMemo<FormState>(
     () => ({
       ownerFullName: ownerFullName.trim(),
@@ -168,21 +167,6 @@ export default function OwnerProfileScreen() {
   }, [currentValues, initialValues]);
 
   useEffect(() => {
-    const loadStats = async (rid: string) => {
-      const { count, error: countErr } = await supabase
-        .from("orders")
-        .select("id", { count: "exact", head: true })
-        .eq("restaurant_id", rid);
-
-      if (!countErr) setOrdersCount(count ?? 0);
-
-      // Keep this query for backend parity while sales display moved to analytics.
-      await supabase
-        .from("orders")
-        .select("total_amount")
-        .eq("restaurant_id", rid);
-    };
-
     const loadLocation = async (rid: string) => {
       const { data: location, error: locationErr } = await supabase
         .from("locations")
@@ -293,8 +277,6 @@ export default function OwnerProfileScreen() {
         phone: (row.phone ?? "").trim(),
         imageUrl: (row.image_url ?? "").trim(),
       });
-
-      await loadStats(row.id);
 
       setLoading(false);
     };
@@ -437,20 +419,22 @@ export default function OwnerProfileScreen() {
         style={styles.keyboardFlex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <ScrollView contentContainerStyle={styles.container}>
-            <View style={styles.statsCard}>
-              <Text style={styles.statsTitle}>Business Stats</Text>
-              <Text style={styles.statsLine}>
-                Orders: <Text style={styles.statsValue}>{ordersCount ?? 0}</Text>
-              </Text>
-            </View>
-
-            <TouchableOpacity style={styles.logoRow} onPress={onPickImage} disabled={uploadingImage}>
+        <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+            <TouchableOpacity
+              style={[styles.logoCard, styles.logoRow]}
+              onPress={onPickImage}
+              disabled={uploadingImage}
+              activeOpacity={0.9}
+            >
               {imageUrl.trim() ? (
-                <Image source={{ uri: imageUrl.trim() }} style={styles.logoImg} />
+                <Image
+                  source={{ uri: imageUrl.trim() }}
+                  style={styles.logoImg}
+                  resizeMode="cover"
+                />
               ) : (
                 <View style={styles.logoPlaceholder}>
-                  <Text style={styles.noLogoText}>No logo</Text>
+                  <Text style={styles.noLogoText}>No Image</Text>
                 </View>
               )}
               <View style={styles.logoMetaWrap}>
@@ -461,6 +445,7 @@ export default function OwnerProfileScreen() {
               </View>
             </TouchableOpacity>
 
+            <View style={styles.card}>
             <Field
               label="Owner Full Name"
               value={ownerFullName}
@@ -509,18 +494,32 @@ export default function OwnerProfileScreen() {
               placeholder="(555) 123-4567"
               keyboardType="phone-pad"
             />
-
-            <View style={styles.saveWrap}>
-              <Button
-                title={saving ? "Saving..." : "Save profile"}
-                onPress={onSave}
-                disabled={saving || !restaurantId || !isDirty}
-              />
             </View>
 
-          <View style={styles.signOutWrap}>
-            <Button title="Sign Out" onPress={handleSignOut} />
-          </View>
+            <View style={styles.saveWrap}>
+              <Pressable
+                onPress={onSave}
+                disabled={saving || !restaurantId || !isDirty}
+                style={({ pressed }) => [
+                  styles.saveBtn,
+                  (saving || !restaurantId || !isDirty) && styles.saveBtnDisabled,
+                  pressed && { opacity: 0.9 },
+                ]}
+              >
+                <Text style={styles.saveBtnText}>
+                  {saving ? "Saving..." : "Save profile"}
+                </Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.signOutWrap}>
+              <Pressable
+                onPress={handleSignOut}
+                style={({ pressed }) => [styles.signOutBtn, pressed && { opacity: 0.85 }]}
+              >
+                <Text style={styles.signOutBtnText}>Sign Out</Text>
+              </Pressable>
+            </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

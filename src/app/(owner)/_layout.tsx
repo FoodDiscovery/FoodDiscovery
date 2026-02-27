@@ -23,6 +23,7 @@ export default function OwnerLayout() {
         name="analytics"
         options={{
           title: "Analytics",
+          unmountOnBlur: false,
           tabBarIcon: ({ color, size }) => (
             <FontAwesome name="bar-chart" color={color} size={size} />
           ),
