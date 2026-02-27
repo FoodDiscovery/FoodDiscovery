@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 
@@ -7,7 +14,12 @@ import DateRangePickerModal, {
   type DateRangeSelection,
 } from "../../components/DateRangePickerModal";
 import { analyticsStyles as styles } from "../../components/styles";
-import { dateRangeLabel, dateOnlyToUtcEnd, dateOnlyToUtcStart, formatIsoToPstDisplay } from "../../lib/dateUtils";
+import {
+  dateRangeLabel,
+  dateOnlyToUtcEnd,
+  dateOnlyToUtcStart,
+  formatIsoToPstDisplay,
+} from "../../lib/dateUtils";
 import { supabase } from "../../lib/supabase";
 
 interface AnalyticsOrderItem {
@@ -17,7 +29,7 @@ interface AnalyticsOrderItem {
 
 interface AnalyticsOrderRow {
   id: string;
-  status: "completed";
+  status: string;
   total_amount: number | string;
   created_at: string;
   order_items: AnalyticsOrderItem[];
@@ -39,6 +51,7 @@ export default function OwnerAnalyticsScreen() {
 
   const loadAnalytics = useCallback(async () => {
     setLoading(true);
+
     const {
       data: { user },
       error: userErr,
@@ -106,7 +119,7 @@ export default function OwnerAnalyticsScreen() {
     if (error) {
       setOrders([]);
       setLoading(false);
-      Alert.alert("Error", error.message);
+      Alert.alert("Error loading orders", error.message);
       return;
     }
 
@@ -152,7 +165,9 @@ export default function OwnerAnalyticsScreen() {
         <Text style={styles.subtitle}>Completed orders and sales performance</Text>
 
         <Pressable style={styles.filterButton} onPress={() => setDateFilterOpen(true)}>
-          <Text style={styles.filterButtonText}>Date filter: {dateRangeLabel(dateFilter)}</Text>
+          <Text style={styles.filterButtonText}>
+            Date filter: {dateRangeLabel(dateFilter)}
+          </Text>
         </Pressable>
 
         <View style={styles.statsRow}>
@@ -169,7 +184,9 @@ export default function OwnerAnalyticsScreen() {
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Item Frequency</Text>
           {itemFrequency.length === 0 ? (
-            <Text style={styles.helperText}>No completed orders for this date selection.</Text>
+            <Text style={styles.helperText}>
+              No completed orders for this date selection.
+            </Text>
           ) : (
             itemFrequency.map(([name, quantity]) => (
               <View key={name} style={styles.frequencyRow}>
@@ -183,14 +200,18 @@ export default function OwnerAnalyticsScreen() {
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Completed Orders</Text>
           {orders.length === 0 ? (
-            <Text style={styles.helperText}>No completed orders for this date selection.</Text>
+            <Text style={styles.helperText}>
+              No completed orders for this date selection.
+            </Text>
           ) : (
             orders.map((order) => (
               <View key={order.id} style={styles.orderRow}>
                 <Text style={styles.orderDate}>
                   {formatIsoToPstDisplay(order.created_at)}
                 </Text>
-                <Text style={styles.orderAmount}>${Number(order.total_amount).toFixed(2)}</Text>
+                <Text style={styles.orderAmount}>
+                  ${Number(order.total_amount).toFixed(2)}
+                </Text>
               </View>
             ))
           )}
@@ -207,4 +228,3 @@ export default function OwnerAnalyticsScreen() {
     </SafeAreaView>
   );
 }
-
