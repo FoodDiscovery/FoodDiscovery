@@ -78,6 +78,10 @@ export default StyleSheet.create({
     letterSpacing: -0.2,
   },
 
+  ratingRow: {
+    marginTop: 8,
+  },
+
   subtitle: {
     marginTop: 10,
     fontSize: 16,
@@ -113,6 +117,45 @@ export default StyleSheet.create({
   },
   emptyTitle: { fontSize: 18, fontWeight: "900", color: "#111827" },
   emptySub: { marginTop: 6, fontSize: 14, color: "#6B7280", fontWeight: "700" },
+
+  reviewsCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 22,
+    padding: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#E5ECF7",
+  },
+  reviewsTitle: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#111827",
+    marginBottom: 10,
+  },
+  reviewsEmptyText: {
+    fontSize: 14,
+    color: "#6B7280",
+    fontWeight: "700",
+  },
+  reviewItem: {
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#EEF2F7",
+    minHeight: 68,
+  },
+  reviewText: {
+    marginTop: 6,
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#4B5563",
+    fontWeight: "500",
+  },
+  reviewsListScroll: {
+    height: 140,
+  },
+  reviewsListContent: {
+    paddingBottom: 2,
+  },
 
   ownerTitle: { fontSize: 22, fontWeight: "900", color: "#111827" },
   ownerSub: { marginTop: 8, textAlign: "center", color: "#6B7280", fontWeight: "700" },

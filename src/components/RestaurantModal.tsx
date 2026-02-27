@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import {
     Modal,
     View,
@@ -14,6 +15,13 @@ import {
     getRestaurantOpenStatus,
     isWeeklyBusinessHours,
 } from '../lib/businessHours';
+import Rating from "./reviews/ratings";
+import {
+    fetchRestaurantRating,
+    getSavedUserRestaurantRating,
+    type RestaurantRatingSummary
+} from "../lib/ratings";
+import { useAuth } from "../Providers/AuthProvider";
 
 interface RestaurantModalInfo {
     id: string;
@@ -141,6 +149,48 @@ export default function RestaurantModal({
     onViewMenu
 }: RestaurantModalProps) {
     if (!restaurant) return null;
+
+    const { session } = useAuth();
+    const [ratingSummary, setRatingSummary] = useState<RestaurantRatingSummary | null>(null);
+    const [savedUserRating, setSavedUserRating] = useState<number | null>(null);
+
+    useEffect(() => {
+        let isCancelled = false;
+
+        const loadRating = async () => {
+            try {
+                
+                // fetch the rating summary for the restaurant
+                const summary = await fetchRestaurantRating(restaurant.id);
+                // if the rating summary is not cancelled, set the rating summary
+                if (!isCancelled) {
+                    setRatingSummary(summary);
+                }
+
+                // if the user is logged in, get the user's rating for the restaurant
+                if (session?.user?.id) {
+                    const savedRating = await getSavedUserRestaurantRating(session.user.id, restaurant.id);
+                    if (!isCancelled) {
+                        setSavedUserRating(savedRating);
+                    }
+                } else if (!isCancelled) {
+                    setSavedUserRating(null);
+                }
+            } catch (error) {
+                console.error("Failed to load rating data", error);
+                if (!isCancelled) {
+                    setRatingSummary(null);
+                    setSavedUserRating(null);
+                }
+            }
+        };
+
+        loadRating();
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [restaurant.id, session?.user?.id]);
 
     const { isOpen, statusText, displayText } = getRestaurantHoursDisplay(restaurant.business_hours);
 
@@ -276,7 +326,25 @@ export default function RestaurantModal({
                                         <Text style={styles.sectionIcon}>⭐</Text>
                                         <Text style={styles.sectionTitle}>Reviews</Text>
                                     </View>
-                                    <Text style={styles.comingSoonText}>Coming soon...</Text>
+                                    <View style={styles.ratingRow}>
+                                        <Rating
+                                            value={savedUserRating ?? ratingSummary?.average_rating ?? 0}
+                                            size="md"
+                                            label={
+                                                savedUserRating != null
+                                                    ? `Your rating: ${savedUserRating.toFixed(1)}`
+                                                    :
+                                                ratingSummary &&
+                                                ratingSummary.rating_count > 0 &&
+                                                ratingSummary.average_rating != null
+                                                    ? `Ratings: ${ratingSummary.average_rating.toFixed(
+                                                          1
+                                                      )} (${ratingSummary.rating_count})`
+                                                    : undefined
+                                            }
+                                        />
+                                    </View>
+                                    <Text style={styles.comingSoonText}>Reviews coming soon...</Text>
                                 </View>
 
                                 {/* Menu section */}

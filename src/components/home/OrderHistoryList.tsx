@@ -118,29 +118,30 @@ export default function OrderHistoryList({ startDate = null, endDate = null }: O
         const isOpening = loadingOrderId === order.id;
         const displayNumber = filteredOrders.length - index; // 1 = oldest, n = newest
         return (
-          <Pressable
-            key={order.id}
-            onPress={async () => {
-              const cached = getCached(order.id);
-              if (cached) {
+          <View key={order.id}>
+            <Pressable
+              onPress={async () => {
+                const cached = getCached(order.id);
+                if (cached) {
+                  router.push(`/(home)/order/${order.id}`);
+                  return;
+                }
+                const userId = session?.user?.id;
+                if (!userId) return;
+                setLoadingOrderId(order.id);
+                const result = await fetchOrderDetail(order.id, userId);
+                setLoadingOrderId(null);
+                if ("data" in result) setCached(order.id, result.data);
                 router.push(`/(home)/order/${order.id}`);
-                return;
+              }}
+              style={({ pressed }) =>
+                pressed || isOpening ? sharedStyles.pressedOpacity70 : {}
               }
-              const userId = session?.user?.id;
-              if (!userId) return;
-              setLoadingOrderId(order.id);
-              const result = await fetchOrderDetail(order.id, userId);
-              setLoadingOrderId(null);
-              if ("data" in result) setCached(order.id, result.data);
-              router.push(`/(home)/order/${order.id}`);
-            }}
-            style={({ pressed }) =>
-              pressed || isOpening ? sharedStyles.pressedOpacity70 : {}
-            }
-            disabled={isOpening}
-          >
-            <OrderHistoryCard order={order} displayNumber={displayNumber} />
-          </Pressable>
+              disabled={isOpening}
+            >
+              <OrderHistoryCard order={order} displayNumber={displayNumber} />
+            </Pressable>
+          </View>
         );
       })}
     </ScrollView>

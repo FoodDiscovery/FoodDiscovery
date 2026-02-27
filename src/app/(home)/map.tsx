@@ -35,13 +35,11 @@ interface RestaurantModalInfo {
 
 export default function MapScreen() {
   const mapRef = useRef<MapView>(null);
-  const insets = useSafeAreaInsets();
-  const { location, errorMsg, isLoading, refreshLocation } = useLocation();
+  const insets = useSafeAreaInsets(); 
+  const { location, errorMsg, isLoading, refreshLocation } = useLocation(); // get location from location provider
   const [restaurants, setRestaurants] = React.useState<Restaurant[]>([]);
-
   const [modalVisible, setModalVisible] = React.useState(false);
-  const [selectedRestaurant, setSelectedRestaurant] =
-    React.useState<RestaurantModalInfo | null>(null);
+  const [selectedRestaurant, setSelectedRestaurant] = React.useState<RestaurantModalInfo | null>(null);
 
   useEffect(() => {
     if (!location || !mapRef.current) return;

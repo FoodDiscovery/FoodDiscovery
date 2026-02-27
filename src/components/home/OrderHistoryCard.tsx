@@ -4,6 +4,7 @@ import { orderHistoryCardStyles as styles } from "../styles";
 
 export interface OrderHistoryItem {
   id: string;
+  restaurantId?: string;
   date: string; // ISO, YYYY-MM-DD, or MM/DD/YYYY for display
   createdAt?: string; // raw timestamp for filtering
   itemCount?: number; // optional when coming from orders table (no line items)
@@ -30,7 +31,10 @@ function getStatusBadgeStyles(status: string | undefined): { badge: object; text
 }
 
 // takes in the order_items as props from its caller
-export default function OrderHistoryCard({ order, displayNumber }: OrderHistoryCardProps) {
+export default function OrderHistoryCard({
+  order,
+  displayNumber,
+}: OrderHistoryCardProps) {
   const dateDisplay =
     order.date.length === 10 && order.date.includes("-")
       ? formatDateOnlyForDisplay(order.date)

@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Linking,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -13,6 +17,11 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../../Providers/AuthProvider";
 import { useOrderDetailCache } from "../../../Providers/OrderDetailCacheProvider";
+import Rating from "../../../components/reviews/ratings";
+import {
+  fetchUserRestaurantReviews,
+  saveUserRestaurantReview,
+} from "../../../lib/ratings";
 import { orderDetailStyles as style, NAVY } from "../../../components/styles";
 import { sharedStyles } from "../../../components/styles";
 
@@ -31,9 +40,15 @@ export default function OrderDetailScreen() {
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [restaurantName, setRestaurantName] = useState<string>("");
   const [address, setAddress] = useState<string | null>(null);
   const [lineItems, setLineItems] = useState<OrderItemRow[]>([]);
+  const [reviewModalVisible, setReviewModalVisible] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewDescription, setReviewDescription] = useState("");
+  const [savingReview, setSavingReview] = useState(false);
+  const [hasExistingReview, setHasExistingReview] = useState(false);
 
   useEffect(() => {
     if (!orderId || !session?.user?.id) {
@@ -43,6 +58,7 @@ export default function OrderDetailScreen() {
     // check if it's cached first
     const cached = getCached(orderId);
     if (cached) {
+      setRestaurantId(cached.restaurantId ?? null);
       setRestaurantName(cached.restaurantName);
       setAddress(cached.address);
       setLineItems(cached.lineItems);
@@ -52,6 +68,7 @@ export default function OrderDetailScreen() {
     }
     setLoading(true);
     setError(null);
+    setRestaurantId(null);
     setRestaurantName("");
     setAddress(null);
     setLineItems([]);
@@ -65,6 +82,7 @@ export default function OrderDetailScreen() {
         setLoading(false);
         return;
       }
+      setRestaurantId(result.data.restaurantId ?? null);
       setRestaurantName(result.data.restaurantName);
       setAddress(result.data.address);
       setLineItems(result.data.lineItems);
@@ -75,6 +93,72 @@ export default function OrderDetailScreen() {
       cancelled = true;
     };
   }, [orderId, session?.user?.id, getCached, setCached, fetchOrderDetail]);
+
+  useEffect(() => {
+    if (!session?.user?.id || !restaurantId) {
+      setHasExistingReview(false);
+      setReviewRating(0);
+      setReviewDescription("");
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const reviews = await fetchUserRestaurantReviews(session.user.id, [restaurantId]);
+        if (cancelled) return;
+        const existing = reviews.get(restaurantId);
+        setHasExistingReview(Boolean(existing));
+        setReviewRating(existing?.rating ?? 0);
+        setReviewDescription(existing?.reviewDescription ?? "");
+      } catch (reviewError) {
+        console.error("Failed to load review for order detail", reviewError);
+        if (cancelled) return;
+        setHasExistingReview(false);
+        setReviewRating(0);
+        setReviewDescription("");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [restaurantId, session?.user?.id]);
+
+  const submitReview = async () => {
+    if (!session?.user?.id) {
+      Alert.alert("Sign in required", "Please sign in to leave a review.");
+      return;
+    }
+    if (!restaurantId) {
+      Alert.alert("Unable to review", "Missing restaurant information for this order.");
+      return;
+    }
+    if (reviewRating <= 0) {
+      Alert.alert("Rating required", "Please choose a star rating before submitting.");
+      return;
+    }
+
+    setSavingReview(true);
+    try {
+      await saveUserRestaurantReview(
+        session.user.id,
+        restaurantId,
+        reviewRating,
+        reviewDescription
+      );
+      setHasExistingReview(true);
+      setReviewModalVisible(false);
+      Alert.alert("Saved", "Your review has been saved.");
+    } catch (reviewError) {
+      Alert.alert(
+        "Save failed",
+        reviewError instanceof Error ? reviewError.message : "Unable to save review."
+      );
+    } finally {
+      setSavingReview(false);
+    }
+  };
 
   if (!session?.user?.id) {
     return (
@@ -167,7 +251,137 @@ export default function OrderDetailScreen() {
           <Text style={style.summaryRow}>Tax: ${tax.toFixed(2)}</Text>
           <Text style={[style.summaryRow, style.summaryTotal]}>Total: ${totalWithTax.toFixed(2)}</Text>
         </View>
+
+        <Pressable
+          style={({ pressed }) => [localStyles.reviewButton, pressed && { opacity: 0.85 }]}
+          onPress={() => setReviewModalVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel={hasExistingReview ? "Edit review" : "Leave review"}
+        >
+          <Text style={localStyles.reviewButtonText}>
+            {hasExistingReview ? "Edit review" : "Leave review"}
+          </Text>
+        </Pressable>
       </ScrollView>
+
+      <Modal
+        visible={reviewModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          if (!savingReview) setReviewModalVisible(false);
+        }}
+      >
+        <View style={localStyles.modalBackdrop}>
+          <View style={localStyles.modalCard}>
+            <Text style={localStyles.modalTitle}>
+              {hasExistingReview ? "Edit review" : "Leave a review"}
+            </Text>
+            <Rating
+              value={reviewRating}
+              onChange={setReviewRating}
+              size="md"
+              label={reviewRating > 0 ? `${reviewRating.toFixed(1)} stars` : "Tap to rate"}
+            />
+            <TextInput
+              style={localStyles.reviewInput}
+              placeholder="Share your experience..."
+              placeholderTextColor="#9AA0A6"
+              multiline
+              value={reviewDescription}
+              onChangeText={setReviewDescription}
+              editable={!savingReview}
+            />
+            <View style={localStyles.modalActions}>
+              <Pressable
+                style={({ pressed }) => [localStyles.cancelButton, pressed && { opacity: 0.85 }]}
+                onPress={() => setReviewModalVisible(false)}
+                disabled={savingReview}
+              >
+                <Text style={localStyles.cancelButtonText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [localStyles.submitButton, pressed && { opacity: 0.85 }]}
+                onPress={submitReview}
+                disabled={savingReview}
+              >
+                <Text style={localStyles.submitButtonText}>
+                  {savingReview ? "Saving..." : hasExistingReview ? "Update" : "Submit"}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
+
+const localStyles = StyleSheet.create({
+  reviewButton: {
+    alignSelf: "flex-end",
+    backgroundColor: NAVY,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  reviewButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    justifyContent: "flex-end",
+  },
+  modalCard: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 16,
+    gap: 12,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#0B1220",
+  },
+  reviewInput: {
+    minHeight: 96,
+    borderWidth: 1,
+    borderColor: "#E5ECF7",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: "#111827",
+    textAlignVertical: "top",
+  },
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 10,
+    marginTop: 4,
+  },
+  cancelButton: {
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: "#E5E7EB",
+  },
+  cancelButtonText: {
+    color: "#111827",
+    fontWeight: "800",
+  },
+  submitButton: {
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: NAVY,
+  },
+  submitButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "800",
+  },
+});

@@ -2,6 +2,10 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import { Alert } from "react-native";
 import { useLocation } from "./LocationProvider";
 import { supabase } from "../lib/supabase";
+import {
+  fetchAllRestaurantRatings,
+  type RestaurantRatingSummary,
+} from "../lib/ratings";
 
 interface RestaurantRow {
   id: string;
@@ -34,6 +38,7 @@ interface HomeContextValue {
   restaurants: RestaurantRow[];
   nearby: NearbyRestaurant[];
   restaurantDistances: Map<string, number>;
+  restaurantRatings: Map<string, RestaurantRatingSummary>;
   query: string;
   setQuery: (query: string) => void;
   sortMode: SortMode;
@@ -68,6 +73,7 @@ export default function HomeProvider({ children }: { children: React.ReactNode }
   const [restaurants, setRestaurants] = useState<RestaurantRow[]>([]);
   const [nearby, setNearby] = useState<NearbyRestaurant[]>([]);
   const [restaurantDistances, setRestaurantDistances] = useState<Map<string, number>>(new Map());
+  const [restaurantRatings, setRestaurantRatings] = useState<Map<string, RestaurantRatingSummary>>(new Map());
 
   const [query, setQuery] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>("name");
@@ -91,7 +97,16 @@ export default function HomeProvider({ children }: { children: React.ReactNode }
       }
 
       setRestaurants((data ?? []) as RestaurantRow[]);
-      setLoading(false);
+
+      // fetch all ratings for all restaurants
+      fetchAllRestaurantRatings()
+        .then((map) => setRestaurantRatings(map))
+        .catch((ratingsError) => {
+          console.error("Failed to load restaurant ratings", ratingsError);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     };
 
     load();
@@ -265,6 +280,7 @@ export default function HomeProvider({ children }: { children: React.ReactNode }
       restaurants,
       nearby,
       restaurantDistances,
+      restaurantRatings,
       query,
       setQuery,
       sortMode,
@@ -286,6 +302,7 @@ export default function HomeProvider({ children }: { children: React.ReactNode }
       restaurants,
       nearby,
       restaurantDistances,
+      restaurantRatings,
       query,
       sortMode,
       selectedCuisines,

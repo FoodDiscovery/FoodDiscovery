@@ -8,6 +8,7 @@ const mockRpc = jest.fn();
 
 jest.mock("expo-router", () => ({
   router: { push: jest.fn() },
+  useFocusEffect: jest.fn(),
 }));
 
 jest.mock("../../../src/components/ProfileHeaderIcon", () => ({

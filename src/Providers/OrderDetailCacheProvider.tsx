@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabase";
 import type { OrderHistoryItem } from "../components/home/OrderHistoryCard";
 
 export interface OrderDetailData {
+  restaurantId?: string;
   restaurantName: string;
   address: string | null;
   // array of objects
@@ -91,7 +92,7 @@ async function fetchOrderDetailImpl(
   });
 
   return {
-    data: { restaurantName, address, lineItems },
+    data: { restaurantId: rid, restaurantName, address, lineItems },
   };
 }
 
@@ -104,7 +105,7 @@ async function fetchOrderListImpl(
   // load orders from the current user
   const { data, error: fetchError } = await supabase
     .from("orders")
-    .select("id, created_at, total_amount, status, order_number")
+    .select("id, restaurant_id, created_at, total_amount, status, order_number")
     .eq("customer_id", userId)
     .order("created_at", { ascending: false });
 
@@ -135,12 +136,14 @@ async function fetchOrderListImpl(
   const list = orderRows.map(
     (row: {
       id: string;
+      restaurant_id: string;
       created_at: string;
       total_amount: number;
       status?: string | null;
       order_number?: number | null;
     }) => ({
       id: row.id,
+      restaurantId: row.restaurant_id,
       date: formatIsoToPstDisplay(row.created_at),
       createdAt: row.created_at,
       totalPrice: Number(row.total_amount),

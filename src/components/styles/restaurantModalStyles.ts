@@ -175,6 +175,10 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     marginLeft: 26,
   },
+  ratingRow: {
+    marginLeft: 26,
+    marginBottom: 8,
+  },
   buttonContainer: {
     paddingHorizontal: 20,
     paddingTop: 8,
