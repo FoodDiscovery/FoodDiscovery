@@ -66,63 +66,17 @@ export default function ItemModal({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
+      <View style={[styles.modalOverlay, styles.itemModalOverlay]}>
         <View style={[styles.modalCard, { maxHeight: "85%" }]}>
-          <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Header: title on left, Save/Cancel on right - always visible above keyboard */}
+          <View style={styles.modalHeaderRow}>
             <Text style={styles.modalTitle}>
               {item ? "Edit Item" : "New Item"}
             </Text>
-
-            <Text style={styles.fieldLabel}>Name</Text>
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              placeholder="e.g., Margherita Pizza"
-              placeholderTextColor="#888"
-              style={styles.input}
-            />
-
-            <Text style={styles.fieldLabel}>Description</Text>
-            <TextInput
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Optional description"
-              placeholderTextColor="#888"
-              multiline
-              style={[styles.input, { minHeight: 70 }]}
-            />
-
-            <Text style={styles.fieldLabel}>Price ($)</Text>
-            <TextInput
-              value={price}
-              onChangeText={setPrice}
-              placeholder="e.g., 12.99"
-              placeholderTextColor="#888"
-              keyboardType="decimal-pad"
-              style={styles.input}
-            />
-
-            <Text style={styles.fieldLabel}>
-              Dietary Tags (comma-separated)
-            </Text>
-            <TextInput
-              value={dietaryTags}
-              onChangeText={setDietaryTags}
-              placeholder="e.g., vegan, gluten-free"
-              placeholderTextColor="#888"
-              style={styles.input}
-            />
-
-            <View style={styles.switchRow}>
-              <Text style={styles.fieldLabel}>Available</Text>
-              <Switch value={isAvailable} onValueChange={setIsAvailable} />
-            </View>
-
-            <View style={styles.modalBtnRow}>
+            <View style={styles.modalHeaderBtns}>
               <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
                 <Text style={styles.cancelBtnText}>Cancel</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
                 style={[styles.saveBtn, saving && styles.disabledBtn]}
                 onPress={handleSave}
@@ -133,6 +87,58 @@ export default function ItemModal({
                 </Text>
               </TouchableOpacity>
             </View>
+          </View>
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.modalScrollContent}
+          >
+            <Text style={styles.fieldLabel}>Name</Text>
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              placeholder="e.g., Margherita Pizza"
+              placeholderTextColor="#9AA0A6"
+              style={styles.input}
+              autoFocus
+            />
+
+            <Text style={styles.fieldLabel}>Description</Text>
+            <TextInput
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Optional description"
+              placeholderTextColor="#9AA0A6"
+              multiline
+              style={[styles.input, { minHeight: 70 }]}
+            />
+
+            <Text style={styles.fieldLabel}>Price ($)</Text>
+            <TextInput
+              value={price}
+              onChangeText={setPrice}
+              placeholder="e.g., 12.99"
+              placeholderTextColor="#9AA0A6"
+              keyboardType="decimal-pad"
+              style={styles.input}
+            />
+
+            <View style={styles.switchRow}>
+              <Text style={styles.fieldLabel}>Available</Text>
+              <Switch value={isAvailable} onValueChange={setIsAvailable} />
+            </View>
+
+            <Text style={styles.fieldLabel}>
+              Dietary Tags (comma-separated)
+            </Text>
+            <TextInput
+              value={dietaryTags}
+              onChangeText={setDietaryTags}
+              placeholder="e.g., vegan, gluten-free"
+              placeholderTextColor="#9AA0A6"
+              style={styles.input}
+            />
           </ScrollView>
         </View>
       </View>

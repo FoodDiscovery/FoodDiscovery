@@ -5,10 +5,17 @@ const mockReplace = jest.fn();
 const mockGetUser = jest.fn();
 const mockFrom = jest.fn();
 const orderQueries: { gte: jest.Mock; lte: jest.Mock }[] = [];
+const mockRunFocusEffect = { current: true };
 
 jest.mock("expo-router", () => ({
   router: {
     replace: (...args: unknown[]) => mockReplace(...args),
+  },
+  useFocusEffect: (fn: () => (() => void) | undefined) => {
+    if (mockRunFocusEffect.current) {
+      mockRunFocusEffect.current = false;
+      fn();
+    }
   },
 }));
 
@@ -96,6 +103,7 @@ describe("OwnerAnalyticsScreen", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     orderQueries.length = 0;
+    mockRunFocusEffect.current = true;
     mockGetUser.mockResolvedValue({
       data: { user: { id: "owner-1" } },
       error: null,

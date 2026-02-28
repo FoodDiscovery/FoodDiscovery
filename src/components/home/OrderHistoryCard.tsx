@@ -26,7 +26,7 @@ function getStatusBadgeStyles(status: string | undefined): { badge: object; text
   const s = status.toLowerCase();
   if (s === "confirmed") return { badge: styles.statusBadgeConfirmed, text: styles.statusTextConfirmed };
   if (s === "ready") return { badge: styles.statusBadgeReady, text: styles.statusTextReady };
-  if (s === "completed") return { badge: styles.statusBadgeCompleted, text: styles.statusTextCompleted };
+  if (s === "completed" || s === "picked_up") return { badge: styles.statusBadgeCompleted, text: styles.statusTextCompleted };
   return { badge: styles.statusBadgeDefault, text: styles.statusTextDefault };
 }
 
@@ -50,7 +50,11 @@ export default function OrderHistoryCard({
           ? `${order.id.slice(0, SHORT_ID_LENGTH)}...`
           : order.id;
   const statusBadgeStyles = getStatusBadgeStyles(order.status);
-  const statusDisplay = order.status ? order.status.toLowerCase() : null;
+  const statusDisplay = order.status
+    ? order.status.toLowerCase() === "picked_up"
+      ? "Picked up"
+      : order.status.toLowerCase()
+    : null;
 
   return (
     <View style={styles.card}>

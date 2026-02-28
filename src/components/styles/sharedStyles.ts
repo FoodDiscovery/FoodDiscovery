@@ -1,10 +1,31 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
+
+const OWNER_NAVY = "#0B2D5B";
 
 /**
  * Shared style constants used across multiple components.
  * Use these instead of inline style objects.
  */
 const sharedStyles = StyleSheet.create({
+  /* Owner page header - unified title/subtitle format for (owner) screens */
+  ownerPageHeader: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    paddingTop: Platform.OS === "ios" ? 4 : 8,
+  },
+  ownerPageTitle: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: OWNER_NAVY,
+    letterSpacing: -0.5,
+  },
+  ownerPageSubtitle: {
+    marginTop: 4,
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#6B7280",
+  },
+
   /* Spacers */
   spacerHeight10: { height: 10 },
   spacerWidth40: { width: 40 },
