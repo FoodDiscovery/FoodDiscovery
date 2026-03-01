@@ -131,14 +131,17 @@ const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.35)",
-    justifyContent: "flex-end",
+    justifyContent: "center",
+    padding: 24,
   },
   modalCard: {
     backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 16,
+    borderRadius: 20,
+    padding: 20,
     gap: 12,
+    marginTop: -50,
+    borderWidth: 1,
+    borderColor: "#E5ECF7",
   },
   modalTitle: {
     fontSize: 20,

@@ -278,13 +278,13 @@ export default function OrderDetailScreen() {
           if (!savingReview) setReviewModalVisible(false);
         }}
       >
-        <View style={localStyles.modalBackdrop}>
+        <View style={style.modalBackdrop}>
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             keyboardVerticalOffset={Platform.OS === "ios" ? insets.bottom : 0}
           >
-            <View style={localStyles.modalCard}>
-              <Text style={localStyles.modalTitle}>
+            <View style={style.modalCard}>
+              <Text style={style.modalTitle}>
                 {hasExistingReview ? "Edit review" : "Leave a review"}
               </Text>
               <Rating
@@ -294,28 +294,29 @@ export default function OrderDetailScreen() {
                 label={reviewRating > 0 ? `${reviewRating.toFixed(1)} stars` : "Tap to rate"}
               />
               <TextInput
-                style={localStyles.reviewInput}
+                style={style.reviewInput}
                 placeholder="Share your experience..."
                 placeholderTextColor="#9AA0A6"
                 multiline
                 value={reviewDescription}
                 onChangeText={setReviewDescription}
                 editable={!savingReview}
+                autoFocus
               />
-              <View style={localStyles.modalActions}>
+              <View style={style.modalActions}>
                 <Pressable
-                  style={({ pressed }) => [localStyles.cancelButton, pressed && { opacity: 0.85 }]}
+                  style={({ pressed }) => [style.cancelButton, pressed && { opacity: 0.85 }]}
                   onPress={() => setReviewModalVisible(false)}
                   disabled={savingReview}
                 >
-                  <Text style={localStyles.cancelButtonText}>Cancel</Text>
+                  <Text style={style.cancelButtonText}>Cancel</Text>
                 </Pressable>
                 <Pressable
-                  style={({ pressed }) => [localStyles.submitButton, pressed && { opacity: 0.85 }]}
+                  style={({ pressed }) => [style.submitButton, pressed && { opacity: 0.85 }]}
                   onPress={submitReview}
                   disabled={savingReview}
                 >
-                  <Text style={localStyles.submitButtonText}>
+                  <Text style={style.submitButtonText}>
                     {savingReview ? "Saving..." : hasExistingReview ? "Update" : "Submit"}
                   </Text>
                 </Pressable>
