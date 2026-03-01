@@ -27,7 +27,12 @@ describe("DateRangePickerModal", () => {
 
   it("shows only From when one date is selected, and From | To when range is selected", () => {
     const screen = render(
-      <DateRangePickerModal visible onClose={jest.fn()} onApply={jest.fn()} />
+      <DateRangePickerModal
+        visible
+        onClose={jest.fn()}
+        onApply={jest.fn()}
+        initialStartDate="2026-02-01"
+      />
     );
     fireEvent.press(screen.getByText("Clear"));
     fireEvent.press(screen.getByTestId("day-2026-02-12"));
