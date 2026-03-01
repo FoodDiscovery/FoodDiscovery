@@ -84,12 +84,27 @@ const styles = StyleSheet.create({
   orderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     borderTopWidth: 1,
     borderTopColor: "#F0F2F7",
     paddingTop: 8,
+    paddingVertical: 4,
+  },
+  orderRowPressed: {
+    opacity: 0.7,
+  },
+  orderRowContent: {
+    flex: 1,
+  },
+  orderNumber: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1E314F",
   },
   orderDate: {
-    color: "#1E314F",
+    fontSize: 13,
+    color: "#5C6D89",
+    marginTop: 2,
   },
   orderAmount: {
     color: "#1E314F",

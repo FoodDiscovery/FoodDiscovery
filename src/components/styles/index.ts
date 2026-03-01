@@ -13,6 +13,7 @@ export { default as customerProfileStyles } from "./customerProfileStyles";
 export { default as customerProfileIconStyles } from "./customerProfileIconStyles";
 export { default as profileHeaderIconStyles, PROFILE_HEADER_ICON_COLOR, PROFILE_HEADER_ICON_SIZE } from "./profileHeaderIconStyles";
 export { default as orderDetailStyles, NAVY } from "./orderDetailStyles";
+export { default as ownerOrderReceiptStyles } from "./ownerOrderReceiptStyles";
 export { default as orderHistoryCardStyles } from "./orderHistoryCardStyles";
 export { default as menuEditStyles } from "./menuEditStyles";
 export { default as menuViewStyles } from "./menuViewStyles";

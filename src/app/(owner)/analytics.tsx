@@ -33,6 +33,7 @@ interface AnalyticsOrderRow {
   status: string;
   total_amount: number | string;
   created_at: string;
+  order_number: number | null;
   order_items: AnalyticsOrderItem[];
 }
 
@@ -101,6 +102,7 @@ export default function OwnerAnalyticsScreen() {
           status,
           total_amount,
           created_at,
+          order_number,
           order_items (
             quantity,
             menu_items (name)
@@ -226,14 +228,28 @@ export default function OwnerAnalyticsScreen() {
             </Text>
           ) : (
             orders.map((order) => (
-              <View key={order.id} style={styles.orderRow}>
-                <Text style={styles.orderDate}>
-                  {formatIsoToPstDisplay(order.created_at)}
-                </Text>
+              <Pressable
+                key={order.id}
+                style={({ pressed }) => [
+                  styles.orderRow,
+                  pressed && styles.orderRowPressed,
+                ]}
+                onPress={() =>
+                  router.push(`/(owner)/order/${order.id}` as const)
+                }
+              >
+                <View style={styles.orderRowContent}>
+                  <Text style={styles.orderNumber}>
+                    Order #{order.order_number ?? order.id.slice(0, 8)}
+                  </Text>
+                  <Text style={styles.orderDate}>
+                    {formatIsoToPstDisplay(order.created_at)}
+                  </Text>
+                </View>
                 <Text style={styles.orderAmount}>
                   ${Number(order.total_amount).toFixed(2)}
                 </Text>
-              </View>
+              </Pressable>
             ))
           )}
         </View>

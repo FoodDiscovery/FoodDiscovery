@@ -47,6 +47,7 @@ export default function OwnerLayout() {
           ),
         }}
       />
+      <Tabs.Screen name="order/[orderId]" options={{ href: null }} />
     </Tabs>
   );
 }
