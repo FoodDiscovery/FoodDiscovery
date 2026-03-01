@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 14,
-    marginBottom: 6,
+    // marginBottom: 1,
   },
   dayCellSelected: {
     backgroundColor: "#0B2D5B",
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   footerRow: {
-    marginTop: 10,
+    // marginTop: 1,
     flexDirection: "row",
     justifyContent: "flex-end",
     gap: 10,

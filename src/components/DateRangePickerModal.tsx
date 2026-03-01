@@ -24,6 +24,10 @@ interface DateRangePickerModalProps {
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+const CALENDAR_ROWS = 6;
+const CELLS_PER_ROW = 7;
+const TOTAL_GRID_CELLS = CALENDAR_ROWS * CELLS_PER_ROW; // 42 cells for fixed height
+
 function buildMonthDays(month: Date): (string | null)[] {
   const year = month.getFullYear();
   const monthIndex = month.getMonth();
@@ -37,7 +41,8 @@ function buildMonthDays(month: Date): (string | null)[] {
   for (let day = 1; day <= totalDays; day += 1) {
     days.push(toDateOnlyString(new Date(year, monthIndex, day)));
   }
-  while (days.length % 7 !== 0) {
+  // Always pad to 6 rows (42 cells) so calendar height stays fixed across months
+  while (days.length < TOTAL_GRID_CELLS) {
     days.push(null);
   }
   return days;
