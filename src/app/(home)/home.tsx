@@ -18,7 +18,6 @@ import { supabase } from "../../lib/supabase";
 import { useLocation } from "../../Providers/LocationProvider";
 import { useCart } from "../../Providers/CartProvider";
 import { useAuth } from "../../Providers/AuthProvider";
-import ProfileHeaderIcon from "../../components/ProfileHeaderIcon";
 import Rating from "../../components/reviews/ratings";
 import {
   fetchAllRestaurantRatings,
@@ -378,9 +377,6 @@ export default function HomeScreen() {
           },
         ]}
       >
-        <View style={styles.profileIconBtn}>
-          <ProfileHeaderIcon />
-        </View>
         <View style={styles.logoRow}>
           <Image source={FoodDiscoveryLogo} style={styles.logo} resizeMode="contain" />
           <Text style={styles.subtitle}>{headerSubtitle}</Text>

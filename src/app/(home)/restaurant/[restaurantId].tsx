@@ -1,5 +1,5 @@
 // src/app/(home)/restaurant/[restaurantId].tsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { supabase } from "../../../lib/supabase";
@@ -19,7 +19,6 @@ import { useAuth } from "../../../Providers/AuthProvider";
 import type { MenuCategory, MenuItem } from "../../../components/menu/types";
 import MenuCategoryCard from "../../../components/menu/MenuCategoryCard";
 import CartBar from "../../../components/menu/CartBar";
-import ProfileHeaderIcon from "../../../components/ProfileHeaderIcon";
 import Rating from "../../../components/reviews/ratings";
 import {
   fetchRestaurantReviews,
@@ -173,6 +172,29 @@ export default function RestaurantMenuScreen() {
     loadMenuForRestaurant();
   }, [restaurantId, session]);
 
+  // refresh the rating and reviews when the screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      if (!restaurantId || !session?.user?.id) {
+        return;
+      }
+      fetchRestaurantRating(restaurantId)
+        .then((summary) => setRatingSummary(summary))
+        .catch((ratingsError) => {
+          console.error("Failed to refresh rating summary", ratingsError);
+        });
+
+      fetchRestaurantReviews(restaurantId)
+        .then((rows) => {
+          setReviews(rows);
+        })
+        .catch((ratingsError) => {
+          console.error("Failed to refresh restaurant reviews", ratingsError);
+          setReviews([]);
+        });
+    }, [restaurantId, session?.user?.id])
+  );
+
   const getItemQuantity = (itemId: number): number => {
     if (!restaurant) return 0;
     const key = `${restaurant.id}:${itemId}`;
@@ -248,11 +270,8 @@ export default function RestaurantMenuScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      {/* Top row: profile icon (left), centered logo, back button (right) */}
+      {/* Top row: centered logo and back button */}
       <View style={[styles.topRow, { paddingTop: Math.max(10, insets.top * 0.45) }]}>
-        <View style={styles.headerProfileIcon}>
-          <ProfileHeaderIcon />
-        </View>
         <View style={styles.topLogoWrap} pointerEvents="none">
           <Image source={FoodDiscoveryLogo} style={styles.topLogo} resizeMode="contain" />
         </View>

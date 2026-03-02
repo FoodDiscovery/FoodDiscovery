@@ -15,6 +15,7 @@ import DateRangePickerModal, {
 } from "../../components/DateRangePickerModal";
 import { analyticsStyles as styles } from "../../components/styles";
 import sharedStyles from "../../components/styles/sharedStyles";
+import Rating from "../../components/reviews/ratings";
 import {
   dateRangeLabel,
   dateOnlyToUtcEnd,
@@ -22,6 +23,10 @@ import {
   formatIsoToPstDisplay,
 } from "../../lib/dateUtils";
 import { supabase } from "../../lib/supabase";
+import {
+  fetchRestaurantReviews,
+  type RestaurantReview,
+} from "../../lib/ratings";
 
 interface AnalyticsOrderItem {
   quantity: number;
@@ -45,6 +50,7 @@ function getItemName(menuItems: AnalyticsOrderItem["menu_items"]): string {
 export default function OwnerAnalyticsScreen() {
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<AnalyticsOrderRow[]>([]);
+  const [reviews, setReviews] = useState<RestaurantReview[]>([]);
   const [dateFilterOpen, setDateFilterOpen] = useState(false);
   const [dateFilter, setDateFilter] = useState<DateRangeSelection>({
     startDate: null,
@@ -90,8 +96,17 @@ export default function OwnerAnalyticsScreen() {
 
     if (restaurantErr || !restaurant?.id) {
       setOrders([]);
+      setReviews([]);
       setLoading(false);
       return;
+    }
+
+    try {
+      const reviewRows = await fetchRestaurantReviews(restaurant.id);
+      setReviews(reviewRows);
+    } catch (reviewError) {
+      console.error("Failed to load owner restaurant reviews", reviewError);
+      setReviews([]);
     }
 
     let ordersQuery = supabase
@@ -250,6 +265,46 @@ export default function OwnerAnalyticsScreen() {
                   ${Number(order.total_amount).toFixed(2)}
                 </Text>
               </Pressable>
+            ))
+          )}
+        </View>
+
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Reviews</Text>
+          {reviews.length === 0 ? (
+            <Text style={styles.helperText}>No reviews yet.</Text>
+          ) : reviews.length > 2 ? (
+            <ScrollView
+              style={styles.reviewsListScroll}
+              contentContainerStyle={styles.reviewsListContent}
+              showsVerticalScrollIndicator
+              nestedScrollEnabled
+            >
+              {reviews.map((review) => (
+                <View key={review.id} style={styles.reviewItem}>
+                  <Rating
+                    value={review.rating}
+                    size="sm"
+                    label={`${review.rating.toFixed(1)} / 5`}
+                  />
+                  <Text style={styles.reviewText}>
+                    {review.reviewDescription || "No written review."}
+                  </Text>
+                </View>
+              ))}
+            </ScrollView>
+          ) : (
+            reviews.map((review) => (
+              <View key={review.id} style={styles.reviewItem}>
+                <Rating
+                  value={review.rating}
+                  size="sm"
+                  label={`${review.rating.toFixed(1)} / 5`}
+                />
+                <Text style={styles.reviewText}>
+                  {review.reviewDescription || "No written review."}
+                </Text>
+              </View>
             ))
           )}
         </View>

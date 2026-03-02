@@ -7,9 +7,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-
 import { useCart } from "../../Providers/CartProvider";
-import ProfileHeaderIcon from "../../components/ProfileHeaderIcon";
 import { cartStyles as styles, sharedStyles } from "../../components/styles";
 
 export default function CartScreen() {
@@ -36,9 +34,6 @@ export default function CartScreen() {
           },
         ]}
       >
-        <View style={styles.headerProfileIcon}>
-          <ProfileHeaderIcon />
-        </View>
         <Text style={styles.headerTitle}>Your Cart</Text>
 
         <TouchableOpacity
