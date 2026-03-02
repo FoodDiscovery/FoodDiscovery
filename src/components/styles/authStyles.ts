@@ -137,6 +137,59 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
   },
+  previewAlbumSection: {
+    marginTop: 18,
+    paddingHorizontal: 10,
+  },
+  previewAlbumHint: {
+    fontSize: 13,
+    color: "#666",
+    marginBottom: 10,
+  },
+  previewAddButton: {
+    backgroundColor: "#007AFF",
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  previewAddButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  previewGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  previewTile: {
+    alignItems: "center",
+    gap: 6,
+  },
+  previewThumb: {
+    width: 92,
+    height: 92,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  previewRemoveButton: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    backgroundColor: "#f0f0f0",
+  },
+  previewRemoveText: {
+    color: "#007AFF",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  previewEmptyText: {
+    color: "#666",
+    fontSize: 13,
+  },
 });
 
 export default styles;

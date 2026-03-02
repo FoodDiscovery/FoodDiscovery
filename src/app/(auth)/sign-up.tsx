@@ -33,9 +33,13 @@ interface BusinessInfo {
   cuisineType: string
   businessHours: WeeklyBusinessHours
   imageUri: string | null
+  previewImageUris: string[]
 }
 
-type BusinessInfoTextField = Exclude<keyof BusinessInfo, 'businessHours' | 'imageUri'>
+type BusinessInfoTextField = Exclude<
+  keyof BusinessInfo,
+  'businessHours' | 'imageUri' | 'previewImageUris'
+>
 
 function RoleToggle({
   selectedRole,
@@ -90,13 +94,19 @@ function BusinessInfoForm({
   onUpdate,
   onUpdateBusinessHours,
   onPickImage,
+  onAddPreviewImage,
+  onRemovePreviewImage,
   isUploadingImage,
+  isUploadingPreviewImage,
 }: {
   businessInfo: BusinessInfo
   onUpdate: (field: BusinessInfoTextField, value: string) => void
   onUpdateBusinessHours: (value: WeeklyBusinessHours) => void
   onPickImage: () => void
+  onAddPreviewImage: () => void
+  onRemovePreviewImage: (index: number) => void
   isUploadingImage: boolean
+  isUploadingPreviewImage: boolean
 }) {
   return (
     <View style={styles.businessSection}>
@@ -192,6 +202,40 @@ function BusinessInfoForm({
           </TouchableOpacity>
         )}
       </View>
+
+      <View style={styles.previewAlbumSection}>
+        <Text style={styles.imageLabel}>Preview Album</Text>
+        <Text style={styles.previewAlbumHint}>
+          These images are shown to customers in your restaurant map view. Please add a minimum of 3 images.
+        </Text>
+        <TouchableOpacity
+          style={styles.previewAddButton}
+          onPress={onAddPreviewImage}
+          disabled={isUploadingPreviewImage}
+        >
+          <Text style={styles.previewAddButtonText}>
+            {isUploadingPreviewImage ? 'Loading...' : 'Add Preview Image'}
+          </Text>
+        </TouchableOpacity>
+
+        {businessInfo.previewImageUris.length ? (
+          <View style={styles.previewGrid}>
+            {businessInfo.previewImageUris.map((uri, index) => (
+              <View key={`${uri}-${index}`} style={styles.previewTile}>
+                <Image source={{ uri }} style={styles.previewThumb} />
+                <TouchableOpacity
+                  style={styles.previewRemoveButton}
+                  onPress={() => onRemovePreviewImage(index)}
+                >
+                  <Text style={styles.previewRemoveText}>Remove</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.previewEmptyText}>No preview images yet.</Text>
+        )}
+      </View>
     </View>
   )
 }
@@ -202,6 +246,7 @@ export default function SignUp() {
   const [ownerFullName, setOwnerFullName] = useState('')
   const [loading, setLoading] = useState(false)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const [isUploadingPreviewImage, setIsUploadingPreviewImage] = useState(false)
   const [selectedRole, setSelectedRole] = useState<RoleType>('customer')
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo>({
     name: '',
@@ -211,6 +256,7 @@ export default function SignUp() {
     cuisineType: '',
     businessHours: createDefaultBusinessHours(),
     imageUri: null,
+    previewImageUris: [],
   })
 
   function updateBusinessInfo(field: BusinessInfoTextField, value: string) {
@@ -243,6 +289,41 @@ export default function SignUp() {
     if (!result.canceled && result.assets[0]?.uri) {
       setBusinessInfo((prev) => ({ ...prev, imageUri: result.assets[0].uri }))
     }
+  }
+
+  async function addPreviewImage() {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (!perm.granted) {
+      Alert.alert(
+        'Permission needed',
+        'Please allow photo library access to upload an image.'
+      )
+      return
+    }
+
+    setIsUploadingPreviewImage(true)
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.9,
+    })
+    setIsUploadingPreviewImage(false)
+
+    if (!result.canceled && result.assets[0]?.uri) {
+      const newUri = result.assets[0].uri
+      setBusinessInfo((prev) => ({
+        ...prev,
+        previewImageUris: [...prev.previewImageUris, newUri],
+      }))
+    }
+  }
+
+  function removePreviewImage(indexToRemove: number) {
+    setBusinessInfo((prev) => ({
+      ...prev,
+      previewImageUris: prev.previewImageUris.filter(
+        (_, index) => index !== indexToRemove
+      ),
+    }))
   }
 
   function validateOwnerSignup(): boolean {
@@ -312,6 +393,48 @@ export default function SignUp() {
     }
   }
 
+  async function uploadPreviewImages(
+    userId: string,
+    restaurantId: string
+  ): Promise<string[]> {
+    if (!businessInfo.previewImageUris.length) return []
+
+    const uploadedUrls: string[] = []
+
+    for (const [index, uri] of businessInfo.previewImageUris.entries()) {
+      try {
+        const file = new File(uri)
+        const base64 = await file.base64()
+        const arrayBuffer = decode(base64)
+
+        const fileExt = uri.toLowerCase().includes('.png') ? 'png' : 'jpg'
+        const contentType = fileExt === 'png' ? 'image/png' : 'image/jpeg'
+        const path = `${userId}/${restaurantId}/preview-${Date.now()}-${index}.${fileExt}`
+
+        const { error: uploadErr } = await supabase.storage
+          .from('restaurant-images')
+          .upload(path, arrayBuffer, {
+            contentType,
+            upsert: true,
+          })
+
+        if (uploadErr) {
+          console.error('Preview image upload error:', uploadErr)
+          continue
+        }
+
+        const { data } = supabase.storage.from('restaurant-images').getPublicUrl(path)
+        if (data?.publicUrl) {
+          uploadedUrls.push(data.publicUrl)
+        }
+      } catch (err) {
+        console.error('Preview image upload failed:', err)
+      }
+    }
+
+    return uploadedUrls
+  }
+
   async function createRestaurantForOwner(userId: string): Promise<boolean> {
     // First create the restaurant entry to get the ID
     const { data: restaurant, error: restaurantError } = await supabase
@@ -325,6 +448,7 @@ export default function SignUp() {
           business_hours: businessInfo.businessHours,
           phone: businessInfo.phone.trim(),
           image_url: '', // Will update after image upload
+          preview_images: [],
         },
       ])
       .select('id')
@@ -339,16 +463,22 @@ export default function SignUp() {
       return false
     }
 
-    // Upload the image and update the restaurant
+    // Upload the image(s) and update the restaurant
     const imageUrl = await uploadBusinessImage(userId, restaurant.id)
-    if (imageUrl) {
+    const previewImageUrls = await uploadPreviewImages(userId, restaurant.id)
+
+    if (imageUrl || previewImageUrls.length) {
+      const updates: { image_url?: string; preview_images?: string[] } = {}
+      if (imageUrl) updates.image_url = imageUrl
+      if (previewImageUrls.length) updates.preview_images = previewImageUrls
+
       const { error: updateError } = await supabase
         .from('restaurants')
-        .update({ image_url: imageUrl })
+        .update(updates)
         .eq('id', restaurant.id)
 
       if (updateError) {
-        console.error('Image URL update error:', updateError)
+        console.error('Restaurant image update error:', updateError)
       }
     }
 
@@ -519,14 +649,17 @@ export default function SignUp() {
               onUpdate={updateBusinessInfo}
               onUpdateBusinessHours={updateBusinessHours}
               onPickImage={pickImage}
+              onAddPreviewImage={addPreviewImage}
+              onRemovePreviewImage={removePreviewImage}
               isUploadingImage={isUploadingImage}
+              isUploadingPreviewImage={isUploadingPreviewImage}
             />
           )}
 
           <View style={[styles.verticallySpaced, styles.mt20]}>
             <Button
               title={loading ? 'Creating Account...' : 'Sign up'}
-              disabled={loading || isUploadingImage}
+              disabled={loading || isUploadingImage || isUploadingPreviewImage}
               onPress={signUpWithEmail}
             />
           </View>

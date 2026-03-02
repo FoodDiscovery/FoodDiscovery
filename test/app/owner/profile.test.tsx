@@ -235,6 +235,7 @@ describe("OwnerProfileScreen", () => {
       business_hours: DEFAULT_HOURS,
       phone: "555-1111",
       image_url: null,
+      preview_images: null,
     });
     expect(updateProfilePayloads[0]).toEqual({ full_name: "Jane Owner" });
     expect(updateLocationPayloads[0]).toEqual({ address_text: "Old Address" });
