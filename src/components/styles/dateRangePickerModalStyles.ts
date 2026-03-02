@@ -13,6 +13,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 14,
     paddingBottom: 22,
+    alignSelf: "stretch",
   },
   headerRow: {
     flexDirection: "row",
@@ -95,7 +96,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   footerRow: {
-    // marginTop: 1,
+    marginTop: -110,
     flexDirection: "row",
     justifyContent: "flex-end",
     gap: 10,

@@ -15,11 +15,10 @@ import { formatIsoToPstDisplay } from "../../../lib/dateUtils";
 import ownerOrderReceiptStyles, {
   OWNER_NAVY,
 } from "../../../components/styles/ownerOrderReceiptStyles";
+import { SALES_TAX_RATE } from "../../../lib/taxConstants";
 
 const styles = ownerOrderReceiptStyles;
 import sharedStyles from "../../../components/styles/sharedStyles";
-
-const SALES_TAX_RATE = 0.0975;
 
 interface OrderItemRow {
   quantity: number;
@@ -35,7 +34,6 @@ export default function OwnerOrderReceiptScreen() {
   const [restaurantName, setRestaurantName] = useState<string>("");
   const [address, setAddress] = useState<string | null>(null);
   const [lineItems, setLineItems] = useState<OrderItemRow[]>([]);
-  const [totalAmount, setTotalAmount] = useState<number>(0);
   const [orderNumber, setOrderNumber] = useState<number | null>(null);
   const [createdAt, setCreatedAt] = useState<string>("");
 
@@ -91,7 +89,7 @@ export default function OwnerOrderReceiptScreen() {
 
       const { data: order, error: orderErr } = await supabase
         .from("orders")
-        .select("restaurant_id, total_amount, order_number, created_at")
+        .select("restaurant_id, order_number, created_at")
         .eq("id", orderId)
         .eq("restaurant_id", (restaurant as { id: string }).id)
         .eq("status", "completed")
@@ -107,7 +105,6 @@ export default function OwnerOrderReceiptScreen() {
 
       const orderRow = order as {
         restaurant_id: string;
-        total_amount: number;
         order_number: number | null;
         created_at: string;
       };
@@ -155,7 +152,6 @@ export default function OwnerOrderReceiptScreen() {
       setRestaurantName(restaurantNameVal);
       setAddress(addressVal);
       setLineItems(formattedItems);
-      setTotalAmount(Number(orderRow.total_amount));
       setOrderNumber(orderRow.order_number);
       setCreatedAt(orderRow.created_at);
       setError(null);
@@ -198,6 +194,7 @@ export default function OwnerOrderReceiptScreen() {
     0
   );
   const tax = subtotal * SALES_TAX_RATE;
+  const totalWithTax = subtotal + tax;
   const receiptLabel =
     orderNumber != null ? `Order #${orderNumber}` : `Order ${orderId.slice(0, 8)}`;
 
@@ -255,9 +252,9 @@ export default function OwnerOrderReceiptScreen() {
             Subtotal: ${subtotal.toFixed(2)}
           </Text>
           <Text style={styles.summaryRow}>Tax: ${tax.toFixed(2)}</Text>
-          <Text style={styles.totalPaidLabel}>Total Paid (Customer Amount)</Text>
+          <Text style={styles.totalPaidLabel}>Total Paid </Text>
           <Text style={[styles.summaryRow, styles.summaryTotal]}>
-            ${totalAmount.toFixed(2)}
+            ${totalWithTax.toFixed(2)}
           </Text>
         </View>
       </ScrollView>
