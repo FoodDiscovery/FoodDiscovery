@@ -110,6 +110,23 @@ const styles = StyleSheet.create({
     color: "#1E314F",
     fontWeight: "700",
   },
+  reviewsListScroll: {
+    maxHeight: 140,
+  },
+  reviewsListContent: {
+    gap: 10,
+    paddingRight: 2,
+  },
+  reviewItem: {
+    borderTopWidth: 1,
+    borderTopColor: "#F0F2F7",
+    paddingTop: 8,
+    minHeight: 68,
+  },
+  reviewText: {
+    marginTop: 6,
+    color: "#1E314F",
+  },
 });
 
 export default styles;

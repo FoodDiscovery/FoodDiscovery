@@ -8,6 +8,7 @@ const mockUseAuth = jest.fn();
 jest.mock("expo-router", () => ({
   router: { push: jest.fn(), back: jest.fn() },
   useLocalSearchParams: () => ({ restaurantId: "r1" }),
+  useFocusEffect: jest.fn(),
 }));
 
 jest.mock("../../../src/components/ProfileHeaderIcon", () => ({
