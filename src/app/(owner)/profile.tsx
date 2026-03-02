@@ -35,6 +35,7 @@ interface RestaurantRow {
   description: string | null;
   cuisine_type: string | null;
   image_url: string | null;
+  preview_images: string[] | null;
   business_hours: WeeklyBusinessHours | { text?: string } | string | null;
   phone: string | null;
 }
@@ -48,6 +49,7 @@ interface FormState {
   businessHours: WeeklyBusinessHours;
   phone: string;
   imageUrl: string;
+  previewImages: string[];
 }
 
 function Field({
@@ -84,8 +86,9 @@ function Field({
 async function uploadImageToSupabase(params: {
   restaurantId: string;
   ownerId: string;
+  kind: "cover" | "preview";
 }): Promise<string | null> {
-  const { restaurantId, ownerId } = params;
+  const { restaurantId, ownerId, kind } = params;
 
   const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!perm.granted) {
@@ -96,8 +99,8 @@ async function uploadImageToSupabase(params: {
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ImagePicker.MediaTypeOptions.Images,
     quality: 0.9,
-    allowsEditing: true,
-    aspect: [1, 1],
+    allowsEditing: kind === "cover",
+    aspect: kind === "cover" ? [1, 1] : undefined,
   });
 
   if (result.canceled) return null;
@@ -111,7 +114,10 @@ async function uploadImageToSupabase(params: {
 
   const fileExt = asset.uri.toLowerCase().includes(".png") ? "png" : "jpg";
   const contentType = fileExt === "png" ? "image/png" : "image/jpeg";
-  const path = `${ownerId}/${restaurantId}/image.${fileExt}`;
+  const path =
+    kind === "cover"
+      ? `${ownerId}/${restaurantId}/image.${fileExt}`
+      : `${ownerId}/${restaurantId}/preview-${Date.now()}.${fileExt}`;
 
   const { error: uploadErr } = await supabase.storage
     .from("restaurant-images")
@@ -133,6 +139,7 @@ export default function OwnerProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingPreviewImage, setUploadingPreviewImage] = useState(false);
 
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [ownerId, setOwnerId] = useState<string | null>(null);
@@ -146,6 +153,7 @@ export default function OwnerProfileScreen() {
   const [businessHours, setBusinessHours] = useState<WeeklyBusinessHours>(createDefaultBusinessHours());
   const [phone, setPhone] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [initialValues, setInitialValues] = useState<FormState | null>(null);
 
   const currentValues = useMemo<FormState>(
@@ -158,8 +166,9 @@ export default function OwnerProfileScreen() {
       businessHours,
       phone: phone.trim(),
       imageUrl: imageUrl.trim(),
+      previewImages: previewImages.map((url) => url.trim()).filter(Boolean),
     }),
-    [ownerFullName, name, address, cuisine, description, businessHours, phone, imageUrl]
+    [ownerFullName, name, address, cuisine, description, businessHours, phone, imageUrl, previewImages]
   );
 
   const isDirty = useMemo(() => {
@@ -219,7 +228,7 @@ export default function OwnerProfileScreen() {
 
       const { data: restaurant, error: restErr } = await supabase
         .from("restaurants")
-        .select("id,owner_id,name,description,cuisine_type,image_url,business_hours,phone")
+        .select("id,owner_id,name,description,cuisine_type,image_url,preview_images,business_hours,phone")
         .eq("owner_id", uid)
         .maybeSingle();
 
@@ -242,9 +251,10 @@ export default function OwnerProfileScreen() {
               business_hours: createDefaultBusinessHours(),
               phone: "",
               image_url: "",
+              preview_images: [],
             },
           ])
-          .select("id,owner_id,name,description,cuisine_type,image_url,business_hours,phone")
+          .select("id,owner_id,name,description,cuisine_type,image_url,preview_images,business_hours,phone")
           .single();
 
         if (createErr || !created) {
@@ -268,6 +278,11 @@ export default function OwnerProfileScreen() {
       setBusinessHours(loadedHours);
       setPhone(row.phone ?? "");
       setImageUrl(row.image_url ?? "");
+      setPreviewImages(
+        Array.isArray(row.preview_images)
+          ? row.preview_images.filter((url): url is string => typeof url === "string")
+          : []
+      );
       setInitialValues({
         ownerFullName: (profile?.full_name ?? "").trim(),
         name: (row.name ?? "").trim(),
@@ -277,6 +292,9 @@ export default function OwnerProfileScreen() {
         businessHours: loadedHours,
         phone: (row.phone ?? "").trim(),
         imageUrl: (row.image_url ?? "").trim(),
+        previewImages: Array.isArray(row.preview_images)
+          ? row.preview_images.map((url) => url.trim()).filter(Boolean)
+          : [],
       });
 
       setLoading(false);
@@ -292,12 +310,31 @@ export default function OwnerProfileScreen() {
     }
 
     setUploadingImage(true);
-    const publicUrl = await uploadImageToSupabase({ restaurantId, ownerId });
+    const publicUrl = await uploadImageToSupabase({ restaurantId, ownerId, kind: "cover" });
     setUploadingImage(false);
 
     if (publicUrl) {
       setImageUrl(publicUrl);
     }
+  };
+
+  const onAddPreviewImage = async () => {
+    if (!restaurantId || !ownerId) {
+      Alert.alert("Not ready", "Restaurant not loaded yet.");
+      return;
+    }
+
+    setUploadingPreviewImage(true);
+    const publicUrl = await uploadImageToSupabase({ restaurantId, ownerId, kind: "preview" });
+    setUploadingPreviewImage(false);
+
+    if (publicUrl) {
+      setPreviewImages((prev) => [...prev, publicUrl]);
+    }
+  };
+
+  const onRemovePreviewImage = (indexToRemove: number) => {
+    setPreviewImages((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
 
   const onSave = async () => {
@@ -329,6 +366,7 @@ export default function OwnerProfileScreen() {
         business_hours: businessHours,
         phone: phone.trim() || null,
         image_url: imageUrl.trim() || null,
+        preview_images: currentValues.previewImages.length ? currentValues.previewImages : null,
       })
       .eq("id", restaurantId);
 
@@ -448,6 +486,47 @@ export default function OwnerProfileScreen() {
                 </Text>
               </View>
             </TouchableOpacity>
+
+            <View style={styles.logoCard}>
+              <View style={styles.previewAlbumHeader}>
+                <Text style={styles.logoLabel}>Preview Album</Text>
+                <Text style={styles.previewAlbumHint}>
+                  These images are shown to customers in your restaurant map view. Please add a minumum of 3 images.
+                </Text>
+              </View>
+
+              <Pressable
+                onPress={onAddPreviewImage}
+                disabled={uploadingPreviewImage}
+                style={({ pressed }) => [
+                  styles.previewAddBtn,
+                  uploadingPreviewImage && styles.previewAddBtnDisabled,
+                  pressed && { opacity: 0.9 },
+                ]}
+              >
+                <Text style={styles.previewAddBtnText}>
+                  {uploadingPreviewImage ? "Uploading preview image..." : "Add Preview Image"}
+                </Text>
+              </Pressable>
+
+              {previewImages.length ? (
+                <View style={styles.previewGrid}>
+                  {previewImages.map((url, index) => (
+                    <View key={`${url}-${index}`} style={styles.previewTile}>
+                      <Image source={{ uri: url }} style={styles.previewThumb} resizeMode="cover" />
+                      <Pressable
+                        onPress={() => onRemovePreviewImage(index)}
+                        style={({ pressed }) => [styles.previewRemoveBtn, pressed && { opacity: 0.85 }]}
+                      >
+                        <Text style={styles.previewRemoveText}>Remove</Text>
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.previewEmptyText}>No preview images yet.</Text>
+              )}
+            </View>
 
             <View style={styles.card}>
             <Field
