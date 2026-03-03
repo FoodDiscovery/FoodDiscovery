@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import {
   Alert,
   View,
@@ -8,7 +8,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  Keyboard,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { Button, Input } from '@rneui/themed'
 import { router } from 'expo-router'
@@ -16,6 +18,7 @@ import * as ImagePicker from 'expo-image-picker'
 import { File } from 'expo-file-system/next'
 import { decode } from 'base64-arraybuffer'
 import { authStyles as styles } from '../../components/styles'
+import FoodDiscoveryLogo from '../../../assets/images/fooddiscovery-logo.png'
 import BusinessHoursEditor from '../../components/BusinessHoursEditor'
 import {
   WeeklyBusinessHours,
@@ -122,6 +125,11 @@ function BusinessInfoForm({
           value={businessInfo.name}
           placeholder="e.g., FoodDiscovery Cafe"
           autoCapitalize="words"
+          containerStyle={styles.inputContainer}
+          inputContainerStyle={styles.input}
+          inputStyle={{ color: '#111827', fontSize: 16 }}
+          labelStyle={styles.inputLabel}
+          placeholderTextColor="#9AA0A6"
         />
       </View>
 
@@ -132,6 +140,11 @@ function BusinessInfoForm({
           value={businessInfo.address}
           placeholder="e.g., 123 Main St, City, State"
           autoCapitalize="words"
+          containerStyle={styles.inputContainer}
+          inputContainerStyle={styles.input}
+          inputStyle={{ color: '#111827', fontSize: 16 }}
+          labelStyle={styles.inputLabel}
+          placeholderTextColor="#9AA0A6"
         />
       </View>
 
@@ -142,6 +155,11 @@ function BusinessInfoForm({
           value={businessInfo.phone}
           placeholder="e.g., (555) 123-4567"
           keyboardType="phone-pad"
+          containerStyle={styles.inputContainer}
+          inputContainerStyle={styles.input}
+          inputStyle={{ color: '#111827', fontSize: 16 }}
+          labelStyle={styles.inputLabel}
+          placeholderTextColor="#9AA0A6"
         />
       </View>
 
@@ -153,6 +171,11 @@ function BusinessInfoForm({
           placeholder="Tell customers about your business..."
           multiline
           numberOfLines={3}
+          containerStyle={styles.inputContainer}
+          inputContainerStyle={[styles.input, styles.multilineInput]}
+          inputStyle={{ color: '#111827', fontSize: 16 }}
+          labelStyle={styles.inputLabel}
+          placeholderTextColor="#9AA0A6"
         />
       </View>
 
@@ -163,6 +186,11 @@ function BusinessInfoForm({
           value={businessInfo.cuisineType}
           placeholder="e.g., Italian, Mexican, Thai"
           autoCapitalize="words"
+          containerStyle={styles.inputContainer}
+          inputContainerStyle={styles.input}
+          inputStyle={{ color: '#111827', fontSize: 16 }}
+          labelStyle={styles.inputLabel}
+          placeholderTextColor="#9AA0A6"
         />
       </View>
 
@@ -248,6 +276,32 @@ export default function SignUp() {
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [isUploadingPreviewImage, setIsUploadingPreviewImage] = useState(false)
   const [selectedRole, setSelectedRole] = useState<RoleType>('customer')
+  const scrollRef = useRef<ScrollView>(null)
+  const keyboardVisibleRef = useRef(false)
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide'
+    const showSub = Keyboard.addListener(showEvent, () => {
+      keyboardVisibleRef.current = true
+    })
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      keyboardVisibleRef.current = false
+    })
+    return () => {
+      showSub.remove()
+      hideSub.remove()
+    }
+  }, [])
+
+  const handleAuthFieldFocus = () => {
+    if (!keyboardVisibleRef.current) {
+      setTimeout(() => {
+        scrollRef.current?.scrollToEnd({ animated: true })
+      }, 300)
+    }
+  }
+
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo>({
     name: '',
     address: '',
@@ -594,84 +648,107 @@ export default function SignUp() {
 
   const isOwner = selectedRole === 'owner'
 
+  const inputProps = {
+    containerStyle: styles.inputContainer,
+    inputContainerStyle: styles.input,
+    inputStyle: { color: '#111827', fontSize: 16 },
+    labelStyle: styles.inputLabel,
+    placeholderTextColor: '#9AA0A6',
+  }
+
   return (
-    <KeyboardAvoidingView
-      style={styles.keyboardView}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
       >
-        <View style={[styles.container, styles.signUpContainer]}>
-          <Text style={styles.title}>Create Account</Text>
-
-          <RoleToggle selectedRole={selectedRole} onRoleChange={setSelectedRole} />
-
-          <View style={[styles.verticallySpaced, styles.mt20]}>
-            <Input
-              label="Email"
-              onChangeText={(text) => setEmail(text)}
-              value={email}
-              placeholder="email@address.com"
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
+        <ScrollView
+          ref={scrollRef}
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.logoContainer}>
+            <Image source={FoodDiscoveryLogo} style={styles.logo} resizeMode="contain" />
           </View>
+          <View style={[styles.formCard, styles.signUpContainer]}>
+            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.subtitle}>Join FoodDiscovery to explore local restaurants</Text>
 
-          <View style={styles.verticallySpaced}>
-            <Input
-              label="Password"
-              onChangeText={(text) => setPassword(text)}
-              value={password}
-              secureTextEntry={true}
-              placeholder="Password"
-              autoCapitalize="none"
-            />
-          </View>
+            <RoleToggle selectedRole={selectedRole} onRoleChange={setSelectedRole} />
 
-          {isOwner && (
-            <View style={styles.verticallySpaced}>
+            <View style={[styles.verticallySpaced, styles.mt20]}>
               <Input
-                label="Full Name *"
-                onChangeText={(text) => setOwnerFullName(text)}
-                value={ownerFullName}
-                placeholder="e.g., Jane Smith"
-                autoCapitalize="words"
+                label="Email"
+                onChangeText={(text) => setEmail(text)}
+                value={email}
+                onFocus={handleAuthFieldFocus}
+                placeholder="email@address.com"
+                autoCapitalize="none"
+                keyboardType="email-address"
+                {...inputProps}
               />
             </View>
-          )}
 
-          {isOwner && (
-            <BusinessInfoForm
-              businessInfo={businessInfo}
-              onUpdate={updateBusinessInfo}
-              onUpdateBusinessHours={updateBusinessHours}
-              onPickImage={pickImage}
-              onAddPreviewImage={addPreviewImage}
-              onRemovePreviewImage={removePreviewImage}
-              isUploadingImage={isUploadingImage}
-              isUploadingPreviewImage={isUploadingPreviewImage}
-            />
-          )}
+            <View style={styles.verticallySpaced}>
+              <Input
+                label="Password"
+                onChangeText={(text) => setPassword(text)}
+                value={password}
+                onFocus={handleAuthFieldFocus}
+                secureTextEntry
+                placeholder="Password"
+                autoCapitalize="none"
+                {...inputProps}
+              />
+            </View>
 
-          <View style={[styles.verticallySpaced, styles.mt20]}>
-            <Button
-              title={loading ? 'Creating Account...' : 'Sign up'}
-              disabled={loading || isUploadingImage || isUploadingPreviewImage}
-              onPress={signUpWithEmail}
-            />
+            {isOwner && (
+              <View style={styles.verticallySpaced}>
+                <Input
+                  label="Full Name *"
+                  onChangeText={(text) => setOwnerFullName(text)}
+                  value={ownerFullName}
+                  placeholder="e.g., Jane Smith"
+                  autoCapitalize="words"
+                  {...inputProps}
+                />
+              </View>
+            )}
+
+            {isOwner && (
+              <BusinessInfoForm
+                businessInfo={businessInfo}
+                onUpdate={updateBusinessInfo}
+                onUpdateBusinessHours={updateBusinessHours}
+                onPickImage={pickImage}
+                onAddPreviewImage={addPreviewImage}
+                onRemovePreviewImage={removePreviewImage}
+                isUploadingImage={isUploadingImage}
+                isUploadingPreviewImage={isUploadingPreviewImage}
+              />
+            )}
+
+            <View style={[styles.verticallySpaced, styles.mt20]}>
+              <Button
+                title={loading ? 'Creating Account...' : 'Sign up'}
+                disabled={loading || isUploadingImage || isUploadingPreviewImage}
+                onPress={signUpWithEmail}
+                buttonStyle={styles.button}
+                titleStyle={styles.buttonTitle}
+              />
+            </View>
           </View>
 
-          <View style={[styles.verticallySpaced, styles.mt20]}>
+          <View style={styles.linkWrap}>
             <TouchableOpacity onPress={() => router.push('/(auth)/sign-in')}>
               <Text style={styles.linkText}>Already have an account? Sign in</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   )
 }
 
