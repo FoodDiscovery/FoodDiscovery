@@ -1,5 +1,6 @@
 import { Tabs } from "expo-router";
 import FontAwesome from "@react-native-vector-icons/fontawesome";
+import CustomerProfileTabIcon from "../../components/CustomerProfileTabIcon";
 import HomeProvider from "../../Providers/HomeProvider";
 import OrderDetailCacheProvider from "../../Providers/OrderDetailCacheProvider";
 
@@ -45,7 +46,7 @@ export default function HomeLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => (
-            <FontAwesome name="user" color={color} size={size} />
+            <CustomerProfileTabIcon color={color} size={size} />
           ),
         }}
       />
