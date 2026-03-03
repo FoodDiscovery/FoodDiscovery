@@ -1,4 +1,3 @@
-import React from "react";
 import { Pressable, View, Text, GestureResponderEvent } from "react-native";
 import { ratingStyles as styles, ratingSizeStyles } from "../styles";
 
