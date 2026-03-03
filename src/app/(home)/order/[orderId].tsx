@@ -27,8 +27,7 @@ import {
   sharedStyles,
   NAVY,
 } from "../../../components/styles";
-
-const SALES_TAX_RATE = 0.0975;
+import { SALES_TAX_RATE } from "../../../lib/taxConstants";
 
 interface OrderItemRow {
   quantity: number;
