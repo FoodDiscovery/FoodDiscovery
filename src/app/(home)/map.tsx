@@ -141,6 +141,10 @@ export default function MapScreen() {
         style={styles.map}
         ref={mapRef}
         mapPadding={{ top: insets.top * 0.45, right: 8, bottom: 0, left: 0 }}
+        compassOffset={{
+          x: 0,
+          y: Math.max(24, insets.top * 0.45 + 20) + 8,
+        }}
         initialRegion={{
           latitude: location.latitude,
           longitude: location.longitude,
@@ -166,7 +170,7 @@ export default function MapScreen() {
 
       <TouchableOpacity
         testID="re-center"
-        style={[styles.recenterButton, { top: Math.max(24, insets.top * 0.45 + 14 + 44) }]}
+        style={[styles.recenterButton, { top: Math.max(24, insets.top * 0.45 + 25) }]}
         onPress={focusOnLocation}
         activeOpacity={0.8}
       >
