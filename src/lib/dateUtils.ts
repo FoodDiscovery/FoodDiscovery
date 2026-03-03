@@ -57,6 +57,23 @@ export function formatIsoToPstDisplay(isoString: string): string {
   });
 }
 
+/** Format ISO timestamp to MM/DD/YYYY, h:mm AM/PM in Pacific time. */
+export function formatIsoToPstDisplayWithTime(isoString: string): string {
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return isoString;
+  const timeString = date.toLocaleString("en-US", {
+    timeZone: PACIFIC_TZ,
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  return timeString.replace(",", "");
+}
+
 /** Convert order date (ISO or YYYY-MM-DD) to YYYY-MM-DD for filtering. Uses Pacific time for ISO timestamps. */
 export function toDateOnlyForFilter(input: string): string | null {
   if (!input) return null;

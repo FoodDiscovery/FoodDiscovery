@@ -11,7 +11,9 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons";
 
 import { supabase } from "../../../lib/supabase";
-import { formatIsoToPstDisplay } from "../../../lib/dateUtils";
+import {
+  formatIsoToPstDisplayWithTime,
+} from "../../../lib/dateUtils";
 import ownerOrderReceiptStyles, {
   OWNER_NAVY,
 } from "../../../components/styles/ownerOrderReceiptStyles";
@@ -19,6 +21,15 @@ import { SALES_TAX_RATE } from "../../../lib/taxConstants";
 
 const styles = ownerOrderReceiptStyles;
 import sharedStyles from "../../../components/styles/sharedStyles";
+
+function abbreviateName(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return fullName;
+  if (parts.length === 1) return parts[0];
+  const firstName = parts[0];
+  const lastInitial = parts[parts.length - 1].charAt(0).toUpperCase();
+  return `${firstName} ${lastInitial}.`;
+}
 
 interface OrderItemRow {
   quantity: number;
@@ -36,6 +47,7 @@ export default function OwnerOrderReceiptScreen() {
   const [lineItems, setLineItems] = useState<OrderItemRow[]>([]);
   const [orderNumber, setOrderNumber] = useState<number | null>(null);
   const [createdAt, setCreatedAt] = useState<string>("");
+  const [customerDisplayName, setCustomerDisplayName] = useState<string>("");
 
   useEffect(() => {
     if (!orderId) {
@@ -89,7 +101,7 @@ export default function OwnerOrderReceiptScreen() {
 
       const { data: order, error: orderErr } = await supabase
         .from("orders")
-        .select("restaurant_id, order_number, created_at")
+        .select("restaurant_id, order_number, created_at, customer_id, profiles(full_name)")
         .eq("id", orderId)
         .eq("restaurant_id", (restaurant as { id: string }).id)
         .eq("status", "completed")
@@ -107,7 +119,16 @@ export default function OwnerOrderReceiptScreen() {
         restaurant_id: string;
         order_number: number | null;
         created_at: string;
+        customer_id: string | null;
+        profiles: { full_name: string | null } | { full_name: string | null }[] | null;
       };
+
+      const profileData = Array.isArray(orderRow.profiles)
+        ? orderRow.profiles[0]
+        : orderRow.profiles;
+      const fullName = profileData?.full_name ?? null;
+      const displayName =
+        fullName?.trim() ? abbreviateName(fullName) : "Guest";
 
       const [restRes, locRes, itemsRes] = await Promise.all([
         supabase
@@ -154,6 +175,7 @@ export default function OwnerOrderReceiptScreen() {
       setLineItems(formattedItems);
       setOrderNumber(orderRow.order_number);
       setCreatedAt(orderRow.created_at);
+      setCustomerDisplayName(displayName);
       setError(null);
       setLoading(false);
     })();
@@ -227,7 +249,8 @@ export default function OwnerOrderReceiptScreen() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{restaurantName}</Text>
           <Text style={styles.cardMeta}>{receiptLabel}</Text>
-          <Text style={styles.cardMeta}>{formatIsoToPstDisplay(createdAt)}</Text>
+          <Text style={styles.cardMeta}>{formatIsoToPstDisplayWithTime(createdAt)}</Text>
+          <Text style={styles.cardMeta}>Customer: {customerDisplayName}</Text>
           {address ? (
             <Text style={styles.cardMetaAddress}>{address}</Text>
           ) : null}
