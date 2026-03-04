@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -296,6 +297,11 @@ export default function MenuEditScreen() {
     setItemModalVisible(true);
   };
 
+  const closeItemModal = () => {
+    Keyboard.dismiss();
+    setItemModalVisible(false);
+  };
+
   const handleSaveItem = async (data: ItemFormData) => {
     if (!data.name) {
       Alert.alert("Missing name", "Please enter an item name.");
@@ -333,7 +339,7 @@ export default function MenuEditScreen() {
     }
 
     setSavingItem(false);
-    setItemModalVisible(false);
+    closeItemModal();
     if (restaurantId) await loadMenu(restaurantId);
   };
 
@@ -537,7 +543,7 @@ export default function MenuEditScreen() {
         visible={itemModalVisible}
         item={editingItem}
         saving={savingItem}
-        onClose={() => setItemModalVisible(false)}
+        onClose={closeItemModal}
         onSave={handleSaveItem}
       />
 

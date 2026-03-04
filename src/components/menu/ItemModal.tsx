@@ -102,6 +102,9 @@ export default function ItemModal({
               placeholderTextColor="#9AA0A6"
               style={styles.input}
               autoFocus
+              autoCorrect
+              spellCheck
+              autoComplete="name"
             />
 
             <Text style={styles.fieldLabel}>Description</Text>
@@ -112,6 +115,8 @@ export default function ItemModal({
               placeholderTextColor="#9AA0A6"
               multiline
               style={[styles.input, { minHeight: 70 }]}
+              autoCorrect
+              spellCheck
             />
 
             <Text style={styles.fieldLabel}>Price ($)</Text>
@@ -138,6 +143,8 @@ export default function ItemModal({
               placeholder="e.g., vegan, gluten-free"
               placeholderTextColor="#9AA0A6"
               style={styles.input}
+              autoCorrect
+              spellCheck
             />
           </ScrollView>
         </View>
