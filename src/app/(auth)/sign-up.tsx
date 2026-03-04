@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Alert,
   View,
@@ -8,7 +8,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
-  Keyboard,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
@@ -276,32 +275,6 @@ export default function SignUp() {
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [isUploadingPreviewImage, setIsUploadingPreviewImage] = useState(false)
   const [selectedRole, setSelectedRole] = useState<RoleType>('customer')
-  const scrollRef = useRef<ScrollView>(null)
-  const keyboardVisibleRef = useRef(false)
-
-  useEffect(() => {
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide'
-    const showSub = Keyboard.addListener(showEvent, () => {
-      keyboardVisibleRef.current = true
-    })
-    const hideSub = Keyboard.addListener(hideEvent, () => {
-      keyboardVisibleRef.current = false
-    })
-    return () => {
-      showSub.remove()
-      hideSub.remove()
-    }
-  }, [])
-
-  const handleAuthFieldFocus = () => {
-    if (!keyboardVisibleRef.current) {
-      setTimeout(() => {
-        scrollRef.current?.scrollToEnd({ animated: true })
-      }, 300)
-    }
-  }
-
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo>({
     name: '',
     address: '',
@@ -660,11 +633,9 @@ export default function SignUp() {
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
-          ref={scrollRef}
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
@@ -683,7 +654,6 @@ export default function SignUp() {
                 label="Email"
                 onChangeText={(text) => setEmail(text)}
                 value={email}
-                onFocus={handleAuthFieldFocus}
                 placeholder="email@address.com"
                 autoCapitalize="none"
                 keyboardType="email-address"
@@ -696,7 +666,6 @@ export default function SignUp() {
                 label="Password"
                 onChangeText={(text) => setPassword(text)}
                 value={password}
-                onFocus={handleAuthFieldFocus}
                 secureTextEntry
                 placeholder="Password"
                 autoCapitalize="none"
