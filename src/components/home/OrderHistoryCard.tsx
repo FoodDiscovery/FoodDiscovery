@@ -1,5 +1,6 @@
 import { Text, View } from "react-native";
 import { formatDateOnlyForDisplay, formatIsoToPstDisplay } from "../../lib/dateUtils";
+import { totalWithTax } from "../../lib/taxConstants";
 import { orderHistoryCardStyles as styles } from "../styles";
 
 export interface OrderHistoryItem {
@@ -75,7 +76,7 @@ export default function OrderHistoryCard({
         <Text style={styles.itemCount}>
           {order.itemCount != null ? `${order.itemCount} item${order.itemCount === 1 ? "" : "s"}` : "—"}
         </Text>
-        <Text style={styles.price}>${order.totalPrice.toFixed(2)}</Text>
+        <Text style={styles.price}>${totalWithTax(order.totalPrice).toFixed(2)}</Text>
       </View>
     </View>
   );

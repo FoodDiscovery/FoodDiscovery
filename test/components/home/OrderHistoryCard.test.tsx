@@ -1,5 +1,6 @@
 import { render } from "@testing-library/react-native";
 import OrderHistoryCard, { type OrderHistoryItem } from "../../../src/components/home/OrderHistoryCard";
+import { totalWithTax } from "../../../src/lib/taxConstants";
 
 describe("OrderHistoryCard", () => {
   it("renders order id, date, item count, and price", () => {
@@ -13,7 +14,7 @@ describe("OrderHistoryCard", () => {
     expect(getByText("Order ID: abc12345")).toBeTruthy();
     expect(getByText("02/23/2026")).toBeTruthy();
     expect(getByText("2 items")).toBeTruthy();
-    expect(getByText("$18.66")).toBeTruthy();
+    expect(getByText(`$${totalWithTax(18.66).toFixed(2)}`)).toBeTruthy();
   });
 
   it("shows orderNumber when present (from orders.order_number)", () => {
@@ -69,7 +70,7 @@ describe("OrderHistoryCard", () => {
     };
     const { getByText } = render(<OrderHistoryCard order={order} />);
     expect(getByText("—")).toBeTruthy();
-    expect(getByText("$25.00")).toBeTruthy();
+    expect(getByText(`$${totalWithTax(25).toFixed(2)}`)).toBeTruthy();
   });
 
   it("converts ISO date to MM/DD/YYYY", () => {

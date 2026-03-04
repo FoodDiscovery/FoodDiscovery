@@ -1,6 +1,7 @@
 import { render, waitFor } from "@testing-library/react-native";
 import OrderHistoryList from "../../../src/components/home/OrderHistoryList";
 import type { OrderHistoryItem } from "../../../src/components/home/OrderHistoryCard";
+import { totalWithTax } from "../../../src/lib/taxConstants";
 
 const mockUseAuth = jest.fn();
 const mockFetchOrderList = jest.fn();
@@ -110,7 +111,7 @@ describe("OrderHistoryList", () => {
     const { getByText } = render(<OrderHistoryList />);
 
     await waitFor(() => {
-      expect(getByText("$18.66")).toBeTruthy();
+      expect(getByText(`$${totalWithTax(18.66).toFixed(2)}`)).toBeTruthy();
     });
   });
 
@@ -138,8 +139,8 @@ describe("OrderHistoryList", () => {
     );
 
     await waitFor(() => {
-      expect(getByText("$12.00")).toBeTruthy();
+      expect(getByText(`$${totalWithTax(12).toFixed(2)}`)).toBeTruthy();
     });
-    expect(queryByText("$8.00")).toBeNull();
+    expect(queryByText(`$${totalWithTax(8).toFixed(2)}`)).toBeNull();
   });
 });
