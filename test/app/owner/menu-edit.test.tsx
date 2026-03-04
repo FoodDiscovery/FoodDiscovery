@@ -83,6 +83,11 @@ jest.mock("../../../src/components/menu/CategoryModal", () => {
             TouchableOpacity,
             { onPress: () => onSave("New Category") },
             React.createElement(Text, null, "save-category-valid")
+          ),
+          React.createElement(
+            TouchableOpacity,
+            { onPress: () => onSave("Starters") },
+            React.createElement(Text, null, "save-category-duplicate")
           )
         )
       : null;
@@ -143,6 +148,20 @@ jest.mock("../../../src/components/menu/ItemModal", () => {
                 }),
             },
             React.createElement(Text, null, "save-item-valid")
+          ),
+          React.createElement(
+            TouchableOpacity,
+            {
+              onPress: () =>
+                onSave({
+                  name: "Bruschetta",
+                  description: "",
+                  price: 9,
+                  is_available: true,
+                  dietary_tags: [],
+                }),
+            },
+            React.createElement(Text, null, "save-item-duplicate")
           )
         )
       : null;
@@ -498,6 +517,62 @@ describe("MenuEditScreen", () => {
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith("Invalid price", "Please enter a valid price.");
     });
+  });
+
+  it("alerts and does not insert when adding duplicate category name", async () => {
+    const insertCategory = jest.fn().mockResolvedValue({ error: null });
+    mockGetUser.mockResolvedValue({ data: { user: { id: "owner-dup-cat" } }, error: null });
+    mockFrom
+      .mockReturnValueOnce(selectSingle({ data: { role: "owner" }, error: null }))
+      .mockReturnValueOnce(selectMaybeSingle({ data: { id: "rest-1" }, error: null }))
+      .mockReturnValueOnce(selectEqOrder({ data: categories, error: null }))
+      .mockReturnValueOnce(selectIn({ data: items, error: null }))
+      .mockReturnValueOnce({ insert: insertCategory });
+
+    const screen = render(<MenuEditScreen />);
+
+    await waitFor(() => {
+      expect(screen.getByText("+ Add Category")).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByText("+ Add Category"));
+    fireEvent.press(screen.getByText("save-category-duplicate"));
+
+    await waitFor(() => {
+      expect(Alert.alert).toHaveBeenCalledWith(
+        "Duplicate category",
+        "A category with this name already exists. Please use a different name."
+      );
+    });
+    expect(insertCategory).not.toHaveBeenCalled();
+  });
+
+  it("alerts and does not insert when adding duplicate item name in category", async () => {
+    const insertItem = jest.fn().mockResolvedValue({ error: null });
+    mockGetUser.mockResolvedValue({ data: { user: { id: "owner-dup-item" } }, error: null });
+    mockFrom
+      .mockReturnValueOnce(selectSingle({ data: { role: "owner" }, error: null }))
+      .mockReturnValueOnce(selectMaybeSingle({ data: { id: "rest-1" }, error: null }))
+      .mockReturnValueOnce(selectEqOrder({ data: categories, error: null }))
+      .mockReturnValueOnce(selectIn({ data: items, error: null }))
+      .mockReturnValueOnce({ insert: insertItem });
+
+    const screen = render(<MenuEditScreen />);
+
+    await waitFor(() => {
+      expect(screen.getByText("add-item-first-category")).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByText("add-item-first-category"));
+    fireEvent.press(screen.getByText("save-item-duplicate"));
+
+    await waitFor(() => {
+      expect(Alert.alert).toHaveBeenCalledWith(
+        "Duplicate item",
+        "An item with this name already exists in this category. Please use a different name."
+      );
+    });
+    expect(insertItem).not.toHaveBeenCalled();
   });
 
   it("handles profile, restaurant, category, and item loading errors", async () => {

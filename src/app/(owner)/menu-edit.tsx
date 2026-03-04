@@ -176,6 +176,20 @@ export default function MenuEditScreen() {
     }
     if (!restaurantId) return;
 
+    const nameLower = name.trim().toLowerCase();
+    const isDuplicate = categories.some(
+      (c) =>
+        c.name.trim().toLowerCase() === nameLower &&
+        (editingCategory ? c.id !== editingCategory.id : true)
+    );
+    if (isDuplicate) {
+      Alert.alert(
+        "Duplicate category",
+        "A category with this name already exists. Please use a different name."
+      );
+      return;
+    }
+
     setSavingCategory(true);
 
     if (editingCategory) {
@@ -312,6 +326,21 @@ export default function MenuEditScreen() {
       return;
     }
     if (!targetCategoryId) return;
+
+    const nameLower = data.name.trim().toLowerCase();
+    const isDuplicate = items.some(
+      (i) =>
+        i.category_id === targetCategoryId &&
+        i.name.trim().toLowerCase() === nameLower &&
+        (editingItem ? i.id !== editingItem.id : true)
+    );
+    if (isDuplicate) {
+      Alert.alert(
+        "Duplicate item",
+        "An item with this name already exists in this category. Please use a different name."
+      );
+      return;
+    }
 
     setSavingItem(true);
 
