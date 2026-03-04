@@ -373,12 +373,14 @@ export default function HomeScreen() {
         style={[
           styles.header,
           {
-            paddingTop: Math.max(10, insets.top * 0.45),
+            paddingTop: Math.max(4, insets.top * 0.18),
           },
         ]}
       >
         <View style={styles.logoRow}>
-          <Image source={FoodDiscoveryLogo} style={styles.logo} resizeMode="contain" />
+          <View style={styles.logoFrame}>
+            <Image source={FoodDiscoveryLogo} style={styles.logo} resizeMode="contain" />
+          </View>
           <Text style={styles.subtitle}>{headerSubtitle}</Text>
         </View>
 

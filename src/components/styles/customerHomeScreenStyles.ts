@@ -26,11 +26,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
-    gap: 6,
+    gap: 4,
+    marginTop: -2,
+  },
+  logoFrame: {
+    width: "100%",
+    height: 74,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
   },
   logo: {
-    width: 260,
-    height: 90,
+    width: "100%",
+    height: "100%",
+    transform: [{ scale: 2.35 }, { translateY: -3 }],
   },
   subtitle: {
     color: "#6B7280",
