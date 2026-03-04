@@ -84,76 +84,36 @@ describe("OrderHistoryCard", () => {
     expect(getByText("03/10/2026")).toBeTruthy();
   });
 
-  it("displays status confirmed", () => {
-    const order: OrderHistoryItem = {
-      id: "ord-a",
-      date: "02/23/2026",
-      itemCount: 1,
-      totalPrice: 6.0,
-      status: "confirmed",
-    };
-    const { getByText } = render(<OrderHistoryCard order={order} />);
-    expect(getByText("confirmed")).toBeTruthy();
-  });
+  describe("status display", () => {
+    it.each([
+      { status: "confirmed", expectedDisplay: "confirmed" },
+      { status: "ready", expectedDisplay: "ready" },
+      { status: "completed", expectedDisplay: "completed" },
+      { status: "unknown_status", expectedDisplay: "unknown_status" },
+      { status: "CONFIRMED", expectedDisplay: "confirmed" },
+    ])("displays status '$status' as '$expectedDisplay'", ({ status, expectedDisplay }) => {
+      const order: OrderHistoryItem = {
+        id: "ord-test",
+        date: "02/23/2026",
+        itemCount: 1,
+        totalPrice: 6.0,
+        status,
+      };
+      const { getByText } = render(<OrderHistoryCard order={order} />);
+      expect(getByText(expectedDisplay)).toBeTruthy();
+    });
 
-  it("displays status ready", () => {
-    const order: OrderHistoryItem = {
-      id: "ord-b",
-      date: "02/23/2026",
-      itemCount: 1,
-      totalPrice: 6.0,
-      status: "ready",
-    };
-    const { getByText } = render(<OrderHistoryCard order={order} />);
-    expect(getByText("ready")).toBeTruthy();
-  });
-
-  it("displays status completed", () => {
-    const order: OrderHistoryItem = {
-      id: "ord-c",
-      date: "02/23/2026",
-      itemCount: 1,
-      totalPrice: 6.0,
-      status: "completed",
-    };
-    const { getByText } = render(<OrderHistoryCard order={order} />);
-    expect(getByText("completed")).toBeTruthy();
-  });
-
-  it("displays unknown status with default style", () => {
-    const order: OrderHistoryItem = {
-      id: "ord-d",
-      date: "02/23/2026",
-      itemCount: 1,
-      totalPrice: 6.0,
-      status: "unknown_status",
-    };
-    const { getByText } = render(<OrderHistoryCard order={order} />);
-    expect(getByText("unknown_status")).toBeTruthy();
-  });
-
-  it("shows status in lowercase when provided in mixed case", () => {
-    const order: OrderHistoryItem = {
-      id: "ord-e",
-      date: "02/23/2026",
-      itemCount: 1,
-      totalPrice: 6.0,
-      status: "CONFIRMED",
-    };
-    const { getByText } = render(<OrderHistoryCard order={order} />);
-    expect(getByText("confirmed")).toBeTruthy();
-  });
-
-  it("does not show status text when status is undefined", () => {
-    const order: OrderHistoryItem = {
-      id: "ord-f",
-      date: "02/23/2026",
-      itemCount: 1,
-      totalPrice: 6.0,
-    };
-    const { queryByText } = render(<OrderHistoryCard order={order} />);
-    expect(queryByText("confirmed")).toBeNull();
-    expect(queryByText("ready")).toBeNull();
-    expect(queryByText("completed")).toBeNull();
+    it("does not show status text when status is undefined", () => {
+      const order: OrderHistoryItem = {
+        id: "ord-f",
+        date: "02/23/2026",
+        itemCount: 1,
+        totalPrice: 6.0,
+      };
+      const { queryByText } = render(<OrderHistoryCard order={order} />);
+      expect(queryByText("confirmed")).toBeNull();
+      expect(queryByText("ready")).toBeNull();
+      expect(queryByText("completed")).toBeNull();
+    });
   });
 });

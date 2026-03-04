@@ -1,8 +1,16 @@
-import { render, waitFor } from "@testing-library/react-native";
+import { fireEvent, render, waitFor } from "@testing-library/react-native";
 import CustomerProfileScreen from "../../../src/app/(home)/profile";
+
+const mockUseAuth = jest.fn();
+const mockFrom = jest.fn();
+const mockSignOut = jest.fn();
 
 jest.mock("react-native-safe-area-context", () => ({
   SafeAreaView: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+jest.mock("../../../src/Providers/AuthProvider", () => ({
+  useAuth: () => mockUseAuth(),
 }));
 
 jest.mock("../../../src/components/CustomerProfileIcon", () => {
@@ -11,33 +19,60 @@ jest.mock("../../../src/components/CustomerProfileIcon", () => {
   return () => React.createElement(Text, null, "Mock CustomerProfileIcon");
 });
 
-jest.mock("../../../src/Providers/AuthProvider", () => ({
-  useAuth: () => ({
-    session: { user: { id: "user-1", email: "test@test.com" } },
-  }),
-}));
-
 jest.mock("../../../src/lib/supabase", () => ({
   supabase: {
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          single: () => Promise.resolve({ data: { full_name: "Jane" }, error: null }),
-        }),
-      }),
-    }),
-    auth: { signOut: jest.fn().mockResolvedValue({ error: null }) },
+    from: (...args: unknown[]) => mockFrom(...args),
+    auth: {
+      signOut: (...args: unknown[]) => mockSignOut(...args),
+    },
   },
 }));
 
 describe("CustomerProfileScreen", () => {
-  it("renders the profile screen title", async () => {
-    const { getByText } = render(<CustomerProfileScreen />);
-    expect(getByText("Mock CustomerProfileIcon")).toBeTruthy();
-    expect(getByText("Tap the icon to change your profile photo")).toBeTruthy();
-    expect(getByText("Settings / Profile")).toBeTruthy();
-    await waitFor(() => {
-      expect(getByText("Jane")).toBeTruthy();
+  beforeEach(() => {
+    mockUseAuth.mockReset();
+    mockFrom.mockReset();
+    mockSignOut.mockReset();
+    mockSignOut.mockResolvedValue({ error: null });
+  });
+
+  it("renders signed-in profile details and signs out", async () => {
+    mockUseAuth.mockReturnValue({
+      session: { user: { id: "user-1", email: "test@test.com" } },
     });
+
+    mockFrom.mockReturnValueOnce({
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({ data: { full_name: "Jane" }, error: null }),
+        }),
+      }),
+    });
+
+    const screen = render(<CustomerProfileScreen />);
+
+    expect(screen.getByText("Mock CustomerProfileIcon")).toBeTruthy();
+    expect(screen.getByText("Tap the icon to change your profile photo")).toBeTruthy();
+    expect(screen.getByText("Settings / Profile")).toBeTruthy();
+
+    await waitFor(() => {
+      expect(screen.getByText("Jane")).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByText("Sign Out"));
+    await waitFor(() => {
+      expect(mockSignOut).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("does not render avatar section when not signed in", () => {
+    mockUseAuth.mockReturnValue({ session: null });
+
+    const screen = render(<CustomerProfileScreen />);
+
+    expect(screen.queryByText("Mock CustomerProfileIcon")).toBeNull();
+    expect(screen.queryByText("Tap the icon to change your profile photo")).toBeNull();
+    expect(screen.getByText("Settings / Profile")).toBeTruthy();
+    expect(screen.getByText("Signed in")).toBeTruthy();
   });
 });

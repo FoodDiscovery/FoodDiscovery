@@ -145,19 +145,13 @@ describe("RestaurantMenuScreen", () => {
     await waitForMenuLoadToFinish(queryByText);
   });
 
-  it("renders restaurant name and cuisine after loading", async () => {
+  it("renders restaurant details and empty menu message when no categories exist", async () => {
     const { getByText, queryByText } = render(<RestaurantMenuScreen />);
 
     await waitForMenuLoadToFinish(queryByText);
     expect(getByText("Italian")).toBeTruthy();
     expect(getByText("Great pizza")).toBeTruthy();
     expect(getByText("Pizza Palace")).toBeTruthy();
-  });
-
-  it("shows empty menu message when no categories exist", async () => {
-    const { getByText, queryByText } = render(<RestaurantMenuScreen />);
-
-    await waitForMenuLoadToFinish(queryByText);
     expect(getByText("No menu yet")).toBeTruthy();
   });
 

@@ -92,7 +92,7 @@ describe("MapScreen", () => {
     expect(getByText("Searching for location...")).toBeTruthy();
   });
 
-  it("shows error message when location has an error", () => {
+  it("handles unavailable location states and retry behavior", () => {
     mockUseLocation.mockReturnValue({
       location: null,
       errorMsg: "Permission denied",
@@ -100,21 +100,23 @@ describe("MapScreen", () => {
       refreshLocation: jest.fn(),
     });
 
-    const { getByText } = render(<MapScreen />);
+    const { getByText, rerender } = render(<MapScreen />);
     expect(getByText("Permission denied")).toBeTruthy();
-  });
+    fireEvent.press(getByText("Try Again"));
 
-  it("shows fallback text when location is null without error", () => {
+    const refreshLocation = jest.fn();
     mockUseLocation.mockReturnValue({
       location: null,
       errorMsg: null,
       isLoading: false,
-      refreshLocation: jest.fn(),
+      refreshLocation,
     });
+    rerender(<MapScreen />);
 
-    const { getByText } = render(<MapScreen />);
     expect(getByText("Location unavailable")).toBeTruthy();
     expect(getByText("Try Again")).toBeTruthy();
+    fireEvent.press(getByText("Try Again"));
+    expect(refreshLocation).toHaveBeenCalled();
   });
 
   it("renders the map and re-center button when location is available", async () => {
@@ -143,20 +145,5 @@ describe("MapScreen", () => {
     await waitFor(() => {
       expect(getByTestId("marker-Sushi Bay")).toBeTruthy();
     });
-  });
-
-  it("calls refreshLocation when Try Again is pressed", () => {
-    const refreshLocation = jest.fn();
-    mockUseLocation.mockReturnValue({
-      location: null,
-      errorMsg: "Error",
-      isLoading: false,
-      refreshLocation,
-    });
-
-    const { getByText } = render(<MapScreen />);
-    fireEvent.press(getByText("Try Again"));
-
-    expect(refreshLocation).toHaveBeenCalled();
   });
 });

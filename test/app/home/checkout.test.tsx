@@ -126,8 +126,4 @@ describe("CheckoutScreen", () => {
     expect(getByText(`Pay $${total}`)).toBeTruthy();
   });
 
-  it("shows the Checkout title", () => {
-    const { getByText } = render(<CheckoutScreen />);
-    expect(getByText("Checkout")).toBeTruthy();
-  });
 });

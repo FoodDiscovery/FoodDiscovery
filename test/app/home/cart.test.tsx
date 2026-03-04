@@ -83,26 +83,8 @@ describe("CartScreen", () => {
     expect(getByText("Pizza Palace")).toBeTruthy();
     expect(getByText("$12.99 each")).toBeTruthy();
     expect(getByText("Qty 2")).toBeTruthy();
-  });
-
-  it("shows summary with item count and subtotal", () => {
-    mockCartState.items = [
-      {
-        key: "r1:1",
-        name: "Burger",
-        restaurantName: "Grill House",
-        price: 9.5,
-        quantity: 3,
-        imageUrl: null,
-      },
-    ];
-    mockCartState.itemCount = 3;
-    mockCartState.subtotal = 28.5;
-
-    const { getByText } = render(<CartScreen />);
-
-    expect(getByText("3")).toBeTruthy();
-    expect(getByText("$28.50")).toBeTruthy();
+    expect(getByText("2")).toBeTruthy();
+    expect(getByText("$25.98")).toBeTruthy();
   });
 
   it("calls incrementItem when + is pressed", () => {

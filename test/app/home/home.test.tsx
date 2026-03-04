@@ -95,25 +95,7 @@ describe("HomeScreen", () => {
     expect(getByText("Sushi Spot")).toBeTruthy();
   });
 
-  it("shows empty state when no restaurants match search", async () => {
-    const { getByText, getByPlaceholderText } = render(<HomeScreen />);
-    await flushEffects();
-
-    await waitFor(() => {
-      expect(getByText("Pizza Palace")).toBeTruthy();
-    });
-
-    fireEvent.changeText(
-      getByPlaceholderText("Search by name or cuisine"),
-      "nonexistent"
-    );
-
-    await waitFor(() => {
-      expect(getByText("No results")).toBeTruthy();
-    });
-  });
-
-  it("filters restaurants by search query", async () => {
+  it("filters restaurants by search query and shows empty state when no results match", async () => {
     const { getByText, getByPlaceholderText, queryByText } = render(
       <HomeScreen />
     );
@@ -131,6 +113,15 @@ describe("HomeScreen", () => {
     await waitFor(() => {
       expect(getByText("Pizza Palace")).toBeTruthy();
       expect(queryByText("Sushi Spot")).toBeNull();
+    });
+
+    fireEvent.changeText(
+      getByPlaceholderText("Search by name or cuisine"),
+      "nonexistent"
+    );
+
+    await waitFor(() => {
+      expect(getByText("No results")).toBeTruthy();
     });
   });
 

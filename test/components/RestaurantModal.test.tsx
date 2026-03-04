@@ -1,15 +1,15 @@
 import { fireEvent, render } from "@testing-library/react-native";
 import RestaurantModal from "../../src/components/RestaurantModal";
 import { createDefaultBusinessHours } from "../../src/lib/businessHours";
+import * as ratings from "../../src/lib/ratings";
+import { useAuth } from "../../src/Providers/AuthProvider";
 
-jest.mock("../../src/lib/ratings", () => ({
-  fetchRestaurantRating: jest.fn().mockResolvedValue(null),
-  getSavedUserRestaurantRating: jest.fn().mockResolvedValue(null),
-}));
+jest.mock("../../src/lib/ratings");
+jest.mock("../../src/Providers/AuthProvider");
 
-jest.mock("../../src/Providers/AuthProvider", () => ({
-  useAuth: () => ({ session: null }),
-}));
+const mockFetchRestaurantRating = jest.mocked(ratings.fetchRestaurantRating);
+const mockGetSavedUserRestaurantRating = jest.mocked(ratings.getSavedUserRestaurantRating);
+const mockUseAuth = jest.mocked(useAuth);
 
 const baseRestaurant = {
   id: "r1",
@@ -21,6 +21,12 @@ const baseRestaurant = {
   phone: "(408)-123-1234",
   preview_images: null,
 };
+
+beforeEach(() => {
+  mockFetchRestaurantRating.mockResolvedValue(null);
+  mockGetSavedUserRestaurantRating.mockResolvedValue(null);
+  mockUseAuth.mockReturnValue({ session: null });
+});
 
 describe("RestaurantModal", () => {
   it("returns null when restaurant is null", () => {
@@ -87,23 +93,6 @@ describe("RestaurantModal", () => {
     expect(queryByText("Hours")).toBeNull();
   });
 
-  it("shows Hours section with status when business_hours is weekly", () => {
-    const hours = createDefaultBusinessHours();
-    const { getByText } = render(
-      <RestaurantModal
-        visible
-        restaurant={{
-          ...baseRestaurant,
-          business_hours: hours,
-        }}
-        onClose={jest.fn()}
-      />
-    );
-    expect(getByText("Hours")).toBeTruthy();
-    // Display text includes day line e.g. Monday: 9:00 AM - 5:00 PM
-    expect(getByText(/Monday:/)).toBeTruthy();
-  });
-
   it("calls onViewMenu with restaurant id when View Full Menu is pressed", () => {
     const onViewMenu = jest.fn();
     const { getByText } = render(
@@ -116,5 +105,163 @@ describe("RestaurantModal", () => {
     );
     fireEvent.press(getByText("View Full Menu"));
     expect(onViewMenu).toHaveBeenCalledWith("r1");
+  });
+
+  it("shows no preview images fallback when preview_images is empty", () => {
+    const { getByText } = render(
+      <RestaurantModal
+        visible
+        restaurant={{
+          ...baseRestaurant,
+          preview_images: [],
+        }}
+        onClose={jest.fn()}
+      />
+    );
+    expect(getByText("📷 No preview images")).toBeTruthy();
+  });
+
+  it("handles rating load error gracefully", async () => {
+    mockFetchRestaurantRating.mockRejectedValueOnce(new Error("Network error"));
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const { getByText } = render(
+      <RestaurantModal
+        visible
+        restaurant={baseRestaurant}
+        onClose={jest.fn()}
+      />
+    );
+    expect(getByText("Test Restaurant")).toBeTruthy();
+    await Promise.resolve();
+    consoleSpy.mockRestore();
+  });
+
+  it("displays user saved rating when logged in", async () => {
+    mockUseAuth.mockReturnValue({
+      session: { user: { id: "u1" } },
+    } as ReturnType<typeof useAuth>);
+    mockFetchRestaurantRating.mockResolvedValue({
+      restaurant_id: "r1",
+      average_rating: 4.2,
+      rating_count: 10,
+    });
+    mockGetSavedUserRestaurantRating.mockResolvedValue(4.5);
+    const { findByText } = render(
+      <RestaurantModal
+        visible
+        restaurant={baseRestaurant}
+        onClose={jest.fn()}
+      />
+    );
+    expect(await findByText(/Your rating: 4\.5/)).toBeTruthy();
+  });
+
+  it("displays rating summary when user is not logged in", async () => {
+    mockFetchRestaurantRating.mockResolvedValue({
+      restaurant_id: "r1",
+      average_rating: 4.2,
+      rating_count: 10,
+    });
+    const { findByText } = render(
+      <RestaurantModal
+        visible
+        restaurant={baseRestaurant}
+        onClose={jest.fn()}
+      />
+    );
+    expect(await findByText(/Ratings: 4\.2 \(10\)/)).toBeTruthy();
+  });
+
+  describe("business hours rendering", () => {
+    it.each([
+      {
+        name: "weekly structured hours",
+        hours: createDefaultBusinessHours(),
+        expectedText: /Monday:/,
+      },
+      {
+        name: "Open 24 hours legacy string",
+        hours: "Open 24 hours",
+        expectedText: "Open 24 hours",
+      },
+      {
+        name: "Closed today legacy string",
+        hours: "Closed today",
+        expectedText: "Closed",
+      },
+      {
+        name: "object with text property",
+        hours: { text: "Open 24 hours" },
+        expectedText: "Open 24 hours",
+      },
+      {
+        name: "object with empty text",
+        hours: { text: "" },
+        expectedText: "Hours not available",
+      },
+    ])("shows Hours section with $name", ({ hours, expectedText }) => {
+      const { getByText, getAllByText } = render(
+        <RestaurantModal
+          visible
+          restaurant={{
+            ...baseRestaurant,
+            business_hours: hours,
+          }}
+          onClose={jest.fn()}
+        />
+      );
+      expect(getByText("Hours")).toBeTruthy();
+      if (expectedText instanceof RegExp) {
+        expect(getByText(expectedText)).toBeTruthy();
+      } else {
+        expect(getAllByText(expectedText).length).toBeGreaterThanOrEqual(1);
+      }
+    });
+
+    it.each([
+      {
+        name: "open now during business hours",
+        hours: "Monday: 9:00 AM - 5:00 PM",
+        mockTime: new Date(2025, 0, 6, 10, 0, 0), // Monday 10:00 AM
+        expectedStatus: "Open now",
+      },
+      {
+        name: "closed outside business hours",
+        hours: "Monday: 9:00 AM - 5:00 PM",
+        mockTime: new Date(2025, 0, 6, 20, 0, 0), // Monday 8:00 PM
+        expectedStatus: "Closed",
+      },
+      {
+        name: "open now when hours span midnight",
+        hours: "Monday: 11:00 PM - 2:00 AM",
+        mockTime: new Date(2025, 0, 6, 23, 30, 0), // Monday 11:30 PM
+        expectedStatus: "Open now",
+      },
+      {
+        name: "hours vary when unparseable",
+        hours: "Call for hours",
+        mockTime: new Date(2025, 0, 6, 10, 0, 0),
+        expectedStatus: "Hours vary",
+      },
+    ])("shows correct status: $name", ({ hours, mockTime, expectedStatus }) => {
+      jest.useFakeTimers();
+      jest.setSystemTime(mockTime);
+
+      const { getByText } = render(
+        <RestaurantModal
+          visible
+          restaurant={{
+            ...baseRestaurant,
+            business_hours: hours,
+          }}
+          onClose={jest.fn()}
+        />
+      );
+
+      expect(getByText("Hours")).toBeTruthy();
+      expect(getByText(expectedStatus)).toBeTruthy();
+
+      jest.useRealTimers();
+    });
   });
 });

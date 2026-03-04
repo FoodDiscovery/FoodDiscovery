@@ -34,17 +34,17 @@ describe("OrderCard", () => {
 
   it("shows Ready for pickup button when status is confirmed", () => {
     const onMarkReady = jest.fn();
-    const { getByTestId } = render(
+    const { getByText } = render(
       <OrderCard {...baseOrder} onMarkReady={onMarkReady} />
     );
 
-    fireEvent.press(getByTestId("order-order-1-mark-ready"));
+    fireEvent.press(getByText("Ready for pickup"));
     expect(onMarkReady).toHaveBeenCalledTimes(1);
   });
 
   it("shows Completed button when status is ready", () => {
     const onMarkCompleted = jest.fn();
-    const { getByTestId } = render(
+    const { getByText } = render(
       <OrderCard
         {...baseOrder}
         status="ready"
@@ -52,29 +52,19 @@ describe("OrderCard", () => {
       />
     );
 
-    fireEvent.press(getByTestId("order-order-1-mark-completed"));
+    fireEvent.press(getByText("Completed"));
     expect(onMarkCompleted).toHaveBeenCalledTimes(1);
   });
 
-  it("abbreviates multi-part names to first name + last initial", () => {
+  it.each([
+    { input: "Mary Jane Watson", expected: "Mary W." },
+    { input: "Madonna", expected: "Madonna" },
+    { input: null, expected: "Guest" },
+  ])("formats customer name '$input' as '$expected'", ({ input, expected }) => {
     const { getByText } = render(
-      <OrderCard {...baseOrder} customerName="Mary Jane Watson" />
+      <OrderCard {...baseOrder} customerName={input} />
     );
-    expect(getByText("Mary W.")).toBeTruthy();
-  });
-
-  it("displays single name as-is", () => {
-    const { getByText } = render(
-      <OrderCard {...baseOrder} customerName="Madonna" />
-    );
-    expect(getByText("Madonna")).toBeTruthy();
-  });
-
-  it("displays Guest when customer name is null", () => {
-    const { getByText } = render(
-      <OrderCard {...baseOrder} customerName={null} />
-    );
-    expect(getByText("Guest")).toBeTruthy();
+    expect(getByText(expected)).toBeTruthy();
   });
 
   it("handles unknown item when menu_items is null", () => {
@@ -95,7 +85,7 @@ describe("OrderCard", () => {
 
   it("disables buttons when isUpdating", () => {
     const onMarkReady = jest.fn();
-    const { getByTestId } = render(
+    const { getByText } = render(
       <OrderCard
         {...baseOrder}
         onMarkReady={onMarkReady}
@@ -103,7 +93,7 @@ describe("OrderCard", () => {
       />
     );
 
-    const btn = getByTestId("order-order-1-mark-ready");
+    const btn = getByText("Ready for pickup");
     fireEvent.press(btn);
     expect(onMarkReady).not.toHaveBeenCalled();
   });
