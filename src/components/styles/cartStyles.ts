@@ -28,8 +28,7 @@ const styles = StyleSheet.create({
   },
   headerBackBtn: {
     position: "absolute",
-    right: 16,
-    left: undefined,
+    left: 16,
     top: 10,
     width: 44,
     height: 44,
