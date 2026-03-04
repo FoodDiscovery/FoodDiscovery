@@ -344,16 +344,6 @@ export default function RestaurantModal({
                                             }
                                         />
                                     </View>
-                                    <Text style={styles.comingSoonText}>Reviews coming soon...</Text>
-                                </View>
-
-                                {/* Menu section */}
-                                <View style={styles.section}>
-                                    <View style={styles.sectionHeader}>
-                                        <Text style={styles.sectionIcon}>📋</Text>
-                                        <Text style={styles.sectionTitle}>Menu</Text>
-                                    </View>
-                                    <Text style={styles.comingSoonText}>View full menu...</Text>
                                 </View>
 
                                 {/* Bottom padding for scroll */}
