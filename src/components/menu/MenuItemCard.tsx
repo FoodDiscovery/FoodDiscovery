@@ -1,4 +1,5 @@
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
+import CachedImage from "../CachedImage";
 import type { MenuItem } from "./types.d";
 import styles from "../styles/menuViewStyles";
 
@@ -18,7 +19,7 @@ export default function MenuItemCard({
   return (
     <View style={styles.itemRow}>
       {item.image_url ? (
-        <Image source={{ uri: item.image_url }} style={styles.itemThumb} />
+        <CachedImage uri={item.image_url} style={styles.itemThumb} />
       ) : (
         <View style={styles.itemThumbPlaceholder}>
           <Text style={styles.emojiIcon}>📷</Text>

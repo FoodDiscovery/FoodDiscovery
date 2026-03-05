@@ -1,4 +1,5 @@
-import { Image, Text, View } from "react-native";
+import { Text, View } from "react-native";
+import CachedImage from "../CachedImage";
 import { homeStyles as styles } from "../styles";
 
 interface RestaurantImageProps {
@@ -9,7 +10,7 @@ export default function RestaurantImage({ imageUrl }: RestaurantImageProps) {
   return (
     <View style={styles.imageContainer}>
       {imageUrl ? (
-        <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
+        <CachedImage uri={imageUrl} style={styles.image} />
       ) : (
         <View style={styles.imagePlaceholder}>
           {/* can replace with logo */}

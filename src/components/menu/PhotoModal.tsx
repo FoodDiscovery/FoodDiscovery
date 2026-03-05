@@ -1,4 +1,5 @@
-import { Modal, View, Text, Image, TouchableOpacity } from "react-native";
+import { Modal, View, Text, TouchableOpacity } from "react-native";
+import CachedImage from "../CachedImage";
 import { menuEditStyles as styles } from "../../components/styles";
 import type { MenuItem } from "./types";
 
@@ -32,8 +33,8 @@ export default function PhotoModal({
           </Text>
 
           {item?.image_url ? (
-            <Image
-              source={{ uri: item.image_url }}
+            <CachedImage
+              uri={item.image_url}
               style={styles.photoPreview}
             />
           ) : (

@@ -5,9 +5,9 @@ import {
     Text,
     TouchableOpacity,
     ScrollView,
-    Image,
     ActivityIndicator
 } from "react-native";
+import CachedImage from "./CachedImage";
 import { restaurantModalStyles as styles } from "./styles";
 import {
     WeeklyBusinessHours,
@@ -231,10 +231,9 @@ export default function RestaurantModal({
                                 {restaurant.preview_images && restaurant.preview_images.length > 0 ? (
                                     restaurant.preview_images.map((imageUrl, index) => (
                                         <View key={index} style={styles.imageWrapper}>
-                                            <Image
-                                                source={{ uri: imageUrl }}
+                                            <CachedImage
+                                                uri={imageUrl}
                                                 style={styles.menuImage}
-                                                resizeMode="cover"
                                             />
                                         </View>
                                     ))

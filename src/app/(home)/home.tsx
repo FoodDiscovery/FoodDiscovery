@@ -18,6 +18,7 @@ import { supabase } from "../../lib/supabase";
 import { useLocation } from "../../Providers/LocationProvider";
 import { useCart } from "../../Providers/CartProvider";
 import { useAuth } from "../../Providers/AuthProvider";
+import CachedImage from "../../components/CachedImage";
 import Rating from "../../components/reviews/ratings";
 import {
   fetchAllRestaurantRatings,
@@ -284,7 +285,7 @@ export default function HomeScreen() {
         </View>
       );
     }
-    return <Image source={{ uri }} style={styles.cardImage} resizeMode="cover" />;
+    return <CachedImage uri={uri} style={styles.cardImage} />;
   };
 
   // ✅ Fix: remove `any` by typing render item

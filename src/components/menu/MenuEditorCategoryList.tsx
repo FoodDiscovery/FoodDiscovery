@@ -1,4 +1,5 @@
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
+import CachedImage from "../CachedImage";
 import { menuEditStyles as styles } from "../../components/styles";
 import { sharedStyles } from "../styles";
 import type { MenuCategory, MenuItem } from "./types";
@@ -68,7 +69,7 @@ export default function MenuEditorCategoryList({
               <View key={item.id} style={styles.itemRow}>
                 <TouchableOpacity onPress={() => onOpenPhoto(item)}>
                   {item.image_url ? (
-                    <Image source={{ uri: item.image_url }} style={styles.itemThumb} />
+                    <CachedImage uri={item.image_url} style={styles.itemThumb} />
                   ) : (
                     <View style={styles.itemThumbPlaceholder}>
                       <Text style={sharedStyles.emojiIcon}>📷</Text>

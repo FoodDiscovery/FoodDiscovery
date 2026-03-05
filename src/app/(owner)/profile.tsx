@@ -9,9 +9,9 @@ import {
   Text,
   TextInput,
   View,
-  Image,
   TouchableOpacity,
 } from "react-native";
+import CachedImage from "../../components/CachedImage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { supabase } from "../../lib/supabase";
@@ -469,10 +469,9 @@ export default function OwnerProfileScreen() {
               activeOpacity={0.9}
             >
               {imageUrl.trim() ? (
-                <Image
-                  source={{ uri: imageUrl.trim() }}
+                <CachedImage
+                  uri={imageUrl.trim()}
                   style={styles.logoImg}
-                  resizeMode="cover"
                 />
               ) : (
                 <View style={styles.logoPlaceholder}>
@@ -513,7 +512,7 @@ export default function OwnerProfileScreen() {
                 <View style={styles.previewGrid}>
                   {previewImages.map((url, index) => (
                     <View key={`${url}-${index}`} style={styles.previewTile}>
-                      <Image source={{ uri: url }} style={styles.previewThumb} resizeMode="cover" />
+                      <CachedImage uri={url} style={styles.previewThumb} />
                       <Pressable
                         onPress={() => onRemovePreviewImage(index)}
                         style={({ pressed }) => [styles.previewRemoveBtn, pressed && { opacity: 0.85 }]}

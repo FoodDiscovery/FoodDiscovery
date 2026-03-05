@@ -1,10 +1,10 @@
 import {
-  Image,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import CachedImage from "../../components/CachedImage";
 import { router } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCart } from "../../Providers/CartProvider";
@@ -77,7 +77,7 @@ export default function CartScreen() {
           <View key={item.key} style={styles.card}>
             <View style={styles.rowTop}>
               {item.imageUrl ? (
-                <Image source={{ uri: item.imageUrl }} style={styles.thumb} />
+                <CachedImage uri={item.imageUrl} style={styles.thumb} />
               ) : (
                 <View style={styles.thumbPlaceholder}>
                   <Text style={sharedStyles.emojiIcon}>📷</Text>

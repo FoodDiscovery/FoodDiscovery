@@ -2,11 +2,11 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import CachedImage from "./CachedImage";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode } from "base64-arraybuffer";
@@ -139,11 +139,10 @@ export default function CustomerProfileIcon({
           <ActivityIndicator size="small" />
         </View>
       ) : avatarUri ? (
-        <Image
-          testID="customer-profile-icon-image"
-          source={{ uri: avatarUri }}
+        <CachedImage
+          uri={avatarUri}
           style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}
-          resizeMode="cover"
+          testID="customer-profile-icon-image"
         />
       ) : (
         <View

@@ -1,5 +1,6 @@
 import { useCallback } from "react";
-import { Image, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
+import CachedImage from "./CachedImage";
 import { router } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import FontAwesome from "@react-native-vector-icons/fontawesome";
@@ -34,11 +35,10 @@ export default function ProfileHeaderIcon() {
       accessibilityLabel="Go to profile"
     >
       {avatarUri ? (
-        <Image
-          testID="profile-header-icon-image"
-          source={{ uri: avatarUri }}
+        <CachedImage
+          uri={avatarUri}
           style={styles.avatarImage}
-          resizeMode="cover"
+          testID="profile-header-icon-image"
         />
       ) : (
         <View testID="profile-header-icon-placeholder" style={styles.placeholder}>

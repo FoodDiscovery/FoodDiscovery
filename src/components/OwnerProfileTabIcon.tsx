@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Image } from "react-native";
 import { getAvatarStyle } from "./styles";
 import FontAwesome from "@react-native-vector-icons/fontawesome";
 import { supabase } from "../lib/supabase";
+import CachedImage from "./CachedImage";
 
 interface OwnerProfileTabIconProps {
   color: string;
@@ -40,12 +40,7 @@ export default function OwnerProfileTabIcon({
   }, []);
 
   if (logoUrl)
-    return (
-      <Image
-        source={{ uri: logoUrl }}
-        style={getAvatarStyle(size)}
-      />
-    );
+    return <CachedImage uri={logoUrl} style={getAvatarStyle(size)} />;
 
   return <FontAwesome name="user" color={color} size={size} />;
 }

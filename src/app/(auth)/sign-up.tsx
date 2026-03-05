@@ -9,6 +9,7 @@ import {
   Platform,
   Image,
 } from 'react-native'
+import CachedImage from '../../components/CachedImage'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { supabase } from '../../lib/supabase'
 import { Button, Input } from '@rneui/themed'
@@ -205,8 +206,8 @@ function BusinessInfoForm({
         <Text style={styles.imageLabel}>Business Image *</Text>
         {businessInfo.imageUri ? (
           <View style={styles.imagePreviewContainer}>
-            <Image
-              source={{ uri: businessInfo.imageUri }}
+            <CachedImage
+              uri={businessInfo.imageUri}
               style={styles.imagePreview}
             />
             <TouchableOpacity
@@ -249,7 +250,7 @@ function BusinessInfoForm({
           <View style={styles.previewGrid}>
             {businessInfo.previewImageUris.map((uri, index) => (
               <View key={`${uri}-${index}`} style={styles.previewTile}>
-                <Image source={{ uri }} style={styles.previewThumb} />
+                <CachedImage uri={uri} style={styles.previewThumb} />
                 <TouchableOpacity
                   style={styles.previewRemoveButton}
                   onPress={() => onRemovePreviewImage(index)}
