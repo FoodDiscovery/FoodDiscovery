@@ -5,6 +5,21 @@ process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY =
 
 jest.mock("expo-sqlite/localStorage/install", () => ({}));
 
+jest.mock("@expo/vector-icons", () => {
+  const React = jest.requireActual("react") as typeof import("react");
+  const { Text } = jest.requireActual("react-native") as typeof import("react-native");
+
+  const MockIcon = ({ name }: { name?: string }) =>
+    React.createElement(Text, null, name ?? "icon");
+
+  return {
+    Ionicons: MockIcon,
+    MaterialIcons: MockIcon,
+    Feather: MockIcon,
+    FontAwesome: MockIcon,
+  };
+});
+
 jest.mock(
   "@react-native-async-storage/async-storage",
   () => jest.requireActual("@react-native-async-storage/async-storage/jest/async-storage-mock")
