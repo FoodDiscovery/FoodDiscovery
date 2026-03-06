@@ -4,7 +4,7 @@ A React Native / Expo app for discovering restaurants, browsing menus, placing o
 
 ## Prerequisites
 
-- **Node.js** 18+ (LTS recommended)
+- **Node.js** 20+ (required for `npm run coverage`; LTS recommended)
 - **npm** (comes with Node)
 - **Expo Go** on your phone (for device testing), or **Xcode** (macOS) / **Android Studio** for simulators
 
@@ -73,3 +73,4 @@ npm run lint:fix   # auto-fix
 - **Location:** The app uses location for maps and nearby restaurants; allow location when prompted.
 - **Backend:** Supabase and Stripe must be configured (project, tables, Stripe account) for full functionality.
 - **Native builds:** For `expo run:ios` or `expo run:android`, you need Xcode (macOS) or Android Studio installed.
+- **Node 20+:** Tests run on Node 19, but `npm run coverage` requires Node 20 or newer due to a dependency/tool requirement.
