@@ -7,6 +7,8 @@ import {
     ScrollView,
     ActivityIndicator
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import CachedImage from "./CachedImage";
 import { restaurantModalStyles as styles } from "./styles";
 import {
@@ -150,6 +152,7 @@ export default function RestaurantModal({
 }: RestaurantModalProps) {
     if (!restaurant) return null;
 
+    const insets = useSafeAreaInsets();
     const { session } = useAuth();
     const [ratingSummary, setRatingSummary] = useState<RestaurantRatingSummary | null>(null);
     const [savedUserRating, setSavedUserRating] = useState<number | null>(null);
@@ -193,6 +196,7 @@ export default function RestaurantModal({
     }, [restaurant.id, session?.user?.id]);
 
     const { isOpen, statusText, displayText } = getRestaurantHoursDisplay(restaurant.business_hours);
+    const previewImages = restaurant.preview_images?.filter(Boolean) ?? [];
 
     return (
         <Modal
@@ -228,8 +232,8 @@ export default function RestaurantModal({
                                 style={styles.imageScroll}
                                 contentContainerStyle={styles.imageScrollContent}
                             >
-                                {restaurant.preview_images && restaurant.preview_images.length > 0 ? (
-                                    restaurant.preview_images.map((imageUrl, index) => (
+                                {previewImages.length > 0 ? (
+                                    previewImages.map((imageUrl, index) => (
                                         <View key={index} style={styles.imageWrapper}>
                                             <CachedImage
                                                 uri={imageUrl}
@@ -252,7 +256,7 @@ export default function RestaurantModal({
                                 {/* Header Section */}
                                 <View style={styles.headerSection}>
                                     <View style={styles.nameRow}>
-                                        <Text style={styles.name}>{restaurant.name}</Text>
+                                        <Text style={styles.name}>{restaurant.name ?? "Unnamed restaurant"}</Text>
                                         {restaurant.business_hours && (
                                             <View style={[styles.statusBadge, isOpen ? styles.statusOpen : styles.statusClosed]}>
                                                 <View style={[styles.statusDot, isOpen ? styles.statusDotOpen : styles.statusDotClosed]} />
@@ -262,14 +266,22 @@ export default function RestaurantModal({
                                             </View>
                                         )}
                                     </View>
-                                    {distance && (
-                                        <View style={styles.distanceContainer}>
-                                            <Text style={styles.distanceIcon}>📍</Text>
-                                            <Text style={styles.distance}>
-                                                {distance.toFixed(1)} miles away
-                                            </Text>
-                                        </View>
-                                    )}
+                                    <View style={styles.metaRow}>
+                                        {distance != null && (
+                                            <View style={styles.metaChip}>
+                                                <Ionicons name="location-outline" size={14} color="#0B2D5B" />
+                                                <Text style={styles.metaChipText}>
+                                                    {distance.toFixed(1)} mi away
+                                                </Text>
+                                            </View>
+                                        )}
+                                        {restaurant.cuisine_type && (
+                                            <View style={styles.metaChip}>
+                                                <Ionicons name="restaurant-outline" size={14} color="#0B2D5B" />
+                                                <Text style={styles.metaChipText}>{restaurant.cuisine_type}</Text>
+                                            </View>
+                                        )}
+                                    </View>
                                 </View>
 
                                 {/* Divider */}
@@ -278,54 +290,40 @@ export default function RestaurantModal({
                                 {restaurant.description && (
                                     <View style={styles.section}>
                                         <View style={styles.sectionHeader}>
-                                            <Text style={styles.sectionIcon}>ℹ️</Text>
+                                            <Ionicons name="information-circle-outline" size={18} color="#0B2D5B" />
                                             <Text style={styles.sectionTitle}>About</Text>
                                         </View>
-                                        <Text style={styles.sectionText}>{restaurant.description}</Text>
-                                    </View>
-                                )}
-
-                                {restaurant.cuisine_type && (
-                                    <View style={styles.section}>
-                                        <View style={styles.sectionHeader}>
-                                            <Text style={styles.sectionIcon}>🍽️</Text>
-                                            <Text style={styles.sectionTitle}>Cuisine</Text>
-                                        </View>
-                                        <View style={styles.tagContainer}>
-                                            <View style={styles.tag}>
-                                                <Text style={styles.tagText}>{restaurant.cuisine_type}</Text>
-                                            </View>
-                                        </View>
+                                        <Text style={styles.sectionBodyText}>{restaurant.description}</Text>
                                     </View>
                                 )}
 
                                 {restaurant.business_hours && (
                                     <View style={styles.section}>
                                         <View style={styles.sectionHeader}>
-                                            <Text style={styles.sectionIcon}>🕐</Text>
+                                            <Ionicons name="time-outline" size={18} color="#0B2D5B" />
                                             <Text style={styles.sectionTitle}>Hours</Text>
                                         </View>
-                                        <Text style={styles.sectionText}>{displayText}</Text>
+                                        <Text style={styles.sectionBodyText}>{displayText}</Text>
                                     </View>
                                 )}
 
                                 {restaurant.phone && (
                                     <View style={styles.section}>
                                         <View style={styles.sectionHeader}>
-                                            <Text style={styles.sectionIcon}>📞</Text>
+                                            <Ionicons name="call-outline" size={18} color="#0B2D5B" />
                                             <Text style={styles.sectionTitle}>Phone</Text>
                                         </View>
-                                        <Text style={styles.sectionText}>{restaurant.phone}</Text>
+                                        <Text style={styles.sectionBodyText}>{restaurant.phone}</Text>
                                     </View>
                                 )}
 
                                 {/* Reviews section */}
                                 <View style={styles.section}>
                                     <View style={styles.sectionHeader}>
-                                        <Text style={styles.sectionIcon}>⭐</Text>
+                                        <Ionicons name="star-outline" size={18} color="#0B2D5B" />
                                         <Text style={styles.sectionTitle}>Reviews</Text>
                                     </View>
-                                    <View style={styles.ratingRow}>
+                                    <View style={styles.sectionBody}>
                                         <Rating
                                             value={savedUserRating ?? ratingSummary?.average_rating ?? 0}
                                             size="md"
@@ -350,12 +348,13 @@ export default function RestaurantModal({
                             </ScrollView>
 
                             {/* Close Button */}
-                            <View style={styles.buttonContainer}>
+                            <View style={[styles.buttonContainer, { paddingBottom: Math.max(16, insets.bottom + 8) }]}>
                                 <TouchableOpacity
                                     style={styles.menuButton}
                                     onPress={() => onViewMenu?.(restaurant.id)}
                                     activeOpacity={0.8}
                                 >
+                                    <Ionicons name="restaurant" size={16} color="#FFFFFF" />
                                     <Text style={styles.menuButtonText}>View Full Menu</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
@@ -363,6 +362,7 @@ export default function RestaurantModal({
                                     onPress={onClose}
                                     activeOpacity={0.8}
                                 >
+                                    <Ionicons name="close" size={16} color="#0B2D5B" />
                                     <Text style={styles.closeButtonText}>Close</Text>
                                 </TouchableOpacity>
                             </View>
