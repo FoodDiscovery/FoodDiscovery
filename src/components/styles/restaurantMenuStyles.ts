@@ -11,7 +11,7 @@ export default StyleSheet.create({
 
   topRow: {
     paddingHorizontal: 16,
-    paddingBottom: 10,
+    paddingBottom: 6,
     flexDirection: "row",
     alignItems: "center",
     position: "relative",
@@ -50,7 +50,18 @@ export default StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  topLogo: { width: 170, height: 44 },
+  topLogoFrame: {
+    width: "100%",
+    height: 74,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  topLogo: {
+    width: "100%",
+    height: "100%",
+    transform: [{ scale: 2.35 }, { translateY: -3 }],
+  },
 
   page: {
     paddingHorizontal: 16,
