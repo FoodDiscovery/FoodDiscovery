@@ -272,7 +272,9 @@ export default function RestaurantMenuScreen() {
       {/* Top row: centered logo and back button */}
       <View style={[styles.topRow, { paddingTop: Math.max(10, insets.top * 0.45) }]}>
         <View style={styles.topLogoWrap} pointerEvents="none">
-          <Image source={FoodDiscoveryLogo} style={styles.topLogo} resizeMode="contain" />
+          <View style={styles.topLogoFrame}>
+            <Image source={FoodDiscoveryLogo} style={styles.topLogo} resizeMode="contain" />
+          </View>
         </View>
         <TouchableOpacity
           onPress={() => router.back()}
