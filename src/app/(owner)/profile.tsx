@@ -52,6 +52,11 @@ interface FormState {
   previewImages: string[];
 }
 
+function withCacheBust(url: string) {
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}t=${Date.now()}`;
+}
+
 function Field({
   label,
   value,
@@ -132,7 +137,11 @@ async function uploadImageToSupabase(params: {
   }
 
   const { data } = supabase.storage.from("restaurant-images").getPublicUrl(path);
-  return data?.publicUrl ?? null;
+  if (!data?.publicUrl) {
+    return null;
+  }
+
+  return kind === "cover" ? withCacheBust(data.publicUrl) : data.publicUrl;
 }
 
 export default function OwnerProfileScreen() {

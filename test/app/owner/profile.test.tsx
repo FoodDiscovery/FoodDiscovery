@@ -33,6 +33,13 @@ jest.mock("react-native-safe-area-context", () => ({
   SafeAreaView: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+jest.mock("../../../src/components/CachedImage", () => {
+  const React = jest.requireActual("react") as typeof import("react");
+  const { Text } = jest.requireActual("react-native") as typeof import("react-native");
+  return ({ uri }: { uri?: string | null }) =>
+    uri ? React.createElement(Text, null, uri) : null;
+});
+
 jest.mock("expo-image-picker", () => ({
   MediaTypeOptions: { Images: "Images" },
   requestMediaLibraryPermissionsAsync: (...args: unknown[]) =>
@@ -289,6 +296,44 @@ describe("OwnerProfileScreen", () => {
 
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith("Error signing out", "failed signout");
+    });
+  });
+
+  it("cache-busts the cover image url after replacing the same file", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "owner-15" } }, error: null });
+    mockFrom
+      .mockReturnValueOnce(
+        selectSingle({ data: { role: "owner", full_name: "Owner 15" }, error: null })
+      )
+      .mockReturnValueOnce(
+        selectMaybeSingle({
+          data: {
+            id: "rest-15",
+            owner_id: "owner-15",
+            name: "Cache Cafe",
+            description: "",
+            cuisine_type: "",
+            image_url: "https://cdn.example.com/new-image.jpg",
+            business_hours: DEFAULT_HOURS,
+            phone: "",
+          },
+          error: null,
+        })
+      )
+      .mockReturnValueOnce(selectMaybeSingle({ data: null, error: null }));
+
+    const screen = render(<OwnerProfileScreen />);
+
+    await waitFor(() => {
+      expect(screen.getByText("https://cdn.example.com/new-image.jpg")).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByText("https://cdn.example.com/new-image.jpg"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/^https:\/\/cdn\.example\.com\/new-image\.jpg\?t=\d+$/)
+      ).toBeTruthy();
     });
   });
 
