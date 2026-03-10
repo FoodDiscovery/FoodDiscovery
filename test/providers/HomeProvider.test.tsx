@@ -279,6 +279,11 @@ describe("HomeProvider", () => {
 
     fireEvent.press(getByText("Toggle Sort"));
     await waitFor(() => {
+      expect(getByTestId("sort").props.children).toBe("rating");
+    });
+
+    fireEvent.press(getByText("Toggle Sort"));
+    await waitFor(() => {
       expect(getByTestId("sort").props.children).toBe("name");
     });
   });

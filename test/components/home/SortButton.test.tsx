@@ -31,4 +31,15 @@ describe("SortButton", () => {
     const { getByText } = render(<SortButton />);
     expect(getByText("Sort: Distance")).toBeTruthy();
   });
+
+  it("renders rating sort label", () => {
+    const mockUseHome = useHome as jest.Mock;
+    mockUseHome.mockReturnValue({
+      sortMode: "rating",
+      onPressSort: jest.fn(),
+    });
+
+    const { getByText } = render(<SortButton />);
+    expect(getByText("Sort: Rating")).toBeTruthy();
+  });
 });

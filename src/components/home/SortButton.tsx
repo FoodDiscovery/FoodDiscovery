@@ -11,7 +11,7 @@ export default function SortButton() {
       style={({ pressed }) => [styles.pill, pressed && styles.pressedOpacity80]}
     >
       <Text style={styles.pillText}>
-        Sort: {sortMode === "name" ? "Name" : "Distance"}
+        Sort: {sortMode === "name" ? "Name" : sortMode === "distance" ? "Distance" : "Rating"}
       </Text>
     </Pressable>
   );

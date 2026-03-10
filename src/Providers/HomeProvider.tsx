@@ -31,7 +31,7 @@ interface NearbyRestaurant {
   };
 }
 
-type SortMode = "name" | "distance";
+type SortMode = "name" | "distance" | "rating";
 
 interface HomeContextValue {
   loading: boolean;
@@ -245,18 +245,36 @@ export default function HomeProvider({ children }: { children: React.ReactNode }
     });
   }, [nearby, query, selectedCuisines]);
 
-  const activeList = sortMode === "distance" ? filteredNearby : filteredBase;
+  const filteredByRating = useMemo(() => {
+    const sorted = [...filteredBase].sort((a, b) => {
+      const ratingA = restaurantRatings.get(a.id)?.average_rating ?? 0;
+      const ratingB = restaurantRatings.get(b.id)?.average_rating ?? 0;
+      if (ratingB !== ratingA) return ratingB - ratingA;
+      const countA = restaurantRatings.get(a.id)?.rating_count ?? 0;
+      const countB = restaurantRatings.get(b.id)?.rating_count ?? 0;
+      return countB - countA;
+    });
+    return sorted;
+  }, [filteredBase, restaurantRatings]);
+
+  const activeList =
+    sortMode === "distance"
+      ? filteredNearby
+      : sortMode === "rating"
+        ? filteredByRating
+        : filteredBase;
 
   const headerSubtitle =
     sortMode === "distance"
       ? location
         ? "Distance (5km)"
         : "Enable location to sort by distance"
-      : "Search by name or cuisine";
+      : sortMode === "rating"
+        ? "Highest rated first"
+        : "Search by name or cuisine";
 
   const onPressSort = () => {
     if (sortMode === "name") {
-      // switch to distance
       if (isLoading) {
         Alert.alert("Location", "Getting your location… try again in a moment.");
         return;
@@ -269,6 +287,8 @@ export default function HomeProvider({ children }: { children: React.ReactNode }
         return;
       }
       setSortMode("distance");
+    } else if (sortMode === "distance") {
+      setSortMode("rating");
     } else {
       setSortMode("name");
     }
