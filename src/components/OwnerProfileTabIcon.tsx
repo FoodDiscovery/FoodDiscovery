@@ -1,8 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { getAvatarStyle } from "./styles";
 import FontAwesome from "@react-native-vector-icons/fontawesome";
 import { supabase } from "../lib/supabase";
 import CachedImage from "./CachedImage";
+import { useFocusEffect } from "@react-navigation/native";
+import {
+  getOwnerLogoUrl,
+  setOwnerLogoUrl,
+  subscribeOwnerLogoUrl,
+} from "../lib/ownerLogoStore";
 
 interface OwnerProfileTabIconProps {
   color: string;
@@ -13,31 +19,38 @@ export default function OwnerProfileTabIcon({
   color,
   size,
 }: OwnerProfileTabIconProps) {
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(() => getOwnerLogoUrl());
 
-  useEffect(() => {
-    let mounted = true;
-
-    async function loadLogo() {
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
-      if (!userId) return;
-
-      const { data } = await supabase
-        .from("restaurants")
-        .select("image_url")
-        .eq("owner_id", userId)
-        .maybeSingle();
-
-      if (!mounted) return;
-      setLogoUrl(data?.image_url ?? null);
+  const loadLogo = useCallback(async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) {
+      setOwnerLogoUrl(null);
+      return;
     }
 
-    loadLogo();
-    return () => {
-      mounted = false;
-    };
+    const { data } = await supabase
+      .from("restaurants")
+      .select("image_url")
+      .eq("owner_id", userId)
+      .maybeSingle();
+
+    setOwnerLogoUrl(data?.image_url ?? null);
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeOwnerLogoUrl(() => {
+      setLogoUrl(getOwnerLogoUrl());
+    });
+
+    return unsubscribe;
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadLogo();
+    }, [loadLogo])
+  );
 
   if (logoUrl)
     return <CachedImage uri={logoUrl} style={getAvatarStyle(size)} />;

@@ -16,6 +16,7 @@ const mockRequestMediaLibraryPermissionsAsync = jest.fn();
 const mockLaunchImageLibraryAsync = jest.fn();
 const mockFileBase64 = jest.fn();
 const mockValidateWeeklyBusinessHours = validateWeeklyBusinessHours as jest.Mock;
+const mockSetOwnerLogoUrl = jest.fn();
 
 jest.mock("expo-router", () => ({
   router: { push: jest.fn() },
@@ -105,6 +106,10 @@ jest.mock("../../../src/components/BusinessHoursEditor", () => {
 jest.mock("../../../src/lib/businessHours", () => ({
   createDefaultBusinessHours: () => ({}),
   validateWeeklyBusinessHours: jest.fn(),
+}));
+
+jest.mock("../../../src/lib/ownerLogoStore", () => ({
+  setOwnerLogoUrl: (...args: unknown[]) => mockSetOwnerLogoUrl(...args),
 }));
 
 jest.mock("@rneui/themed", () => {
@@ -331,6 +336,9 @@ describe("SignUp screen", () => {
     );
     expect(mockStorageUpload).toHaveBeenCalled();
     expect(mockRestaurantUpdateEq).toHaveBeenCalledWith("id", "rest-1");
+    expect(mockSetOwnerLogoUrl).toHaveBeenCalledWith(
+      expect.stringMatching(/^https:\/\/example\.com\/img\.jpg\?t=\d+$/)
+    );
     expect(mockLocationInsert).toHaveBeenCalled();
     expect(alertSpy).toHaveBeenCalledWith(
       "Verification Required",

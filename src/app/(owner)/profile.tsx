@@ -27,6 +27,12 @@ import {
   normalizeWeeklyBusinessHours,
   validateWeeklyBusinessHours,
 } from "../../lib/businessHours";
+import {
+  getOwnerLogoUrl,
+  setOwnerLogoUrl,
+  subscribeOwnerLogoUrl,
+} from "../../lib/ownerLogoStore";
+import { withCacheBust } from "../../lib/imageUrl";
 
 interface RestaurantRow {
   id: string;
@@ -50,11 +56,6 @@ interface FormState {
   phone: string;
   imageUrl: string;
   previewImages: string[];
-}
-
-function withCacheBust(url: string) {
-  const separator = url.includes("?") ? "&" : "?";
-  return `${url}${separator}t=${Date.now()}`;
 }
 
 function Field({
@@ -161,7 +162,7 @@ export default function OwnerProfileScreen() {
   const [description, setDescription] = useState("");
   const [businessHours, setBusinessHours] = useState<WeeklyBusinessHours>(createDefaultBusinessHours());
   const [phone, setPhone] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState(() => getOwnerLogoUrl() ?? "");
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [initialValues, setInitialValues] = useState<FormState | null>(null);
 
@@ -184,6 +185,16 @@ export default function OwnerProfileScreen() {
     if (!initialValues) return false;
     return JSON.stringify(currentValues) !== JSON.stringify(initialValues);
   }, [currentValues, initialValues]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeOwnerLogoUrl(() => {
+      const nextLogoUrl = getOwnerLogoUrl() ?? "";
+      setImageUrl(nextLogoUrl);
+      setInitialValues((prev) => (prev ? { ...prev, imageUrl: nextLogoUrl.trim() } : prev));
+    });
+
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     const loadLocation = async (rid: string) => {
@@ -286,7 +297,9 @@ export default function OwnerProfileScreen() {
       setDescription(row.description ?? "");
       setBusinessHours(loadedHours);
       setPhone(row.phone ?? "");
-      setImageUrl(row.image_url ?? "");
+      const syncedLogoUrl = getOwnerLogoUrl() ?? row.image_url ?? "";
+      setImageUrl(syncedLogoUrl);
+      setOwnerLogoUrl(syncedLogoUrl || null);
       setPreviewImages(
         Array.isArray(row.preview_images)
           ? row.preview_images.filter((url): url is string => typeof url === "string")
@@ -300,7 +313,7 @@ export default function OwnerProfileScreen() {
         description: (row.description ?? "").trim(),
         businessHours: loadedHours,
         phone: (row.phone ?? "").trim(),
-        imageUrl: (row.image_url ?? "").trim(),
+        imageUrl: syncedLogoUrl.trim(),
         previewImages: Array.isArray(row.preview_images)
           ? row.preview_images.map((url) => url.trim()).filter(Boolean)
           : [],
@@ -324,6 +337,7 @@ export default function OwnerProfileScreen() {
 
     if (publicUrl) {
       setImageUrl(publicUrl);
+      setOwnerLogoUrl(publicUrl);
     }
   };
 

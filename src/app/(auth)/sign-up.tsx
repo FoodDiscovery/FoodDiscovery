@@ -25,6 +25,8 @@ import {
   createDefaultBusinessHours,
   validateWeeklyBusinessHours,
 } from '../../lib/businessHours'
+import { setOwnerLogoUrl } from '../../lib/ownerLogoStore'
+import { withCacheBust } from '../../lib/imageUrl'
 
 type RoleType = 'customer' | 'owner'
 
@@ -414,7 +416,7 @@ export default function SignUp() {
       }
 
       const { data } = supabase.storage.from('restaurant-images').getPublicUrl(path)
-      return data?.publicUrl ?? null
+      return data?.publicUrl ? withCacheBust(data.publicUrl) : null
     } catch (err) {
       console.error('Image upload failed:', err)
       return null
@@ -507,6 +509,8 @@ export default function SignUp() {
 
       if (updateError) {
         console.error('Restaurant image update error:', updateError)
+      } else if (imageUrl) {
+        setOwnerLogoUrl(imageUrl)
       }
     }
 

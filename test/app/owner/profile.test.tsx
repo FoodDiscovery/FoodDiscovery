@@ -1,6 +1,7 @@
-import { fireEvent, render, waitFor } from "@testing-library/react-native";
+import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
 import { Alert } from "react-native";
 import OwnerProfileScreen from "../../../src/app/(owner)/profile";
+import { setOwnerLogoUrl } from "../../../src/lib/ownerLogoStore";
 
 const mockReplace = jest.fn();
 const mockFrom = jest.fn();
@@ -137,6 +138,7 @@ function insertSelectSingle(result: unknown) {
 
 describe("OwnerProfileScreen", () => {
   beforeEach(() => {
+    setOwnerLogoUrl(null);
     mockReplace.mockReset();
     mockFrom.mockReset();
     mockGetUser.mockReset();
@@ -334,6 +336,44 @@ describe("OwnerProfileScreen", () => {
       expect(
         screen.getByText(/^https:\/\/cdn\.example\.com\/new-image\.jpg\?t=\d+$/)
       ).toBeTruthy();
+    });
+  });
+
+  it("updates the owner profile image when the shared logo store changes", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "owner-16" } }, error: null });
+    mockFrom
+      .mockReturnValueOnce(
+        selectSingle({ data: { role: "owner", full_name: "Owner 16" }, error: null })
+      )
+      .mockReturnValueOnce(
+        selectMaybeSingle({
+          data: {
+            id: "rest-16",
+            owner_id: "owner-16",
+            name: "Store Cafe",
+            description: "",
+            cuisine_type: "",
+            image_url: "",
+            business_hours: DEFAULT_HOURS,
+            phone: "",
+          },
+          error: null,
+        })
+      )
+      .mockReturnValueOnce(selectMaybeSingle({ data: null, error: null }));
+
+    const screen = render(<OwnerProfileScreen />);
+
+    await waitFor(() => {
+      expect(screen.getByText("No Image")).toBeTruthy();
+    });
+
+    act(() => {
+      setOwnerLogoUrl("https://cdn.example.com/store-owner-logo.jpg?t=789");
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("https://cdn.example.com/store-owner-logo.jpg?t=789")).toBeTruthy();
     });
   });
 
