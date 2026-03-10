@@ -23,6 +23,7 @@ import CategoryModal from "../../components/menu/CategoryModal";
 import ItemModal from "../../components/menu/ItemModal";
 import MenuEditorCategoryList from "../../components/menu/MenuEditorCategoryList";
 import PhotoModal from "../../components/menu/PhotoModal";
+import { withCacheBust } from "../../lib/imageUrl";
 
 // Screen 
 
@@ -447,7 +448,7 @@ export default function MenuEditScreen() {
         .from("restaurant-images")
         .getPublicUrl(path);
 
-      const publicUrl = data?.publicUrl;
+      const publicUrl = data?.publicUrl ? withCacheBust(data.publicUrl) : null;
 
       if (publicUrl) {
         const { error: updateErr } = await supabase

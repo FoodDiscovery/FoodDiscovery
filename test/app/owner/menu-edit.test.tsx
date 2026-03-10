@@ -300,6 +300,17 @@ function updateEq(result: unknown) {
   };
 }
 
+function updateEqWithPayload(result: unknown, onUpdate: (payload: unknown) => void) {
+  return {
+    update: jest.fn().mockImplementation((payload: unknown) => {
+      onUpdate(payload);
+      return {
+        eq: jest.fn().mockResolvedValue(result),
+      };
+    }),
+  };
+}
+
 function deleteEq(result: unknown) {
   return {
     delete: jest.fn().mockReturnValue({
@@ -422,6 +433,7 @@ describe("MenuEditScreen", () => {
   });
 
   it("handles reorder, delete, and photo upload flows", async () => {
+    const updatedMenuItemPayloads: unknown[] = [];
     mockGetUser.mockResolvedValue({ data: { user: { id: "owner-3" } }, error: null });
     mockFrom
       .mockReturnValueOnce(selectSingle({ data: { role: "owner" }, error: null }))
@@ -436,7 +448,9 @@ describe("MenuEditScreen", () => {
       .mockReturnValueOnce(deleteEq({ error: null }))
       .mockReturnValueOnce(selectEqOrder({ data: categories, error: null }))
       .mockReturnValueOnce(selectIn({ data: items, error: null }))
-      .mockReturnValueOnce(updateEq({ error: null }))
+      .mockReturnValueOnce(
+        updateEqWithPayload({ error: null }, (payload) => updatedMenuItemPayloads.push(payload))
+      )
       .mockReturnValueOnce(selectEqOrder({ data: categories, error: null }))
       .mockReturnValueOnce(selectIn({ data: items, error: null }))
       .mockReturnValueOnce(deleteEq({ error: null }))
@@ -472,6 +486,9 @@ describe("MenuEditScreen", () => {
     await waitFor(() => {
       expect(mockStorageUpload).toHaveBeenCalled();
       expect(mockFrom).toHaveBeenCalledWith("menu_items");
+    });
+    expect(updatedMenuItemPayloads[0]).toEqual({
+      image_url: expect.stringMatching(/^https:\/\/cdn\.example\.com\/item\.png\?t=\d+$/),
     });
 
     fireEvent.press(screen.getByText("delete-first-item"));
