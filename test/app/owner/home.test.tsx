@@ -1,5 +1,5 @@
-import { render, waitFor } from "@testing-library/react-native";
-import { Alert } from "react-native";
+import { act, render, waitFor } from "@testing-library/react-native";
+import { Alert, FlatList } from "react-native";
 import OwnerHomeScreen from "../../../src/app/(owner)/home";
 
 const mockReplace = jest.fn();
@@ -57,14 +57,45 @@ function selectEqSingle(result: unknown) {
   };
 }
 
+function setupOwnerHomeQueries(orderResults: unknown[]) {
+  let orderCallCount = 0;
+
+  mockFrom.mockImplementation((table: string) => {
+    if (table === "profiles") {
+      return selectEqSingle({ data: { role: "owner" }, error: null });
+    }
+
+    if (table === "restaurants") {
+      return selectEqMaybeSingle({
+        data: { id: "rest-1" },
+        error: null,
+      });
+    }
+
+    if (table === "orders") {
+      const result =
+        orderResults[Math.min(orderCallCount, orderResults.length - 1)];
+      orderCallCount += 1;
+      return selectEqInOrder(result);
+    }
+
+    throw new Error(`Unexpected table: ${table}`);
+  });
+}
+
 describe("OwnerHomeScreen", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useRealTimers();
     jest.spyOn(Alert, "alert").mockImplementation(jest.fn());
     mockGetUser.mockResolvedValue({
       data: { user: { id: "owner-1" } },
       error: null,
     });
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it("redirects to sign-in when no user", async () => {
@@ -177,6 +208,90 @@ describe("OwnerHomeScreen", () => {
     await waitFor(() => {
       expect(getByText("No incoming orders")).toBeTruthy();
       expect(getByText(/New orders will appear here/)).toBeTruthy();
+    });
+  });
+
+  it("refreshes orders when the user pulls down", async () => {
+    setupOwnerHomeQueries([
+      { data: [], error: null },
+      {
+        data: [
+          {
+            id: "order-1",
+            status: "confirmed",
+            total_amount: 25.98,
+            created_at: "2025-02-23T14:30:00Z",
+            customer_id: "cust-1",
+            order_items: [
+              {
+                quantity: 2,
+                price_at_time_of_purchase: 12.99,
+                menu_items: { name: "Margherita Pizza" },
+              },
+            ],
+            profiles: { full_name: "Jane Doe" },
+          },
+        ],
+        error: null,
+      },
+    ]);
+
+    const { getByText, UNSAFE_getByType } = render(<OwnerHomeScreen />);
+
+    await waitFor(() => {
+      expect(getByText("No incoming orders")).toBeTruthy();
+    });
+
+    const list = UNSAFE_getByType(FlatList);
+
+    await act(async () => {
+      list.props.onRefresh();
+    });
+
+    await waitFor(() => {
+      expect(getByText("Confirmed")).toBeTruthy();
+    });
+  });
+
+  it("auto-refreshes orders every 5 seconds", async () => {
+    jest.useFakeTimers();
+
+    setupOwnerHomeQueries([
+      { data: [], error: null },
+      {
+        data: [
+          {
+            id: "order-1",
+            status: "confirmed",
+            total_amount: 25.98,
+            created_at: "2025-02-23T14:30:00Z",
+            customer_id: "cust-1",
+            order_items: [
+              {
+                quantity: 2,
+                price_at_time_of_purchase: 12.99,
+                menu_items: { name: "Margherita Pizza" },
+              },
+            ],
+            profiles: { full_name: "Jane Doe" },
+          },
+        ],
+        error: null,
+      },
+    ]);
+
+    const { getByText } = render(<OwnerHomeScreen />);
+
+    await waitFor(() => {
+      expect(getByText("No incoming orders")).toBeTruthy();
+    });
+
+    await act(async () => {
+      jest.advanceTimersByTime(5000);
+    });
+
+    await waitFor(() => {
+      expect(getByText("Confirmed")).toBeTruthy();
     });
   });
 });

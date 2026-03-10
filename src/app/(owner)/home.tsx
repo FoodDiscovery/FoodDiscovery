@@ -29,6 +29,7 @@ interface OrderRow {
 
 export default function OwnerHomeScreen() {
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
@@ -107,6 +108,21 @@ export default function OwnerHomeScreen() {
     loadRestaurantAndOrders();
   }, [loadRestaurantAndOrders]);
 
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      void loadRestaurantAndOrders();
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [loadRestaurantAndOrders]);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    loadRestaurantAndOrders().finally(() => {
+      setRefreshing(false);
+    });
+  }, [loadRestaurantAndOrders]);
+
   const handleMarkReady = useCallback(
     async (orderId: string) => {
       setUpdatingOrderId(orderId);
@@ -160,53 +176,55 @@ export default function OwnerHomeScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <View style={sharedStyles.ownerPageHeader}>
-        <Text style={sharedStyles.ownerPageTitle}>Incoming Orders</Text>
-        <Text style={sharedStyles.ownerPageSubtitle}>
-          Manage pickup orders for your restaurant
-        </Text>
-      </View>
-
-      {orders.length === 0 ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyTitle}>No incoming orders</Text>
-          <Text style={styles.emptySub}>
-            {restaurantId
-              ? "New orders will appear here when customers place them."
-              : "Set up your restaurant in Profile to receive orders."}
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={orders}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => (
-            <OrderCard
-              id={item.id}
-              status={item.status as OrderStatus}
-              totalAmount={Number(item.total_amount)}
-              createdAt={item.created_at}
-              customerName={
-                (item.profiles as { full_name: string | null } | null)
-                  ?.full_name ?? null
-              }
-              orderItems={item.order_items ?? []}
-              onMarkReady={
-                item.status === "confirmed"
-                  ? () => handleMarkReady(item.id)
-                  : undefined
-              }
-              onMarkCompleted={
-                item.status === "ready"
-                  ? () => handleMarkCompleted(item.id)
-                  : undefined
-              }
-              isUpdating={updatingOrderId === item.id}
-            />
-          )}
-        />
-      )}
+      <FlatList
+        data={orders}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+        ListHeaderComponent={
+          <View style={sharedStyles.ownerPageHeader}>
+            <Text style={sharedStyles.ownerPageTitle}>Incoming Orders</Text>
+            <Text style={sharedStyles.ownerPageSubtitle}>
+              Manage pickup orders for your restaurant
+            </Text>
+          </View>
+        }
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Text style={styles.emptyTitle}>No incoming orders</Text>
+            <Text style={styles.emptySub}>
+              {restaurantId
+                ? "New orders will appear here when customers place them."
+                : "Set up your restaurant in Profile to receive orders."}
+            </Text>
+          </View>
+        }
+        renderItem={({ item }) => (
+          <OrderCard
+            id={item.id}
+            status={item.status as OrderStatus}
+            totalAmount={Number(item.total_amount)}
+            createdAt={item.created_at}
+            customerName={
+              (item.profiles as { full_name: string | null } | null)
+                ?.full_name ?? null
+            }
+            orderItems={item.order_items ?? []}
+            onMarkReady={
+              item.status === "confirmed"
+                ? () => handleMarkReady(item.id)
+                : undefined
+            }
+            onMarkCompleted={
+              item.status === "ready"
+                ? () => handleMarkCompleted(item.id)
+                : undefined
+            }
+            isUpdating={updatingOrderId === item.id}
+          />
+        )}
+      />
     </SafeAreaView>
   );
 }
