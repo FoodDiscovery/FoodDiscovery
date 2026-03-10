@@ -54,7 +54,7 @@ interface NearbyRestaurant {
   };
 }
 
-type SortMode = "Name" | "Distance";
+type SortMode = "Name" | "Distance" | "Rating";
 
 type ActiveListItem = RestaurantRow | NearbyRestaurant;
 
@@ -236,15 +236,32 @@ export default function HomeScreen() {
     });
   }, [nearby, query, selectedCuisines, restaurantById]);
 
+  const filteredByRating = useMemo(() => {
+    return [...filteredBase].sort((a, b) => {
+      const ratingA = restaurantRatings.get(a.id)?.average_rating ?? 0;
+      const ratingB = restaurantRatings.get(b.id)?.average_rating ?? 0;
+      if (ratingB !== ratingA) return ratingB - ratingA;
+      const countA = restaurantRatings.get(a.id)?.rating_count ?? 0;
+      const countB = restaurantRatings.get(b.id)?.rating_count ?? 0;
+      return countB - countA;
+    });
+  }, [filteredBase, restaurantRatings]);
+
   const activeList: ActiveListItem[] =
-    sortMode === "Distance" ? filteredNearby : filteredBase;
+    sortMode === "Distance"
+      ? filteredNearby
+      : sortMode === "Rating"
+        ? filteredByRating
+        : filteredBase;
 
   const headerSubtitle =
     sortMode === "Distance"
       ? location
         ? "Sorted by nearest (within 5km)"
         : "Enable location to sort by distance"
-      : "Search by name, cuisine, or description";
+      : sortMode === "Rating"
+        ? "Highest rated first"
+        : "Search by name, cuisine, or description";
 
   const onPressSort = () => {
     if (sortMode === "Name") {
@@ -260,6 +277,8 @@ export default function HomeScreen() {
         return;
       }
       setSortMode("Distance");
+    } else if (sortMode === "Distance") {
+      setSortMode("Rating");
     } else {
       setSortMode("Name");
     }
@@ -436,7 +455,7 @@ export default function HomeScreen() {
           style={({ pressed }) => [styles.pillSmallGold, pressed && sharedStyles.pressedOpacity85]}
         >
           <Text style={styles.pillSmallGoldText}>
-            Sort: {sortMode === "Name" ? "Name" : "Distance"}
+            Sort: {sortMode === "Name" ? "Name" : sortMode === "Distance" ? "Distance" : "Rating"}
           </Text>
         </Pressable>
 
