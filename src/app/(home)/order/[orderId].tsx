@@ -45,6 +45,7 @@ export default function OrderDetailScreen() {
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [restaurantName, setRestaurantName] = useState<string>("");
   const [address, setAddress] = useState<string | null>(null);
+  const [orderStatus, setOrderStatus] = useState<string | null>(null);
   const [lineItems, setLineItems] = useState<OrderItemRow[]>([]);
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [reviewRating, setReviewRating] = useState(0);
@@ -63,6 +64,7 @@ export default function OrderDetailScreen() {
       setRestaurantId(cached.restaurantId ?? null);
       setRestaurantName(cached.restaurantName);
       setAddress(cached.address);
+      setOrderStatus(cached.status ?? null);
       setLineItems(cached.lineItems);
       setError(null);
       setLoading(false);
@@ -73,6 +75,7 @@ export default function OrderDetailScreen() {
     setRestaurantId(null);
     setRestaurantName("");
     setAddress(null);
+    setOrderStatus(null);
     setLineItems([]);
     let cancelled = false;
     (async () => {
@@ -87,6 +90,7 @@ export default function OrderDetailScreen() {
       setRestaurantId(result.data.restaurantId ?? null);
       setRestaurantName(result.data.restaurantName);
       setAddress(result.data.address);
+      setOrderStatus(result.data.status ?? null);
       setLineItems(result.data.lineItems);
       setCached(orderId, result.data);
       setLoading(false);
@@ -96,8 +100,10 @@ export default function OrderDetailScreen() {
     };
   }, [orderId, session?.user?.id, getCached, setCached, fetchOrderDetail]);
 
+  const canLeaveReview = orderStatus === "completed" || orderStatus === "picked_up";
+
   useEffect(() => {
-    if (!session?.user?.id || !restaurantId) {
+    if (!session?.user?.id || !restaurantId || !canLeaveReview) {
       setHasExistingReview(false);
       setReviewRating(0);
       setReviewDescription("");
@@ -125,11 +131,18 @@ export default function OrderDetailScreen() {
     return () => {
       cancelled = true;
     };
-  }, [restaurantId, session?.user?.id]);
+  }, [canLeaveReview, restaurantId, session?.user?.id]);
 
   const submitReview = async () => {
     if (!session?.user?.id) {
       Alert.alert("Sign in required", "Please sign in to leave a review.");
+      return;
+    }
+    if (!canLeaveReview) {
+      Alert.alert(
+        "Unable to review",
+        "You can leave a review only after the order is completed."
+      );
       return;
     }
     if (!restaurantId) {
@@ -254,19 +267,21 @@ export default function OrderDetailScreen() {
           <Text style={[style.summaryRow, style.summaryTotal]}>Total: ${totalWithTax.toFixed(2)}</Text>
         </View>
 
-        <Pressable
-          style={({ pressed }) => [
-            style.reviewButton,
-            pressed && sharedStyles.pressedOpacity85,
-          ]}
-          onPress={() => setReviewModalVisible(true)}
-          accessibilityRole="button"
-          accessibilityLabel={hasExistingReview ? "Edit review" : "Leave review"}
-        >
-          <Text style={style.reviewButtonText}>
-            {hasExistingReview ? "Edit review" : "Leave review"}
-          </Text>
-        </Pressable>
+        {canLeaveReview ? (
+          <Pressable
+            style={({ pressed }) => [
+              style.reviewButton,
+              pressed && sharedStyles.pressedOpacity85,
+            ]}
+            onPress={() => setReviewModalVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel={hasExistingReview ? "Edit review" : "Leave review"}
+          >
+            <Text style={style.reviewButtonText}>
+              {hasExistingReview ? "Edit review" : "Leave review"}
+            </Text>
+          </Pressable>
+        ) : null}
       </ScrollView>
 
       <Modal

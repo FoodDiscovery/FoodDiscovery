@@ -19,6 +19,7 @@ const SAMPLE_CACHE: OrderDetailData = {
   restaurantId: "r-1",
   restaurantName: "Sushi Bay",
   address: "123 Market St",
+  status: "completed",
   lineItems: [{ quantity: 1, price_at_time_of_purchase: 12.5, name: "Roll" }],
 };
 
@@ -192,7 +193,7 @@ describe("OrderDetailCacheProvider", () => {
     mockFrom.mockImplementation((table: string) => {
       if (table === "orders") {
         return buildOrderDetailOrdersQuery({
-          data: { restaurant_id: "r-9" },
+          data: { restaurant_id: "r-9", status: "completed" },
           error: null,
         });
       }
@@ -242,6 +243,7 @@ describe("OrderDetailCacheProvider", () => {
       expect(parsed.data.restaurantId).toBe("r-9");
       expect(parsed.data.restaurantName).toBe("Restaurant");
       expect(parsed.data.address).toBeNull();
+      expect(parsed.data.status).toBe("completed");
       expect(parsed.data.lineItems).toEqual([
         { quantity: 2, price_at_time_of_purchase: 8.25, name: "Nigiri" },
         { quantity: 1, price_at_time_of_purchase: 5.75, name: "Item" },
@@ -253,7 +255,7 @@ describe("OrderDetailCacheProvider", () => {
     mockFrom.mockImplementation((table: string) => {
       if (table === "orders") {
         return buildOrderDetailOrdersQuery({
-          data: { restaurant_id: "r-5" },
+          data: { restaurant_id: "r-5", status: "ready" },
           error: null,
         });
       }
@@ -291,6 +293,7 @@ describe("OrderDetailCacheProvider", () => {
       };
       expect(parsed.data.restaurantName).toBe("Noodle House");
       expect(parsed.data.address).toBe("500 Main St");
+      expect(parsed.data.status).toBe("ready");
       expect(parsed.data.lineItems).toEqual([]);
     });
   });

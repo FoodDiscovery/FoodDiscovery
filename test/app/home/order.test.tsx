@@ -49,6 +49,7 @@ const orderDetailData = {
   restaurantId: "rest-1",
   restaurantName: "Pizza Palace",
   address: "123 Main St",
+  status: "completed",
   lineItems: [
     { quantity: 2, price_at_time_of_purchase: 10.5, name: "Margherita" },
     { quantity: 1, price_at_time_of_purchase: 8, name: "Garlic Bread" },
@@ -165,6 +166,25 @@ describe("OrderDetailScreen (home)", () => {
       expect(editBtn).toBeTruthy();
     });
   });
+
+  it.each(["confirmed", "ready"])(
+    "hides leave review actions when order status is %s",
+    async (status) => {
+      mockFetchOrderDetail.mockResolvedValue({
+        data: { ...orderDetailData, status },
+      });
+
+      const { queryByText, queryByRole } = render(<OrderDetailScreen />);
+
+      await waitFor(() => {
+        expect(queryByText("Pizza Palace")).toBeTruthy();
+      });
+
+      expect(queryByText("Leave review")).toBeNull();
+      expect(queryByRole("button", { name: "Leave review" })).toBeNull();
+      expect(mockFetchUserRestaurantReviews).not.toHaveBeenCalled();
+    }
+  );
 
   it("submits review and shows success", async () => {
     mockSaveUserRestaurantReview.mockResolvedValue(undefined);

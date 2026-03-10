@@ -5,6 +5,7 @@ node_modules/
 .expo/
 dist/
 web-build/
+.metro-cache/
 
 # Supabase
 supabase/

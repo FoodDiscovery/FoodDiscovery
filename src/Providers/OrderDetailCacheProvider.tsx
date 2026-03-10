@@ -7,6 +7,7 @@ export interface OrderDetailData {
   restaurantId?: string;
   restaurantName: string;
   address: string | null;
+  status?: string | null;
   // array of objects
   lineItems: {
     quantity: number;
@@ -47,7 +48,7 @@ async function fetchOrderDetailImpl(
   // only need restaurant_id
   const { data: order, error: orderErr } = await supabase
     .from("orders")
-    .select("restaurant_id")
+    .select("restaurant_id, status")
     .eq("id", orderId)
     .eq("customer_id", userId)
     .maybeSingle();
@@ -56,7 +57,8 @@ async function fetchOrderDetailImpl(
     return { error: orderErr?.message ?? "Order not found." };
   }
 
-  const rid = (order as { restaurant_id: string }).restaurant_id;
+  const typedOrder = order as { restaurant_id: string; status?: string | null };
+  const rid = typedOrder.restaurant_id;
 
   // fetch restaurant_name, address, and populate lineItems (takes advantage of the fact that menu_items comes back as an array)
   const [restRes, locRes, itemsRes] = await Promise.all([
@@ -92,7 +94,13 @@ async function fetchOrderDetailImpl(
   });
 
   return {
-    data: { restaurantId: rid, restaurantName, address, lineItems },
+    data: {
+      restaurantId: rid,
+      restaurantName,
+      address,
+      status: typedOrder.status ?? null,
+      lineItems,
+    },
   };
 }
 
