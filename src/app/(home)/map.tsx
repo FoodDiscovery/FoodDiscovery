@@ -36,7 +36,7 @@ interface RestaurantModalInfo {
 export default function MapScreen() {
   const mapRef = useRef<MapView>(null);
   const insets = useSafeAreaInsets(); 
-  const { location, errorMsg, isLoading, refreshLocation } = useLocation(); // get location from location provider
+  const { location, errorMsg, isLoading, refreshLocation } = useLocation(); // get user location from location provider
   const [restaurants, setRestaurants] = React.useState<Restaurant[]>([]);
   const [modalVisible, setModalVisible] = React.useState(false);
   const [selectedRestaurant, setSelectedRestaurant] = React.useState<RestaurantModalInfo | null>(null);
@@ -51,7 +51,7 @@ export default function MapScreen() {
         latitudeDelta: 0.0922,
         longitudeDelta: 0.0421,
       },
-      1000
+      1000 // animate to location over 1 second
     );
 
     fetchNearbyRestaurants(location.latitude, location.longitude);
@@ -61,7 +61,7 @@ export default function MapScreen() {
     const { data, error } = await supabase.rpc("get_nearby_restaurants", {
       user_lat: latitude,
       user_lng: longitude,
-      radius_meters: 5000,
+      radius_meters: 10000, // 10km radius
     });
 
     if (error) {
@@ -161,7 +161,7 @@ export default function MapScreen() {
               longitude: item.longitude,
             }}
             title={item.restaurant.name}
-            description={`Distance: ${(item.distance_meters / 1000).toFixed(2)} km`}
+            description={`Distance: ${(item.distance_meters / 1609.34).toFixed(2)} mi`}
             pinColor="blue"
             onPress={() => handleMarkerPress(item.restaurant.id)}
           />
