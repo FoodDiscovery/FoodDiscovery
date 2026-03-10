@@ -43,11 +43,18 @@ const styles = StyleSheet.create({
     color: NAVY,
   },
   headerLogo: {
-    width: 210,
-    height: 56,
-    marginBottom: 2,
+    width: "100%",
+    height: "100%",
+    transform: [{ scale: 2.35 }, { translateY: -3 }],
   },
-
+  logoFrame: {
+    width: "100%",
+    height: 74,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    marginTop: -2,
+  },
   title: {
     marginTop: 2,
     fontSize: 22,

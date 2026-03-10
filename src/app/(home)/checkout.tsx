@@ -172,7 +172,9 @@ export default function CheckoutScreen() {
       {/* Header (matches Home theme) */}
       <View style={[styles.header, { paddingTop: Math.max(10, insets.top * 0.45) }]}>
         <View style={styles.headerCenter}>
-          <Image source={FoodDiscoveryLogo} style={styles.headerLogo} resizeMode="contain" />
+        <View style={styles.logoFrame}>
+            <Image source={FoodDiscoveryLogo} style={styles.headerLogo} resizeMode="contain" />
+        </View>
           <Text style={styles.title}>Checkout</Text>
           <Text style={styles.subtitle}>Pay with card. Confirm after payment.</Text>
         </View>
