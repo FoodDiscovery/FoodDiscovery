@@ -152,7 +152,7 @@ export default function MapScreen() {
           longitudeDelta: 0.0421,
         }}
       >
-        <Marker coordinate={location} title="My Location" description="Here I am" />
+        <Marker coordinate={location} title="My Location" description="Your location" />
         {restaurants.map((item) => (
           <Marker
             key={item.location_id}
