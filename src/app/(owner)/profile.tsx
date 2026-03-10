@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import CachedImage from "../../components/CachedImage";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import { supabase } from "../../lib/supabase";
 import { ownerStyles as styles } from "../../components/styles";
@@ -165,6 +166,8 @@ export default function OwnerProfileScreen() {
   const [imageUrl, setImageUrl] = useState(() => getOwnerLogoUrl() ?? "");
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [initialValues, setInitialValues] = useState<FormState | null>(null);
+  const currentImageUrlRef = useRef((getOwnerLogoUrl() ?? "").trim());
+  const savedImageUrlRef = useRef((getOwnerLogoUrl() ?? "").trim());
 
   const currentValues = useMemo<FormState>(
     () => ({
@@ -187,14 +190,41 @@ export default function OwnerProfileScreen() {
   }, [currentValues, initialValues]);
 
   useEffect(() => {
+    currentImageUrlRef.current = currentValues.imageUrl;
+  }, [currentValues.imageUrl]);
+
+  useEffect(() => {
+    savedImageUrlRef.current = initialValues?.imageUrl ?? "";
+  }, [initialValues]);
+
+  const restoreSavedLogoIfNeeded = useCallback(() => {
+    if (currentImageUrlRef.current !== savedImageUrlRef.current) {
+      setOwnerLogoUrl(savedImageUrlRef.current || null);
+    }
+  }, []);
+
+  useEffect(() => {
     const unsubscribe = subscribeOwnerLogoUrl(() => {
       const nextLogoUrl = getOwnerLogoUrl() ?? "";
       setImageUrl(nextLogoUrl);
-      setInitialValues((prev) => (prev ? { ...prev, imageUrl: nextLogoUrl.trim() } : prev));
     });
 
     return unsubscribe;
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        restoreSavedLogoIfNeeded();
+      };
+    }, [restoreSavedLogoIfNeeded])
+  );
+
+  useEffect(() => {
+    return () => {
+      restoreSavedLogoIfNeeded();
+    };
+  }, [restoreSavedLogoIfNeeded]);
 
   useEffect(() => {
     const loadLocation = async (rid: string) => {

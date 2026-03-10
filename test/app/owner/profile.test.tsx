@@ -1,7 +1,7 @@
 import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
 import { Alert } from "react-native";
 import OwnerProfileScreen from "../../../src/app/(owner)/profile";
-import { setOwnerLogoUrl } from "../../../src/lib/ownerLogoStore";
+import { getOwnerLogoUrl, setOwnerLogoUrl } from "../../../src/lib/ownerLogoStore";
 
 const mockReplace = jest.fn();
 const mockFrom = jest.fn();
@@ -13,6 +13,7 @@ const mockRequestMediaLibraryPermissionsAsync = jest.fn();
 const mockLaunchImageLibraryAsync = jest.fn();
 const mockBase64 = jest.fn();
 const mockValidateWeeklyBusinessHours = jest.fn();
+const focusEffectCleanups: (undefined | (() => void))[] = [];
 
 const DEFAULT_HOURS = {
   monday: { closed: false, open: { hour: 9, minute: 0, period: "AM" }, close: { hour: 5, minute: 0, period: "PM" } },
@@ -32,6 +33,13 @@ jest.mock("expo-router", () => ({
 
 jest.mock("react-native-safe-area-context", () => ({
   SafeAreaView: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+jest.mock("@react-navigation/native", () => ({
+  useFocusEffect: (effect: () => (() => void) | undefined) => {
+    const cleanup = effect();
+    focusEffectCleanups.push(typeof cleanup === "function" ? cleanup : undefined);
+  },
 }));
 
 jest.mock("../../../src/components/CachedImage", () => {
@@ -138,6 +146,7 @@ function insertSelectSingle(result: unknown) {
 
 describe("OwnerProfileScreen", () => {
   beforeEach(() => {
+    focusEffectCleanups.length = 0;
     setOwnerLogoUrl(null);
     mockReplace.mockReset();
     mockFrom.mockReset();
@@ -375,6 +384,110 @@ describe("OwnerProfileScreen", () => {
     await waitFor(() => {
       expect(screen.getByText("https://cdn.example.com/store-owner-logo.jpg?t=789")).toBeTruthy();
     });
+  });
+
+  it("allows saving after only the shared owner logo changes", async () => {
+    const updateRestaurantPayloads: unknown[] = [];
+    const updateProfilePayloads: unknown[] = [];
+
+    mockGetUser.mockResolvedValue({ data: { user: { id: "owner-17" } }, error: null });
+    mockFrom
+      .mockReturnValueOnce(
+        selectSingle({ data: { role: "owner", full_name: "Owner 17" }, error: null })
+      )
+      .mockReturnValueOnce(
+        selectMaybeSingle({
+          data: {
+            id: "rest-17",
+            owner_id: "owner-17",
+            name: "Logo Cafe",
+            description: "",
+            cuisine_type: "",
+            image_url: "",
+            business_hours: DEFAULT_HOURS,
+            phone: "",
+          },
+          error: null,
+        })
+      )
+      .mockReturnValueOnce(selectMaybeSingle({ data: null, error: null }))
+      .mockReturnValueOnce(updateEq({ error: null }, (payload) => updateRestaurantPayloads.push(payload)))
+      .mockReturnValueOnce(updateEq({ error: null }, (payload) => updateProfilePayloads.push(payload)));
+
+    const screen = render(<OwnerProfileScreen />);
+
+    await waitFor(() => {
+      expect(screen.getByText("No Image")).toBeTruthy();
+    });
+
+    act(() => {
+      setOwnerLogoUrl("https://cdn.example.com/store-owner-logo-updated.jpg?t=999");
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("https://cdn.example.com/store-owner-logo-updated.jpg?t=999")).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByText("Save profile"));
+
+    await waitFor(() => {
+      expect(Alert.alert).toHaveBeenCalledWith("Saved", "Business profile updated successfully.");
+    });
+
+    expect(updateRestaurantPayloads[0]).toEqual({
+      name: "Logo Cafe",
+      description: "",
+      cuisine_type: "",
+      business_hours: DEFAULT_HOURS,
+      phone: null,
+      image_url: "https://cdn.example.com/store-owner-logo-updated.jpg?t=999",
+      preview_images: null,
+    });
+    expect(updateProfilePayloads[0]).toEqual({ full_name: "Owner 17" });
+  });
+
+  it("restores the saved owner logo when leaving the route with an unsaved image change", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "owner-18" } }, error: null });
+    mockFrom
+      .mockReturnValueOnce(
+        selectSingle({ data: { role: "owner", full_name: "Owner 18" }, error: null })
+      )
+      .mockReturnValueOnce(
+        selectMaybeSingle({
+          data: {
+            id: "rest-18",
+            owner_id: "owner-18",
+            name: "Rollback Cafe",
+            description: "",
+            cuisine_type: "",
+            image_url: "https://cdn.example.com/original-owner-logo.jpg",
+            business_hours: DEFAULT_HOURS,
+            phone: "",
+          },
+          error: null,
+        })
+      )
+      .mockReturnValueOnce(selectMaybeSingle({ data: null, error: null }));
+
+    const screen = render(<OwnerProfileScreen />);
+
+    await waitFor(() => {
+      expect(screen.getByText("https://cdn.example.com/original-owner-logo.jpg")).toBeTruthy();
+    });
+
+    fireEvent.press(screen.getByText("https://cdn.example.com/original-owner-logo.jpg"));
+
+    await waitFor(() => {
+      expect(screen.getByText(/^https:\/\/cdn\.example\.com\/new-image\.jpg\?t=\d+$/)).toBeTruthy();
+    });
+
+    expect(getOwnerLogoUrl()).toMatch(/^https:\/\/cdn\.example\.com\/new-image\.jpg\?t=\d+$/);
+
+    act(() => {
+      focusEffectCleanups[0]?.();
+    });
+
+    expect(getOwnerLogoUrl()).toBe("https://cdn.example.com/original-owner-logo.jpg");
   });
 
   it("handles profile and restaurant load errors", async () => {
