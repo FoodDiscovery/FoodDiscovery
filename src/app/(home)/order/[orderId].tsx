@@ -58,7 +58,6 @@ export default function OrderDetailScreen() {
       setLoading(false);
       return;
     }
-    // check if it's cached first
     const cached = getCached(orderId);
     if (cached) {
       setRestaurantId(cached.restaurantId ?? null);
@@ -68,23 +67,24 @@ export default function OrderDetailScreen() {
       setLineItems(cached.lineItems);
       setError(null);
       setLoading(false);
-      return;
+    } else {
+      setLoading(true);
+      setError(null);
+      setRestaurantId(null);
+      setRestaurantName("");
+      setAddress(null);
+      setOrderStatus(null);
+      setLineItems([]);
     }
-    setLoading(true);
-    setError(null);
-    setRestaurantId(null);
-    setRestaurantName("");
-    setAddress(null);
-    setOrderStatus(null);
-    setLineItems([]);
     let cancelled = false;
     (async () => {
-      // attempt to fetch
       const result = await fetchOrderDetail(orderId, session.user.id);
       if (cancelled) return;
       if ("error" in result) {
-        setError(result.error);
-        setLoading(false);
+        if (!cached) {
+          setError(result.error);
+          setLoading(false);
+        }
         return;
       }
       setRestaurantId(result.data.restaurantId ?? null);
@@ -93,6 +93,7 @@ export default function OrderDetailScreen() {
       setOrderStatus(result.data.status ?? null);
       setLineItems(result.data.lineItems);
       setCached(orderId, result.data);
+      setError(null);
       setLoading(false);
     })();
     return () => {

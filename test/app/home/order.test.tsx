@@ -104,14 +104,26 @@ describe("OrderDetailScreen (home)", () => {
 
   it("uses cached data when available", async () => {
     mockGetCached.mockReturnValue(orderDetailData);
-    mockFetchOrderDetail.mockClear();
 
     const { getByText } = render(<OrderDetailScreen />);
 
     await waitFor(() => {
       expect(getByText("Pizza Palace")).toBeTruthy();
     });
-    expect(mockFetchOrderDetail).not.toHaveBeenCalled();
+    expect(mockFetchOrderDetail).toHaveBeenCalledWith("order-123", "user-1");
+  });
+
+  it("refreshes cached status so review button appears after completion", async () => {
+    mockGetCached.mockReturnValue({ ...orderDetailData, status: "confirmed" });
+    mockFetchOrderDetail.mockResolvedValue({ data: orderDetailData });
+
+    const { queryByRole, getByRole } = render(<OrderDetailScreen />);
+
+    expect(queryByRole("button", { name: "Leave review" })).toBeNull();
+
+    await waitFor(() => {
+      expect(getByRole("button", { name: "Leave review" })).toBeTruthy();
+    });
   });
 
   it("shows error and Go back when fetch fails", async () => {
