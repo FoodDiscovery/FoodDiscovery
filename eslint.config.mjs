@@ -29,5 +29,12 @@ export default defineConfig(
         ...globals.node,
       },
     },
+  },
+  // Metro config is a Node CommonJS file; require() is standard there.
+  {
+    files: ["metro.config.js"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
   }
 )
