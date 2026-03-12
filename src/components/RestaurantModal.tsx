@@ -4,8 +4,7 @@ import {
     View,
     Text,
     TouchableOpacity,
-    ScrollView,
-    ActivityIndicator
+    ScrollView
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -45,102 +44,22 @@ interface RestaurantModalProps {
     onViewMenu?: (restaurantId: string) => void;
 }
 
-// Function to determine if restaurant is currently open
-function getLegacyOpenStatus(hoursText: string): { isOpen: boolean; statusText: string } {
-    const now = new Date();
-    const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    const currentTime = now.getHours() * 60 + now.getMinutes(); // Time in minutes since midnight
-
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const dayAbbrevs = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const currentDayName = dayNames[currentDay];
-    const currentDayAbbrev = dayAbbrevs[currentDay];
-
-    // Try to find today's hours in the text
-    // Look for patterns like "Monday: 9:00 AM - 5:00 PM" or "Mon: 9am-5pm"
-    const dayPatterns = [
-        new RegExp(`${currentDayName}[^\\n]*?([0-9]{1,2}):?([0-9]{2})?\\s*(AM|PM|am|pm)[^\\n]*?([0-9]{1,2}):?([0-9]{2})?\\s*(AM|PM|am|pm)`, 'i'),
-        new RegExp(`${currentDayAbbrev}[^\\n]*?([0-9]{1,2}):?([0-9]{2})?\\s*(AM|PM|am|pm)[^\\n]*?([0-9]{1,2}):?([0-9]{2})?\\s*(AM|PM|am|pm)`, 'i'),
-    ];
-
-    for (const pattern of dayPatterns) {
-        const match = hoursText.match(pattern);
-        if (match) {
-            // Parse opening time
-            let openHour = parseInt(match[1]);
-            const openMin = match[2] ? parseInt(match[2]) : 0;
-            const openPeriod = match[3].toUpperCase();
-
-            // Parse closing time
-            let closeHour = parseInt(match[4]);
-            const closeMin = match[5] ? parseInt(match[5]) : 0;
-            const closePeriod = match[6].toUpperCase();
-
-            // Convert to 24-hour format
-            if (openPeriod === 'PM' && openHour !== 12) openHour += 12;
-            if (openPeriod === 'AM' && openHour === 12) openHour = 0;
-
-            if (closePeriod === 'PM' && closeHour !== 12) closeHour += 12;
-            if (closePeriod === 'AM' && closeHour === 12) closeHour = 0;
-
-            const openTime = openHour * 60 + openMin;
-            const closeTime = closeHour * 60 + closeMin;
-
-            // Check if current time is within business hours
-            // Handle case where closing time is next day (e.g., 11 PM - 2 AM)
-            if (closeTime < openTime) {
-                // Hours span midnight
-                const isOpen = currentTime >= openTime || currentTime < closeTime;
-                return { isOpen, statusText: isOpen ? 'Open now' : 'Closed' };
-            } else {
-                const isOpen = currentTime >= openTime && currentTime < closeTime;
-                return { isOpen, statusText: isOpen ? 'Open now' : 'Closed' };
-            }
-        }
-    }
-
-    // If we can't parse the hours, check for common patterns like "Open 24 hours" or "Closed"
-    if (hoursText.toLowerCase().includes('24 hours') || hoursText.toLowerCase().includes('open 24')) {
-        return { isOpen: true, statusText: 'Open 24 hours' };
-    }
-    if (hoursText.toLowerCase().includes('closed')) {
-        return { isOpen: false, statusText: 'Closed' };
-    }
-
-    // Default: can't determine
-    return { isOpen: false, statusText: 'Hours vary' };
-}
-
 function getRestaurantHoursDisplay(businessHours: RestaurantModalInfo['business_hours']) {
-    if (!businessHours) {
-        return { isOpen: false, statusText: 'Hours not available', displayText: 'Hours not available' };
-    }
-
-    if (isWeeklyBusinessHours(businessHours)) {
-        const status = getRestaurantOpenStatus(businessHours);
+    if (!businessHours || !isWeeklyBusinessHours(businessHours)) {
         return {
-            ...status,
-            displayText: businessHoursToDisplayText(businessHours),
+            hasHours: false,
+            isOpen: false,
+            statusText: "Hours unavailable",
+            displayText: "Hours not available",
         };
     }
 
-    if (typeof businessHours === 'string' && businessHours.trim()) {
-        const legacyStatus = getLegacyOpenStatus(businessHours);
-        return {
-            ...legacyStatus,
-            displayText: businessHours,
-        };
-    }
-
-    if (typeof businessHours === 'object' && typeof businessHours.text === 'string' && businessHours.text.trim()) {
-        const legacyStatus = getLegacyOpenStatus(businessHours.text);
-        return {
-            ...legacyStatus,
-            displayText: businessHours.text,
-        };
-    }
-
-    return { isOpen: false, statusText: 'Hours not available', displayText: 'Hours not available' };
+    const status = getRestaurantOpenStatus(businessHours);
+    return {
+        hasHours: true,
+        ...status,
+        displayText: businessHoursToDisplayText(businessHours),
+    };
 }
 
 export default function RestaurantModal({
@@ -195,7 +114,7 @@ export default function RestaurantModal({
         };
     }, [restaurant.id, session?.user?.id]);
 
-    const { isOpen, statusText, displayText } = getRestaurantHoursDisplay(restaurant.business_hours);
+    const { hasHours, isOpen, statusText, displayText } = getRestaurantHoursDisplay(restaurant.business_hours);
     const previewImages = restaurant.preview_images?.filter(Boolean) ?? [];
 
     return (
@@ -212,13 +131,6 @@ export default function RestaurantModal({
                     onPress={onClose}
                 />
                 <View style={styles.modalContainer}>
-                    {!restaurant ? (
-                        <View style={styles.loadingContainer}>
-                            <ActivityIndicator size="large" color="#4285F4" />
-                            <Text style={styles.loadingText}>Loading restaurant details...</Text>
-                        </View>
-                    ) : (
-                        <>
                             {/* Drag Handle */}
                             <View style={styles.handleContainer}>
                                 <View style={styles.handle} />
@@ -257,7 +169,7 @@ export default function RestaurantModal({
                                 <View style={styles.headerSection}>
                                     <View style={styles.nameRow}>
                                         <Text style={styles.name}>{restaurant.name ?? "Unnamed restaurant"}</Text>
-                                        {restaurant.business_hours && (
+                                        {hasHours && (
                                             <View style={[styles.statusBadge, isOpen ? styles.statusOpen : styles.statusClosed]}>
                                                 <View style={[styles.statusDot, isOpen ? styles.statusDotOpen : styles.statusDotClosed]} />
                                                 <Text style={[styles.statusText, isOpen ? styles.statusTextOpen : styles.statusTextClosed]}>
@@ -297,7 +209,7 @@ export default function RestaurantModal({
                                     </View>
                                 )}
 
-                                {restaurant.business_hours && (
+                                {hasHours && (
                                     <View style={styles.section}>
                                         <View style={styles.sectionHeader}>
                                             <Ionicons name="time-outline" size={18} color="#0B2D5B" />
@@ -366,8 +278,6 @@ export default function RestaurantModal({
                                     <Text style={styles.closeButtonText}>Close</Text>
                                 </TouchableOpacity>
                             </View>
-                        </>
-                    )}
                 </View>
             </View>
         </Modal>

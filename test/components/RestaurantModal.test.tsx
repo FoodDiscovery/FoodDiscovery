@@ -30,6 +30,16 @@ const baseRestaurant = {
   preview_images: null,
 };
 
+function buildBusinessHoursForMonday(openHour: number, closeHour: number) {
+  const hours = createDefaultBusinessHours();
+  hours.monday = {
+    closed: false,
+    open: { hour: openHour, minute: 0, period: "AM" as const },
+    close: { hour: closeHour, minute: 0, period: "PM" as const },
+  };
+  return hours;
+}
+
 beforeEach(() => {
   mockFetchRestaurantRating.mockResolvedValue(null);
   mockGetSavedUserRestaurantRating.mockResolvedValue(null);
@@ -180,75 +190,47 @@ describe("RestaurantModal", () => {
   });
 
   describe("business hours rendering", () => {
-    it.each([
-      {
-        name: "weekly structured hours",
-        hours: createDefaultBusinessHours(),
-        expectedText: /Monday:/,
-      },
-      {
-        name: "Open 24 hours legacy string",
-        hours: "Open 24 hours",
-        expectedText: "Open 24 hours",
-      },
-      {
-        name: "Closed today legacy string",
-        hours: "Closed today",
-        expectedText: "Closed",
-      },
-      {
-        name: "object with text property",
-        hours: { text: "Open 24 hours" },
-        expectedText: "Open 24 hours",
-      },
-      {
-        name: "object with empty text",
-        hours: { text: "" },
-        expectedText: "Hours not available",
-      },
-    ])("shows Hours section with $name", ({ hours, expectedText }) => {
-      const { getByText, getAllByText } = render(
+    it("shows Hours section with structured weekly hours", () => {
+      const { getByText } = render(
         <RestaurantModal
           visible
           restaurant={{
             ...baseRestaurant,
-            business_hours: hours,
+            business_hours: createDefaultBusinessHours(),
           }}
           onClose={jest.fn()}
         />
       );
+
       expect(getByText("Hours")).toBeTruthy();
-      if (expectedText instanceof RegExp) {
-        expect(getByText(expectedText)).toBeTruthy();
-      } else {
-        expect(getAllByText(expectedText).length).toBeGreaterThanOrEqual(1);
-      }
+      expect(getByText(/Monday:/)).toBeTruthy();
     });
 
     it.each([
       {
-        name: "open now during business hours",
-        hours: "Monday: 9:00 AM - 5:00 PM",
+        name: "open now during weekly business hours",
+        hours: buildBusinessHoursForMonday(9, 5),
         mockTime: new Date(2025, 0, 6, 10, 0, 0), // Monday 10:00 AM
         expectedStatus: "Open now",
       },
       {
         name: "closed outside business hours",
-        hours: "Monday: 9:00 AM - 5:00 PM",
+        hours: buildBusinessHoursForMonday(9, 5),
         mockTime: new Date(2025, 0, 6, 20, 0, 0), // Monday 8:00 PM
         expectedStatus: "Closed",
       },
       {
-        name: "open now when hours span midnight",
-        hours: "Monday: 11:00 PM - 2:00 AM",
-        mockTime: new Date(2025, 0, 6, 23, 30, 0), // Monday 11:30 PM
-        expectedStatus: "Open now",
-      },
-      {
-        name: "hours vary when unparseable",
-        hours: "Call for hours",
+        name: "closed today when monday is marked closed",
+        hours: {
+          ...createDefaultBusinessHours(),
+          monday: {
+            closed: true,
+            open: { hour: 9, minute: 0, period: "AM" as const },
+            close: { hour: 5, minute: 0, period: "PM" as const },
+          },
+        },
         mockTime: new Date(2025, 0, 6, 10, 0, 0),
-        expectedStatus: "Hours vary",
+        expectedStatus: "Closed today",
       },
     ])("shows correct status: $name", ({ hours, mockTime, expectedStatus }) => {
       jest.useFakeTimers();
